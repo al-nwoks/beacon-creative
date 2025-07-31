@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - beacon-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/beacon
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkey}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION_TIME=3600
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+      - MOCK_MODE=True
+      - SEED_DATA=True
+      - LOG_LEVEL=DEBUG
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - beacon-network
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=beacon
+    ports:
+      - "5432"
+    restart: unless-stopped
+    networks:
+      - beacon-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - beacon-network
+
+networks:
+  beacon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

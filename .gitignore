@@ -1,0 +1,27 @@
+# Ignore context directory
+context/
+
+# Ignore all documentation files except root README.md
+*.md
+!README.md
+
+# Ignore documentation in subfolders
+**/documentation.md
+**/design_doc_beacon.md
+**/mvp_prompt.md
+**/API.md
+
+# Existing ignores
+# ...existing code...
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+# Node
+node_modules/
+dist/
+.env
+# Mac
+.DS_Store
