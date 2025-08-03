@@ -13,7 +13,7 @@ class ApplicationBase(BaseModel):
 
 # Properties to receive via API on creation
 class ApplicationCreate(ApplicationBase):
-    project_id: UUID4
+    project_id: str
 
 # Properties to receive via API on update
 class ApplicationUpdate(BaseModel):

@@ -12,8 +12,8 @@ class PaymentBase(BaseModel):
 
 # Properties to receive via API on creation
 class PaymentCreate(PaymentBase):
-    project_id: UUID4
-    creative_id: UUID4
+    project_id: str
+    creative_id: str
 
 # Properties to receive via API on update
 class PaymentUpdate(BaseModel):

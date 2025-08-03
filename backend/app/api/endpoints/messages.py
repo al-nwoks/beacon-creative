@@ -1,4 +1,5 @@
 from typing import Any, List, Optional
+import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -32,8 +33,9 @@ def create_message(
     """
     Create a new message.
     """
-    # Check if recipient exists
-    recipient = db.query(User).filter(User.id == message_in.recipient_id).first()
+    # Convert recipient_id to integer (user IDs are integers, not UUIDs)
+    recipient_id_int = int(message_in.recipient_id)
+    recipient = db.query(User).filter(User.id == recipient_id_int).first()
     if not recipient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -42,7 +44,8 @@ def create_message(
     
     # If project_id is provided, check if it exists and if both users are involved
     if message_in.project_id:
-        project = db.query(Project).filter(Project.id == message_in.project_id).first()
+        project_id_uuid = uuid.UUID(message_in.project_id)
+        project = db.query(Project).filter(Project.id == project_id_uuid).first()
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -59,7 +62,8 @@ def create_message(
     
     # If application_id is provided, check if it exists and if both users are involved
     if message_in.application_id:
-        application = db.query(Application).filter(Application.id == message_in.application_id).first()
+        application_id_uuid = uuid.UUID(message_in.application_id)
+        application = db.query(Application).filter(Application.id == application_id_uuid).first()
         if not application:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -80,10 +84,10 @@ def create_message(
     # Create new message
     db_message = Message(
         sender_id=current_user.id,
-        recipient_id=message_in.recipient_id,
+        recipient_id=recipient_id_int,
         content=message_in.content,
-        project_id=message_in.project_id,
-        application_id=message_in.application_id,
+        project_id=project_id_uuid if 'project_id_uuid' in locals() else None,
+        application_id=application_id_uuid if 'application_id_uuid' in locals() else None,
         is_read=False
     )
     db.add(db_message)
@@ -115,24 +119,27 @@ def get_messages(
     
     # Apply filters
     if other_user_id:
+        other_user_id_int = int(other_user_id)
         query = query.filter(
             or_(
                 and_(
                     Message.sender_id == current_user.id,
-                    Message.recipient_id == other_user_id
+                    Message.recipient_id == other_user_id_int
                 ),
                 and_(
-                    Message.sender_id == other_user_id,
+                    Message.sender_id == other_user_id_int,
                     Message.recipient_id == current_user.id
                 )
             )
         )
     
     if project_id:
-        query = query.filter(Message.project_id == project_id)
+        project_id_uuid = uuid.UUID(project_id)
+        query = query.filter(Message.project_id == project_id_uuid)
     
     if application_id:
-        query = query.filter(Message.application_id == application_id)
+        application_id_uuid = uuid.UUID(application_id)
+        query = query.filter(Message.application_id == application_id_uuid)
     
     # Order by creation time (newest first) and apply pagination
     messages = query.order_by(desc(Message.created_at)).offset(skip).limit(limit).all()
@@ -217,7 +224,8 @@ def mark_message_as_read(
     """
     Mark a message as read.
     """
-    message = db.query(Message).filter(Message.id == message_id).first()
+    message_id_uuid = uuid.UUID(message_id)
+    message = db.query(Message).filter(Message.id == message_id_uuid).first()
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -1,4 +1,4 @@
-import RegisterForm from '@/components/auth/RegisterForm'
+import RegisterForm from '@/components/forms/RegisterForm'
 import { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -9,11 +9,9 @@ export const metadata: Metadata = {
 
 export default function RegisterPage({
     searchParams,
-}: {
-    searchParams: { [key: string]: string | string[] | undefined }
-}) {
+}: any) {
     // Get the user type from the URL query parameter
-    const userType = typeof searchParams.type === 'string'
+    const userType = searchParams && typeof searchParams.type === 'string'
         ? (searchParams.type === 'client' ? 'client' : 'creative')
         : undefined
 

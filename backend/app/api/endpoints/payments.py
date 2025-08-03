@@ -1,4 +1,5 @@
 from typing import Any, List, Optional
+import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -77,11 +78,15 @@ def create_payment_intent(
     # TODO: Implement Stripe payment intent creation
     # For now, we'll just create a placeholder payment record
     
+    # Convert string IDs to UUIDs
+    project_id_uuid = uuid.UUID(payment_in.project_id)
+    creative_id_uuid = uuid.UUID(payment_in.creative_id)
+    
     # Create payment record
     db_payment = Payment(
-        project_id=payment_in.project_id,
+        project_id=project_id_uuid,
         client_id=current_user.id,
-        creative_id=payment_in.creative_id,
+        creative_id=creative_id_uuid,
         amount=payment_in.amount,
         milestone_description=payment_in.milestone_description,
         stripe_payment_intent_id="pi_placeholder",  # Placeholder
@@ -146,7 +151,8 @@ def release_payment(
     """
     Release a payment from escrow to the creative (client only).
     """
-    payment = db.query(Payment).filter(Payment.id == payment_id).first()
+    payment_id_uuid = uuid.UUID(payment_id)
+    payment = db.query(Payment).filter(Payment.id == payment_id_uuid).first()
     if not payment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -186,7 +192,8 @@ def get_project_payments(
     Get all payments for a specific project.
     """
     # Check if project exists
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project_id_uuid = uuid.UUID(project_id)
+    project = db.query(Project).filter(Project.id == project_id_uuid).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -201,7 +208,7 @@ def get_project_payments(
         )
     
     # Get all payments for the project
-    payments = db.query(Payment).filter(Payment.project_id == project_id).all()
+    payments = db.query(Payment).filter(Payment.project_id == project_id_uuid).all()
     return payments
 
 @router.get("/me", response_model=List[PaymentWithProject])
@@ -237,7 +244,8 @@ def get_payment(
     """
     Get a specific payment by id.
     """
-    payment = db.query(Payment).filter(Payment.id == payment_id).first()
+    payment_id_uuid = uuid.UUID(payment_id)
+    payment = db.query(Payment).filter(Payment.id == payment_id_uuid).first()
     if not payment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -122,7 +122,12 @@ export const applicationsAPI = {
         proposed_budget?: number
         proposed_timeline_weeks?: number
     }) => {
-        const response = await api.post('/applications/', applicationData)
+        // Convert project_id to UUID format if needed
+        const formattedData = {
+            ...applicationData,
+            project_id: applicationData.project_id
+        };
+        const response = await api.post('/applications/', formattedData)
         return response.data
     },
     
@@ -246,7 +251,12 @@ export const paymentsAPI = {
         amount: number
         milestone_description?: string
     }) => {
-        const response = await api.post('/payments/', paymentData)
+        // Convert project_id to UUID format if needed
+        const formattedData = {
+            ...paymentData,
+            project_id: paymentData.project_id
+        };
+        const response = await api.post('/payments/', formattedData)
         return response.data
     },
     

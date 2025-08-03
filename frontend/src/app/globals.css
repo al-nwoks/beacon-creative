@@ -156,15 +156,15 @@ body {
 
   /* Button Styles */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-beacon-blue focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-beacon-purple focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply bg-beacon-blue text-white hover:bg-beacon-blue-dark;
+    @apply bg-beacon-purple text-white hover:bg-beacon-purple-dark;
   }
 
   .btn-secondary {
-    @apply bg-white text-beacon-blue border border-beacon-blue hover:bg-neutral-50;
+    @apply bg-white text-beacon-purple border border-beacon-purple hover:bg-purple-50;
   }
 
   .btn-outline {
@@ -185,7 +185,7 @@ body {
 
   /* Input Styles */
   .input {
-    @apply h-10 w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-beacon-blue focus:border-beacon-blue;
+    @apply h-10 w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple;
   }
 
   /* Card Styles */
@@ -199,7 +199,7 @@ body {
   }
 
   .badge-primary {
-    @apply bg-beacon-blue-light/20 text-beacon-blue-dark;
+    @apply bg-beacon-purple-light/20 text-beacon-purple-dark;
   }
 
   .badge-secondary {

@@ -1,4 +1,5 @@
 from typing import Any, List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -61,8 +62,12 @@ def create_application(
         )
     
     # Create new application
+    # Convert project_id string to UUID
+    application_data = application_in.dict()
+    application_data["project_id"] = uuid.UUID(application_data["project_id"])
+    
     db_application = Application(
-        **application_in.dict(),
+        **application_data,
         creative_id=current_user.id,
         status="pending"
     )
@@ -102,8 +107,9 @@ def get_project_applications(
     Get all applications for a specific project (client only).
     """
     # Check if project exists and belongs to the client
+    project_id_uuid = uuid.UUID(project_id)
     project = db.query(Project).filter(
-        Project.id == project_id,
+        Project.id == project_id_uuid,
         Project.client_id == current_user.id
     ).first()
     
@@ -114,7 +120,7 @@ def get_project_applications(
         )
     
     # Get all applications for the project
-    applications = db.query(Application).filter(Application.project_id == project_id).all()
+    applications = db.query(Application).filter(Application.project_id == project_id_uuid).all()
     return applications
 
 @router.get("/{application_id}", response_model=ApplicationWithDetails)
@@ -127,7 +133,8 @@ def get_application(
     """
     Get a specific application by id.
     """
-    application = db.query(Application).filter(Application.id == application_id).first()
+    application_id_uuid = uuid.UUID(application_id)
+    application = db.query(Application).filter(Application.id == application_id_uuid).first()
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -155,7 +162,8 @@ def update_application(
     """
     Update an application (creative can update content, client can update status).
     """
-    application = db.query(Application).filter(Application.id == application_id).first()
+    application_id_uuid = uuid.UUID(application_id)
+    application = db.query(Application).filter(Application.id == application_id_uuid).first()
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -217,7 +225,7 @@ def update_application(
             # Reject all other applications
             other_applications = db.query(Application).filter(
                 Application.project_id == application.project_id,
-                Application.id != application.id,
+                Application.id != application_id_uuid,
                 Application.status == "pending"
             ).all()
             
@@ -246,7 +254,8 @@ def delete_application(
     """
     Delete an application (creative only).
     """
-    application = db.query(Application).filter(Application.id == application_id).first()
+    application_id_uuid = uuid.UUID(application_id)
+    application = db.query(Application).filter(Application.id == application_id_uuid).first()
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

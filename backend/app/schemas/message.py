@@ -12,7 +12,7 @@ class MessageBase(BaseModel):
 
 # Properties to receive via API on creation
 class MessageCreate(MessageBase):
-    recipient_id: UUID4
+    recipient_id: str
 
 # Properties to receive via API on update
 class MessageUpdate(BaseModel):

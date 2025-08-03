@@ -1,7 +1,7 @@
 'use client'
 
-import BottomNavigation from '@/components/shared/BottomNavigation'
-import Header from '@/components/shared/Header'
+import { Header } from '@/components/layout/Header'
+import BottomNavigation from '@/components/navigation/BottomNavigation'
 import Button from '@/components/ui/Button'
 import { projectsAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -158,17 +158,17 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading admin dashboard...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-beacon-purple mx-auto mb-4"></div>
+                    <p className="text-neutral-600">Loading admin dashboard...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-neutral-50 pb-20">
             {/* Header */}
             <Header
                 showSearch={true}
@@ -180,35 +180,35 @@ export default function AdminDashboard() {
                 {/* Admin Header */}
                 <div className="mb-8">
                     <div className="flex items-center mb-2">
-                        <Shield className="h-6 w-6 text-purple-600 mr-2" />
-                        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                        <Shield className="h-6 w-6 text-beacon-purple mr-2" />
+                        <h1 className="text-3xl font-bold text-neutral-900">Admin Dashboard</h1>
                     </div>
-                    <p className="text-gray-600">Manage users, projects, and platform analytics.</p>
+                    <p className="text-neutral-600">Manage users, projects, and platform analytics.</p>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Total Users</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-sm text-neutral-600">Total Users</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalUsers}</p>
+                                <p className="text-xs text-neutral-500 mt-1">
                                     {stats.totalCreatives} creatives, {stats.totalClients} clients
                                 </p>
                             </div>
-                            <div className="p-3 bg-purple-100 rounded-lg">
-                                <Users className="h-6 w-6 text-purple-600" />
+                            <div className="p-3 bg-beacon-purple-light/20 rounded-lg">
+                                <Users className="h-6 w-6 text-beacon-purple" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Total Projects</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.totalProjects}</p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-sm text-neutral-600">Total Projects</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalProjects}</p>
+                                <p className="text-xs text-neutral-500 mt-1">
                                     {stats.activeProjects} active
                                 </p>
                             </div>
@@ -218,11 +218,11 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Total Revenue</p>
-                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue)}</p>
+                                <p className="text-sm text-neutral-600">Total Revenue</p>
+                                <p className="text-2xl font-bold text-neutral-900">{formatCurrency(stats.totalRevenue)}</p>
                                 <p className="text-xs text-green-600 mt-1">
                                     +{stats.monthlyGrowth}% this month
                                 </p>
@@ -233,12 +233,12 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Growth Rate</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.monthlyGrowth}%</p>
-                                <p className="text-xs text-gray-500 mt-1">Monthly</p>
+                                <p className="text-sm text-neutral-600">Growth Rate</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.monthlyGrowth}%</p>
+                                <p className="text-xs text-neutral-500 mt-1">Monthly</p>
                             </div>
                             <div className="p-3 bg-orange-100 rounded-lg">
                                 <TrendingUp className="h-6 w-6 text-orange-600" />
@@ -248,30 +248,39 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                <div className="bg-white rounded-2xl border border-neutral-200 p-6 mb-8 shadow-sm">
+                    <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Button
                             variant="primary"
-                            className="bg-purple-600 hover:bg-purple-700"
+                            className="w-full flex items-center justify-center py-3"
                         >
                             <Users className="h-4 w-4 mr-2" />
-                            Manage Users
+                            <span className="font-medium">Manage Users</span>
                         </Button>
 
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-center py-3"
+                        >
                             <Briefcase className="h-4 w-4 mr-2" />
-                            Review Projects
+                            <span className="font-medium">Review Projects</span>
                         </Button>
 
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-center py-3"
+                        >
                             <AlertTriangle className="h-4 w-4 mr-2" />
-                            View Reports
+                            <span className="font-medium">View Reports</span>
                         </Button>
 
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-center py-3"
+                        >
                             <TrendingUp className="h-4 w-4 mr-2" />
-                            Analytics
+                            <span className="font-medium">Analytics</span>
                         </Button>
                     </div>
                 </div>
@@ -279,47 +288,47 @@ export default function AdminDashboard() {
                 {/* Recent Users */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Recent Users</h2>
+                        <h2 className="text-xl font-bold text-neutral-900">Recent Users</h2>
                         <Button variant="outline" size="sm">
                             View All Users
                         </Button>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-neutral-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-neutral-700 uppercase tracking-wider">
                                             User
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-neutral-700 uppercase tracking-wider">
                                             Type
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-neutral-700 uppercase tracking-wider">
                                             Status
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-neutral-700 uppercase tracking-wider">
                                             Joined
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-neutral-700 uppercase tracking-wider">
                                             Actions
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+                                <tbody className="bg-white divide-y divide-neutral-200">
                                     {recentUsers.map((user) => (
-                                        <tr key={user.id}>
+                                        <tr key={user.id} className="hover:bg-neutral-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div>
-                                                    <div className="text-sm font-medium text-gray-900">
+                                                    <div className="text-sm font-medium text-neutral-900">
                                                         {user.first_name} {user.last_name}
                                                     </div>
-                                                    <div className="text-sm text-gray-500">{user.email}</div>
+                                                    <div className="text-sm text-neutral-500">{user.email}</div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
+                                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
                                                     {user.user_type}
                                                 </span>
                                             </td>
@@ -335,22 +344,22 @@ export default function AdminDashboard() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                                                 {new Date(user.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex space-x-2">
+                                                <div className="flex space-x-3">
                                                     {!user.is_verified && (
                                                         <button
                                                             onClick={() => handleUserAction(user.id, 'verify')}
-                                                            className="text-green-600 hover:text-green-900"
+                                                            className="text-beacon-purple hover:text-beacon-purple-dark font-medium"
                                                         >
                                                             Verify
                                                         </button>
                                                     )}
                                                     <button
                                                         onClick={() => handleUserAction(user.id, user.is_active ? 'suspend' : 'activate')}
-                                                        className={user.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}
+                                                        className={user.is_active ? 'text-red-600 hover:text-red-900 font-medium' : 'text-green-600 hover:text-green-900 font-medium'}
                                                     >
                                                         {user.is_active ? 'Suspend' : 'Activate'}
                                                     </button>
@@ -367,29 +376,29 @@ export default function AdminDashboard() {
                 {/* Recent Projects */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Recent Projects</h2>
+                        <h2 className="text-xl font-bold text-neutral-900">Recent Projects</h2>
                         <Button variant="outline" size="sm">
                             View All Projects
                         </Button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         {recentProjects.slice(0, 3).map((project) => (
-                            <div key={project.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                                <div className="flex items-start justify-between">
+                            <div key={project.id} className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.title}</h3>
-                                        <p className="text-gray-600 mb-2">
+                                        <h3 className="text-lg font-semibold text-neutral-900 mb-1">{project.title}</h3>
+                                        <p className="text-neutral-600 mb-3">
                                             by {project.client.first_name} {project.client.last_name}
                                         </p>
-                                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                        <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-500">
                                             <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
                                             {project.budget_min && project.budget_max && (
                                                 <span>Budget: {formatCurrency(project.budget_min)} - {formatCurrency(project.budget_max)}</span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center space-x-3">
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${project.status === 'active' ? 'bg-green-100 text-green-800' :
                                             project.status === 'hired' ? 'bg-blue-100 text-blue-800' :
                                                 'bg-gray-100 text-gray-800'

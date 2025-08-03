@@ -1,4 +1,5 @@
 from typing import Any, List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
@@ -116,7 +117,8 @@ def get_project(
     """
     Get a specific project by id.
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project_id_uuid = uuid.UUID(project_id)
+    project = db.query(Project).filter(Project.id == project_id_uuid).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -135,7 +137,8 @@ def update_project(
     """
     Update a project (client only, unless updating status).
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project_id_uuid = uuid.UUID(project_id)
+    project = db.query(Project).filter(Project.id == project_id_uuid).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -178,7 +181,8 @@ def delete_project(
     """
     Delete a project (client only).
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project_id_uuid = uuid.UUID(project_id)
+    project = db.query(Project).filter(Project.id == project_id_uuid).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
