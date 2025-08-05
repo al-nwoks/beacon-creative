@@ -2,159 +2,158 @@
 
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
-import { Check, Clock, MapPin, Star } from 'lucide-react'
-import Link from 'next/link'
+import { MapPin, Star } from 'lucide-react'
+import Image from 'next/image'
 
-export interface ProfileCardProps {
+interface ProfileCardProps {
     id: string
     firstName: string
     lastName: string
-    profileImage?: string
-    userType: 'creative' | 'client'
-    title?: string
+    email: string
     bio?: string
-    hourlyRate?: number
     location?: string
+    hourlyRate?: number
     skills?: string[]
+    portfolioLinks?: string[]
+    profileImageUrl?: string
+    isVerified: boolean
     rating?: number
     reviewCount?: number
-    isVerified?: boolean
-    isAvailable?: boolean
-    portfolioLinks?: string[]
+    onContact?: (id: string) => void
+    onViewProfile?: (id: string) => void
+    className?: string
 }
 
 export default function ProfileCard({
     id,
     firstName,
     lastName,
-    profileImage,
-    userType,
-    title,
+    email,
     bio,
-    hourlyRate,
     location,
+    hourlyRate,
     skills = [],
-    rating = 0,
-    reviewCount = 0,
-    isVerified = false,
-    isAvailable = true,
-    portfolioLinks = [],
+    profileImageUrl,
+    isVerified,
+    rating,
+    reviewCount,
+    onContact,
+    onViewProfile,
+    className = ''
 }: ProfileCardProps) {
     const fullName = `${firstName} ${lastName}`
-    const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
+    const initials = `${firstName[0]}${lastName[0]}`
+
+    const handleContact = () => {
+        if (onContact) {
+            onContact(id)
+        }
+    }
+
+    const handleViewProfile = () => {
+        if (onViewProfile) {
+            onViewProfile(id)
+        }
+    }
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
-                <div className="flex flex-col items-center mb-4">
-                    {/* Profile Image or Initials */}
-                    {profileImage ? (
-                        <img
-                            src={profileImage}
-                            alt={fullName}
-                            className="w-20 h-20 rounded-full object-cover mb-3"
-                        />
-                    ) : (
-                        <div className="w-20 h-20 rounded-full bg-beacon-blue text-white flex items-center justify-center text-xl font-semibold mb-3">
-                            {initials}
-                        </div>
-                    )}
-
-                    {/* Verification Badge */}
-                    {isVerified && (
-                        <div className="absolute mt-16 ml-16">
-                            <div className="bg-beacon-blue text-white rounded-full p-1">
-                                <Check className="h-4 w-4" />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Name and Title */}
-                    <h3 className="text-xl font-semibold text-neutral-900 mb-1">{fullName}</h3>
-
-                    <div className="flex items-center text-sm text-neutral-600 mb-2">
-                        {title && <span>{title}</span>}
-
-                        {title && userType === 'creative' && (
-                            <>
-                                <span className="mx-2">•</span>
-                                <div className="flex items-center">
-                                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                                    <span>
-                                        {rating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
-                                    </span>
-                                </div>
-                            </>
+        <div className={`bg-white rounded-xl border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
+            <div className="flex items-start mb-4">
+                {profileImageUrl ? (
+                    <Image
+                        src={profileImageUrl}
+                        alt={fullName}
+                        width={48}
+                        height={48}
+                        className="rounded-full object-cover mr-4"
+                    />
+                ) : (
+                    <div className="w-12 h-12 rounded-full bg-beacon-purple flex items-center justify-center text-white font-semibold mr-4">
+                        {initials}
+                    </div>
+                )}
+                <div className="flex-1">
+                    <div className="flex items-center">
+                        <h3 className="font-semibold text-neutral-900">{fullName}</h3>
+                        {isVerified && (
+                            <Star className="h-4 w-4 text-yellow-500 fill-current ml-1" />
                         )}
                     </div>
-
-                    {/* Bio */}
-                    {bio && (
-                        <p className="text-center text-neutral-600 mb-4 text-sm">
-                            "{bio}"
-                        </p>
-                    )}
-                </div>
-
-                {/* Details */}
-                <div className="flex flex-wrap justify-center gap-3 mb-4 text-sm">
-                    {hourlyRate !== undefined && (
-                        <div className="flex items-center text-neutral-700">
-                            <span className="font-medium mr-1">💰</span>
-                            <span>{formatCurrency(hourlyRate)}/hr</span>
-                        </div>
-                    )}
-
                     {location && (
-                        <div className="flex items-center text-neutral-700">
-                            <MapPin className="h-4 w-4 mr-1 text-neutral-500" />
+                        <div className="flex items-center text-sm text-neutral-600 mt-1">
+                            <MapPin className="h-3 w-3 mr-1" />
                             <span>{location}</span>
                         </div>
                     )}
+                </div>
+            </div>
 
-                    {userType === 'creative' && (
-                        <div className="flex items-center text-neutral-700">
-                            <Clock className="h-4 w-4 mr-1 text-neutral-500" />
-                            <span className={isAvailable ? 'text-green-600' : 'text-red-600'}>
-                                {isAvailable ? 'Available' : 'Unavailable'}
-                            </span>
-                        </div>
+            {bio && (
+                <p className="text-neutral-700 text-sm mb-4 line-clamp-2">
+                    {bio}
+                </p>
+            )}
+
+            {hourlyRate && (
+                <div className="mb-4">
+                    <span className="text-lg font-semibold text-neutral-900">
+                        {formatCurrency(hourlyRate)}
+                    </span>
+                    <span className="text-neutral-600 text-sm ml-1">/hr</span>
+                </div>
+            )}
+
+            {skills.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-4">
+                    {skills.slice(0, 3).map((skill, index) => (
+                        <span
+                            key={index}
+                            className="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs rounded-full"
+                        >
+                            {skill}
+                        </span>
+                    ))}
+                    {skills.length > 3 && (
+                        <span className="px-2 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-full">
+                            +{skills.length - 3}
+                        </span>
                     )}
                 </div>
+            )}
 
-                {/* Skills */}
-                {skills.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2 mb-4">
-                        {skills.slice(0, 4).map((skill) => (
-                            <span
-                                key={skill}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800"
-                            >
-                                {skill}
-                            </span>
+            {rating && reviewCount && (
+                <div className="flex items-center mb-4">
+                    <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                            <Star
+                                key={i}
+                                className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current text-yellow-400' : 'text-gray-300'}`}
+                            />
                         ))}
-                        {skills.length > 4 && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                                +{skills.length - 4} more
-                            </span>
-                        )}
                     </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-4">
-                    <Link href={`/profiles/${id}`} className="flex-1">
-                        <Button variant="primary" fullWidth={true} size="sm">
-                            View Profile
-                        </Button>
-                    </Link>
-
-                    <Link href={`/messages/new?recipient=${id}`} className="flex-1">
-                        <Button variant="secondary" fullWidth={true} size="sm">
-                            Message
-                        </Button>
-                    </Link>
+                    <span className="text-sm text-neutral-600 ml-2">
+                        {rating} ({reviewCount})
+                    </span>
                 </div>
+            )}
+
+            <div className="flex space-x-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleContact}
+                >
+                    Contact
+                </Button>
+                <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleViewProfile}
+                >
+                    View Profile
+                </Button>
             </div>
         </div>
     )

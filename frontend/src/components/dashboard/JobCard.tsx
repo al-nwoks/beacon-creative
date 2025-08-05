@@ -3,6 +3,7 @@
 import AnimatedCard from '@/components/ui/AnimatedCard'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
+import { motion } from 'framer-motion'
 import { Clock, DollarSign, MapPin } from 'lucide-react'
 
 interface JobCardProps {
@@ -49,12 +50,6 @@ export default function JobCard({
         return 'Budget TBD'
     }
 
-    const getTimelineDisplay = () => {
-        if (!timeline_weeks) return 'Timeline TBD'
-        if (timeline_weeks === 1) return '1 week'
-        return `${timeline_weeks} weeks`
-    }
-
     const getDaysAgo = () => {
         const date = new Date(created_at)
         const now = new Date()
@@ -72,62 +67,85 @@ export default function JobCard({
     }
 
     return (
-        <AnimatedCard className={`border border-gray-200 p-6 ${className}`}>
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-                    <p className="text-gray-600">{company}</p>
-                </div>
-            </div>
-
-            <p className="text-gray-700 mb-4 line-clamp-2">{description}</p>
-
-            {required_skills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {required_skills.slice(0, 3).map((skill) => (
-                        <span
-                            key={skill}
-                            className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full"
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            whileHover={{ y: -5 }}
+        >
+            <AnimatedCard className={`border border-gray-200 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 h-full flex flex-col ${className}`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div className="col-span-1">
+                        <motion.h3
+                            className="text-lg font-semibold text-gray-900 mb-0.5"
+                            whileHover={{ scale: 1.02 }}
+                            transition={{ type: "spring", stiffness: 400 }}
                         >
-                            {skill}
-                        </span>
-                    ))}
-                    {required_skills.length > 3 && (
-                        <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
-                            +{required_skills.length - 3} more
-                        </span>
-                    )}
-                </div>
-            )}
-
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    {location && (
-                        <div className="flex items-center space-x-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{location}</span>
-                        </div>
-                    )}
-                    <div className="flex items-center space-x-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>{getBudgetDisplay()}</span>
+                            {title}
+                        </motion.h3>
+                        <p className="text-gray-600 text-sm">{company}</p>
                     </div>
                 </div>
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span>{deadline ? `Deadline: ${deadline}` : `Posted: ${getDaysAgo()}`}</span>
-                </div>
-            </div>
 
-            {showApplyButton && (
-                <Button
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    size="lg"
-                    onClick={handleApply}
-                >
-                    Apply Now
-                </Button>
-            )}
-        </AnimatedCard>
+                <p className="text-gray-700 mb-3 line-clamp-2">{description}</p>
+
+                {required_skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                        {required_skills.slice(0, 3).map((skill, index) => (
+                            <motion.span
+                                key={skill}
+                                className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.2, delay: index * 0.1 }}
+                            >
+                                {skill}
+                            </motion.span>
+                        ))}
+                        {required_skills.length > 3 && (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                +{required_skills.length - 3} more
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3 text-sm text-gray-600">
+                        {location && (
+                            <div className="flex items-center space-x-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{location}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center space-x-1">
+                            <DollarSign className="h-4 w-4" />
+                            <span>{getBudgetDisplay()}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <Clock className="h-4 w-4" />
+                        <span>{deadline ? `Deadline: ${deadline}` : `Posted: ${getDaysAgo()}`}</span>
+                    </div>
+                </div>
+
+                <div className="mt-auto">
+                    {showApplyButton && (
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Button
+                                className="w-full bg-beacon-purple hover:bg-purple-700 text-white"
+                                size="lg"
+                                onClick={handleApply}
+                            >
+                                Apply Now
+                            </Button>
+                        </motion.div>
+                    )}
+                </div>
+            </AnimatedCard>
+        </motion.div>
     )
 }

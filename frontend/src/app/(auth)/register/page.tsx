@@ -1,18 +1,21 @@
-import RegisterForm from '@/components/forms/RegisterForm'
-import { Metadata } from 'next'
-import Link from 'next/link'
+import RegisterForm from '@/components/forms/RegisterForm';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
     title: 'Create Account | B3ACON Creative Connect',
     description: 'Join B3ACON to connect with creative professionals and clients. Create your account today.',
 }
 
-export default function RegisterPage({
+import type { PageProps } from '@/types/common';
+
+export default async function RegisterPage({
     searchParams,
-}: any) {
+}: PageProps) {
     // Get the user type from the URL query parameter
-    const userType = searchParams && typeof searchParams.type === 'string'
-        ? (searchParams.type === 'client' ? 'client' : 'creative')
+    const params = await searchParams;
+    const userType = params && typeof params.type === 'string'
+        ? (params.type === 'client' ? 'client' : 'creative')
         : undefined
 
     return (

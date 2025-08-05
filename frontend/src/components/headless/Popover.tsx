@@ -2,7 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import { Popover as HeadlessPopover, Transition } from '@headlessui/react'
-import { Fragment, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 
 interface PopoverProps {
     children: ReactNode

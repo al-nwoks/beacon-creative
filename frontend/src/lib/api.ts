@@ -96,7 +96,15 @@ export const projectsAPI = {
         return response.data
     },
     
-    updateProject: async (projectId: string, projectData: any) => {
+    updateProject: async (projectId: string, projectData: Partial<{
+        title: string
+        description: string
+        category: string
+        budget_min?: number
+        budget_max?: number
+        timeline_weeks?: number
+        required_skills?: string[]
+    }>) => {
         const response = await api.put(`/projects/${projectId}`, projectData)
         return response.data
     },
@@ -148,7 +156,12 @@ export const applicationsAPI = {
         return response.data
     },
     
-    updateApplication: async (applicationId: string, applicationData: any) => {
+    updateApplication: async (applicationId: string, applicationData: Partial<{
+        project_id: string
+        cover_letter: string
+        proposed_budget?: number
+        proposed_timeline_weeks?: number
+    }>) => {
         const response = await api.put(`/applications/${applicationId}`, applicationData)
         return response.data
     },
@@ -166,7 +179,13 @@ export const usersAPI = {
         return response.data
     },
     
-    updateCurrentUser: async (userData: any) => {
+    updateCurrentUser: async (userData: Partial<{
+        email: string
+        first_name: string
+        last_name: string
+        bio?: string
+        location?: string
+    }>) => {
         const response = await api.put('/users/me', userData)
         return response.data
     },

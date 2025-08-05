@@ -3,7 +3,8 @@
 import { cn } from '@/lib/utils'
 import { Listbox as HeadlessListbox, Transition } from '@headlessui/react'
 import { Check, ChevronsUpDown } from 'lucide-react'
-import { Fragment, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 
 interface ListboxProps<T> {
     value: T

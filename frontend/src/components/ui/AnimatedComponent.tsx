@@ -1,13 +1,14 @@
 'use client'
 
+import type { Variants } from 'framer-motion'
 import { motion } from 'framer-motion'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface AnimatedComponentProps {
     children: ReactNode
     delay?: number
     className?: string
-    variants?: any
+    variants?: Variants
 }
 
 export function AnimatedComponent({

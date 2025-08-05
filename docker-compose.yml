@@ -21,7 +21,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/beacon
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkey}
@@ -54,7 +54,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6379"
     restart: unless-stopped
     networks:
       - beacon-network

@@ -3,13 +3,15 @@
 import AnimatedCard from '@/components/ui/AnimatedCard'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
+import { motion } from 'framer-motion'
 import { DollarSign, ExternalLink, MapPin, Star } from 'lucide-react'
+import Image from 'next/image'
 
 interface CreativeCardProps {
     id: string
     first_name: string
     last_name: string
-    email: string
+    email?: string // Made optional since it's not being used
     bio?: string
     location?: string
     hourly_rate?: number
@@ -27,7 +29,6 @@ export default function CreativeCard({
     id,
     first_name,
     last_name,
-    email,
     bio,
     location,
     hourly_rate,
@@ -56,121 +57,152 @@ export default function CreativeCard({
     }
 
     return (
-        <AnimatedCard className={`border border-gray-200 p-6 relative ${className}`}>
-            {featured && (
-                <span className="absolute top-3 right-3 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                    Featured
-                </span>
-            )}
-
-            {/* Profile Section */}
-            <div className="text-center mb-4">
-                {profile_image_url ? (
-                    <img
-                        src={profile_image_url}
-                        alt={fullName}
-                        className="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
-                    />
-                ) : (
-                    <div className="w-16 h-16 bg-purple-500 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-semibold text-lg">
-                        {initials}
-                    </div>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            whileHover={{ y: -5 }}
+        >
+            <AnimatedCard className={`border border-gray-200 p-4 relative rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 h-full flex flex-col ${className}`}>
+                {featured && (
+                    <motion.span
+                        className="absolute top-2 right-2 bg-beacon-purple text-white text-xs px-2 py-1 rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    >
+                        Featured
+                    </motion.span>
                 )}
 
-                <h3 className="font-semibold text-gray-900 text-lg">{fullName}</h3>
-
-                <div className="flex items-center justify-center mt-1">
-                    {is_verified && (
-                        <div className="flex items-center">
-                            <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
-                            <span className="text-sm text-gray-600">Verified</span>
-                        </div>
+                {/* Profile Section */}
+                <div className="text-center mb-3">
+                    {profile_image_url ? (
+                        <motion.div whileHover={{ scale: 1.1 }} transition={{ type: "spring", stiffness: 300 }}>
+                            <Image
+                                src={profile_image_url}
+                                alt={fullName}
+                                width={64}
+                                height={64}
+                                className="rounded-full mx-auto mb-2 object-cover"
+                            />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            className="w-16 h-16 bg-beacon-purple rounded-full mx-auto mb-2 flex items-center justify-center text-white font-semibold text-lg"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                        >
+                            {initials}
+                        </motion.div>
                     )}
-                </div>
-            </div>
 
-            {/* Bio */}
-            {bio && (
-                <p className="text-gray-600 text-sm text-center mb-4 line-clamp-3">
-                    {bio}
-                </p>
-            )}
+                    <motion.h3
+                        className="font-semibold text-gray-900 text-lg mb-1"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                    >
+                        {fullName}
+                    </motion.h3>
 
-            {/* Details */}
-            <div className="space-y-2 mb-4">
-                {location && (
-                    <div className="flex items-center justify-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        <span>{location}</span>
-                    </div>
-                )}
-
-                {hourly_rate && (
-                    <div className="flex items-center justify-center text-sm text-gray-600">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        <span>{formatCurrency(hourly_rate)}/hr</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Skills */}
-            {skills.length > 0 && (
-                <div className="mb-4">
-                    <div className="flex flex-wrap gap-1 justify-center">
-                        {skills.slice(0, 3).map((skill) => (
-                            <span
-                                key={skill}
-                                className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
-                            >
-                                {skill}
-                            </span>
-                        ))}
-                        {skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                +{skills.length - 3}
-                            </span>
+                    <div className="flex items-center justify-center mt-0.5">
+                        {is_verified && (
+                            <div className="flex items-center">
+                                <Star className="h-4 w-4 text-yellow-500 fill-current mr-0.5" />
+                                <span className="text-sm text-gray-600">Verified</span>
+                            </div>
                         )}
                     </div>
                 </div>
-            )}
 
-            {/* Portfolio Links */}
-            {portfolio_links.length > 0 && (
-                <div className="mb-4">
-                    <div className="flex justify-center">
-                        <a
-                            href={portfolio_links[0]}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center text-purple-600 hover:text-purple-700 text-sm"
-                        >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            View Portfolio
-                        </a>
-                    </div>
+                {/* Bio */}
+                {bio && (
+                    <p className="text-gray-600 text-sm text-center mb-3 line-clamp-3">
+                        {bio}
+                    </p>
+                )}
+
+                {/* Details */}
+                <div className="space-y-1 mb-3">
+                    {location && (
+                        <div className="flex items-center justify-center text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            <span>{location}</span>
+                        </div>
+                    )}
+
+                    {hourly_rate && (
+                        <div className="flex items-center justify-center text-sm text-gray-600">
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            <span>{formatCurrency(hourly_rate)}/hr</span>
+                        </div>
+                    )}
                 </div>
-            )}
 
-            {/* Action Buttons */}
-            <div className="space-y-2">
-                <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    onClick={handleViewProfile}
-                >
-                    View Profile
-                </Button>
+                {/* Skills */}
+                {skills.length > 0 && (
+                    <div className="mb-3">
+                        <div className="flex flex-wrap gap-1 justify-center">
+                            {skills.slice(0, 3).map((skill, index) => (
+                                <motion.span
+                                    key={skill}
+                                    className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.2, delay: index * 0.1 }}
+                                >
+                                    {skill}
+                                </motion.span>
+                            ))}
+                            {skills.length > 3 && (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                    +{skills.length - 3}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
-                    onClick={handleContact}
-                >
-                    Send Message
-                </Button>
-            </div>
-        </AnimatedCard>
+                {/* Portfolio Links */}
+                {portfolio_links.length > 0 && (
+                    <div className="mb-3">
+                        <div className="flex justify-center">
+                            <motion.a
+                                href={portfolio_links[0]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-beacon-purple hover:text-purple-700 text-sm"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ type: "spring", stiffness: 400 }}
+                            >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                View Portfolio
+                            </motion.a>
+                        </div>
+                    </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="space-y-2 mt-auto">
+                    <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full bg-beacon-purple hover:bg-purple-700"
+                        onClick={handleViewProfile}
+                    >
+                        View Profile
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-beacon-purple text-beacon-purple hover:bg-purple-50"
+                        onClick={handleContact}
+                    >
+                        Send Message
+                    </Button>
+                </div>
+            </AnimatedCard>
+        </motion.div>
     )
 }

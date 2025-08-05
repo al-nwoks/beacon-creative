@@ -3,7 +3,8 @@
 import { cn } from '@/lib/utils'
 import { Menu as HeadlessMenu, Transition } from '@headlessui/react'
 import { ChevronDown } from 'lucide-react'
-import { Fragment, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 
 interface MenuProps {
     children: ReactNode

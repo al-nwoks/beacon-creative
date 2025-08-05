@@ -2,12 +2,12 @@
 
 import { HeroIllustration } from '@/components/home/HeroIllustration'
 import Button from '@/components/ui/Button'
-import { ArrowRight, Briefcase, Users, Zap } from 'lucide-react'
+import { ArrowRight, Briefcase, Star, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -16,8 +16,19 @@ export default function Home() {
               B3ACON
             </Link>
           </div>
+          <div className="hidden md:flex items-center space-x-6">
+            <Link href="/creatives" className="text-neutral-700 hover:text-beacon-purple transition-colors font-medium">
+              For Creatives
+            </Link>
+            <Link href="/projects" className="text-neutral-700 hover:text-beacon-purple transition-colors font-medium">
+              For Clients
+            </Link>
+            <Link href="/how-it-works" className="text-neutral-700 hover:text-beacon-purple transition-colors font-medium">
+              How It Works
+            </Link>
+          </div>
           <div className="flex items-center space-x-4">
-            <Link href="/login" className="text-neutral-700 hover:text-beacon-purple transition-colors">
+            <Link href="/login" className="text-neutral-700 hover:text-beacon-purple transition-colors font-medium hidden sm:block">
               Log in
             </Link>
             <Link href="/register">
@@ -30,7 +41,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
             <div className="flex-1 text-center lg:text-left">
@@ -71,7 +82,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-neutral-50">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">How B3ACON Works</h2>
@@ -81,7 +92,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-white to-neutral-50 rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
                 <Briefcase className="h-8 w-8" />
               </div>
@@ -95,7 +106,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="bg-gradient-to-br from-white to-neutral-50 rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
                 <Users className="h-8 w-8" />
               </div>
@@ -109,7 +120,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="bg-gradient-to-br from-white to-neutral-50 rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
                 <Zap className="h-8 w-8" />
               </div>
@@ -150,19 +161,106 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20">
+      {/* Testimonials Section */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-br from-beacon-purple-light/10 to-beacon-blue-light/10 rounded-2xl p-12 text-center max-w-4xl mx-auto border border-beacon-purple-light/30">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Trusted by Creative Professionals</h2>
+            <p className="text-xl text-neutral-700">
+              Hear from creatives and clients who have found success through B3ACON.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
+              <div className="flex items-center mb-4">
+                <div className="flex text-yellow-400">
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                </div>
+              </div>
+              <p className="text-neutral-700 mb-6">
+                &ldquo;B3ACON helped me find my dream clients. The platform is intuitive and the community is supportive. I&apos;ve grown my freelance income by 150% in just 6 months!&rdquo;
+              </p>
+              <div className="flex items-center">
+                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                <div className="ml-4">
+                  <h4 className="font-semibold text-neutral-900">Sarah Johnson</h4>
+                  <p className="text-neutral-600">Photographer</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
+              <div className="flex items-center mb-4">
+                <div className="flex text-yellow-400">
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                </div>
+              </div>
+              <p className="text-neutral-700 mb-6">
+                &ldquo;As a client, I&apos;ve found exceptional talent on B3ACON. The quality of work has exceeded my expectations, and the platform makes collaboration seamless.&rdquo;
+              </p>
+              <div className="flex items-center">
+                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                <div className="ml-4">
+                  <h4 className="font-semibold text-neutral-900">Michael Chen</h4>
+                  <p className="text-neutral-600">Marketing Director</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
+              <div className="flex items-center mb-4">
+                <div className="flex text-yellow-400">
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                  <Star className="h-5 w-5 fill-current" />
+                </div>
+              </div>
+              <p className="text-neutral-700 mb-6">
+                &ldquo;The project management tools and secure payment system give me peace of mind. I can focus on creating while B3ACON handles the logistics.&rdquo;
+              </p>
+              <div className="flex items-center">
+                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                <div className="ml-4">
+                  <h4 className="font-semibold text-neutral-900">Emma Rodriguez</h4>
+                  <p className="text-neutral-600">Graphic Designer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-neutral-50">
+        <div className="container mx-auto px-4">
+          <div className="bg-white rounded-2xl p-12 text-center max-w-4xl mx-auto border border-neutral-200 shadow-sm">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-neutral-900">Ready to get started?</h2>
             <p className="text-xl text-neutral-700 mb-8 max-w-2xl mx-auto">
               Join thousands of creative professionals and clients already using B3ACON to connect, collaborate, and create amazing work.
             </p>
-            <Link href="/register">
-              <Button variant="primary" size="lg">
-                Create your free account
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link href="/register?type=client">
+                <Button variant="primary" size="lg">
+                  Hire Creatives
+                </Button>
+              </Link>
+              <Link href="/register?type=creative">
+                <Button variant="secondary" size="lg">
+                  Find Work
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

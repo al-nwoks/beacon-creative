@@ -20,7 +20,9 @@ const loginSchema = z.object({
 // Infer the type from the schema
 type LoginFormValues = z.infer<typeof loginSchema>
 
+import { Switch } from '@headlessui/react'
 export default function LoginForm() {
+    const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { showNotification } = useNotification()
     const router = useRouter()
@@ -66,16 +68,26 @@ export default function LoginForm() {
                 default:
                     router.push('/creative-dashboard')
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Login error:', error)
 
             // Handle different error types
-            if (error.response?.status === 401) {
-                showNotification('Invalid email or password. Please try again.', 'error')
-            } else if (error.response?.status === 403) {
-                showNotification('Your account has been deactivated. Please contact support.', 'error')
-            } else if (error.response?.data?.detail) {
-                showNotification(error.response.data.detail, 'error')
+            if (error instanceof Error) {
+                // Handle axios errors
+                if ('response' in error && error.response && typeof error.response === 'object') {
+                    const response = error.response as { status?: number; data?: { detail?: string } };
+                    if (response.status === 401) {
+                        showNotification('Invalid email or password. Please try again.', 'error')
+                    } else if (response.status === 403) {
+                        showNotification('Your account has been deactivated. Please contact support.', 'error')
+                    } else if (response.data?.detail) {
+                        showNotification(response.data.detail, 'error')
+                    } else {
+                        showNotification('An error occurred during login. Please try again.', 'error')
+                    }
+                } else {
+                    showNotification('An error occurred during login. Please try again.', 'error')
+                }
             } else {
                 showNotification('An error occurred during login. Please try again.', 'error')
             }
@@ -112,23 +124,40 @@ export default function LoginForm() {
                             Forgot password?
                         </Link>
                     </div>
-                    <Input
-                        type="password"
-                        id="password"
-                        placeholder="••••••••"
-                        error={errors.password?.message}
-                        {...register('password')}
-                    />
+                    <div className="relative">
+                        <Input
+                            type={showPassword ? 'text' : 'password'}
+                            id="password"
+                            placeholder="••••••••"
+                            error={errors.password?.message}
+                            {...register('password')}
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <Switch
+                                checked={showPassword}
+                                onChange={setShowPassword}
+                                className="bg-gray-200 relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <span className="sr-only">Show password</span>
+                                <span
+                                    aria-hidden="true"
+                                    className={`${showPassword ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`}
+                                />
+                            </Switch>
+                        </div>
+                    </div>
                 </div>
 
-                <Button type="submit" fullWidth={true} isLoading={isLoading}>
-                    Log in
-                </Button>
+                <div className="relative">
+                    <Button type="submit" fullWidth={true} isLoading={isLoading}>
+                        Log in
+                    </Button>
+                </div>
             </form>
 
             <div className="mt-6 text-center">
                 <p className="text-neutral-600">
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <Link href="/register" className="text-beacon-blue hover:underline">
                         Sign up
                     </Link>

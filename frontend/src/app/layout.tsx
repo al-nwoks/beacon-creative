@@ -1,6 +1,6 @@
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 

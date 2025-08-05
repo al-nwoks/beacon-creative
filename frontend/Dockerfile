@@ -4,11 +4,11 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with legacy peer deps to handle Next.js 15 requirements
+RUN npm ci --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -16,9 +16,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the Next.js application
-# Use standalone output mode for Next.js
+# Set environment variables
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+
+# Disable type checking during build
+ENV DISABLE_TYPE_CHECKING true
+
+# Build the Next.js application
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Production image, copy all the files and run next

@@ -1,10 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {
@@ -12,14 +15,22 @@ module.exports = {
         'beacon-blue': '#2563EB',
         'beacon-blue-dark': '#1D4ED8',
         'beacon-blue-light': '#60A5FA',
+        'beacon-blue-muted': '#93C5FD',
         
         // Secondary Colors
         'beacon-purple': '#7C3AED',
         'beacon-purple-dark': '#6D28D9',
         'beacon-purple-light': '#8B5CF6',
+        'beacon-purple-muted': '#C4B5FD',
         'beacon-green': '#059669',
+        'beacon-green-light': '#10B981',
+        'beacon-green-muted': '#6EE7B7',
         'beacon-orange': '#EA580C',
+        'beacon-orange-light': '#F97316',
+        'beacon-orange-muted': '#FDBA74',
         'beacon-red': '#DC2626',
+        'beacon-red-light': '#EF4444',
+        'beacon-red-muted': '#FCA5A5',
         
         // Neutral Colors
         'neutral-50': '#F9FAFB',

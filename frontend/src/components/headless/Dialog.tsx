@@ -3,7 +3,8 @@
 import { cn } from '@/lib/utils'
 import { Dialog as HeadlessDialog, Transition } from '@headlessui/react'
 import { X } from 'lucide-react'
-import { Fragment, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 
 interface DialogProps {
     isOpen: boolean

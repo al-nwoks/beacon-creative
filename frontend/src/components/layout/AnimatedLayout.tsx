@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import { ReactNode, useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface AnimatedLayoutProps {
     children: ReactNode

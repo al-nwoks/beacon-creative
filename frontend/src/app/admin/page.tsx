@@ -1,7 +1,6 @@
 'use client'
 
-import { Header } from '@/components/layout/Header'
-import BottomNavigation from '@/components/navigation/BottomNavigation'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
 import { projectsAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -130,19 +129,6 @@ export default function AdminDashboard() {
         // Implement project management actions
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'active':
-                return 'text-green-600'
-            case 'suspended':
-                return 'text-red-600'
-            case 'pending':
-                return 'text-yellow-600'
-            default:
-                return 'text-gray-600'
-        }
-    }
-
     const getUserTypeColor = (userType: string) => {
         switch (userType) {
             case 'creative':
@@ -158,24 +144,23 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-beacon-purple mx-auto mb-4"></div>
-                    <p className="text-neutral-600">Loading admin dashboard...</p>
+            <SimplifiedLayout userType="admin">
+                <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-beacon-purple mx-auto mb-4"></div>
+                        <p className="text-neutral-600">Loading admin dashboard...</p>
+                    </div>
                 </div>
-            </div>
+            </SimplifiedLayout>
         )
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 pb-20">
-            {/* Header */}
-            <Header
-                showSearch={true}
-                searchPlaceholder="Search users, projects..."
-                userType="admin"
-            />
-
+        <SimplifiedLayout
+            showSearch={true}
+            searchPlaceholder="Search users, projects..."
+            userType="admin"
+        >
             <div className="max-w-7xl mx-auto px-4 py-6">
                 {/* Admin Header */}
                 <div className="mb-8">
@@ -419,9 +404,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </div>
-
-            {/* Bottom Navigation */}
-            <BottomNavigation userType="admin" />
-        </div>
+        </SimplifiedLayout>
     )
 }

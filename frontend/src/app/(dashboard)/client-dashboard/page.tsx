@@ -1,10 +1,10 @@
 'use client'
 
-import { MainLayout } from '@/components/layout'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 
 export default function ClientDashboardPage() {
     return (
-        <MainLayout>
+        <SimplifiedLayout userType="client" showSearch={true} searchPlaceholder="Search projects, creatives...">
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold text-neutral-900 mb-6">Client Dashboard</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -22,6 +22,6 @@ export default function ClientDashboardPage() {
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </SimplifiedLayout>
     )
 }

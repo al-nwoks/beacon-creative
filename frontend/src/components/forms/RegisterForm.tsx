@@ -82,18 +82,28 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
             } else {
                 router.push('/dashboard')
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Registration error:', error)
 
             // Handle different error types
-            if (error.response?.status === 400) {
-                if (error.response.data?.detail?.includes('email already exists')) {
-                    showNotification('An account with this email already exists. Please try logging in instead.', 'error')
+            if (error instanceof Error) {
+                // Handle axios errors
+                if ('response' in error && error.response && typeof error.response === 'object') {
+                    const response = error.response as { status?: number; data?: { detail?: string } };
+                    if (response.status === 400) {
+                        if (response.data?.detail?.includes('email already exists')) {
+                            showNotification('An account with this email already exists. Please try logging in instead.', 'error')
+                        } else {
+                            showNotification(response.data?.detail || 'Please check your information and try again.', 'error')
+                        }
+                    } else if (response.data?.detail) {
+                        showNotification(response.data.detail, 'error')
+                    } else {
+                        showNotification('An error occurred during registration. Please try again.', 'error')
+                    }
                 } else {
-                    showNotification(error.response.data?.detail || 'Please check your information and try again.', 'error')
+                    showNotification('An error occurred during registration. Please try again.', 'error')
                 }
-            } else if (error.response?.data?.detail) {
-                showNotification(error.response.data.detail, 'error')
             } else {
                 showNotification('An error occurred during registration. Please try again.', 'error')
             }
@@ -118,9 +128,9 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
                         I want to:
                     </label>
                     <div className="grid grid-cols-2 gap-3">
-                        <label className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${selectedUserType === 'creative'
-                            ? 'border-beacon-blue bg-beacon-blue/5'
-                            : 'border-neutral-300'
+                        <label className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none transition-all duration-200 ${selectedUserType === 'creative'
+                            ? 'border-beacon-purple bg-beacon-purple/10 ring-2 ring-beacon-purple/20'
+                            : 'border-neutral-300 hover:border-neutral-400'
                             }`}>
                             <input
                                 type="radio"
@@ -138,9 +148,9 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
                             </div>
                         </label>
 
-                        <label className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${selectedUserType === 'client'
-                            ? 'border-beacon-blue bg-beacon-blue/5'
-                            : 'border-neutral-300'
+                        <label className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none transition-all duration-200 ${selectedUserType === 'client'
+                            ? 'border-beacon-purple bg-beacon-purple/10 ring-2 ring-beacon-purple/20'
+                            : 'border-neutral-300 hover:border-neutral-400'
                             }`}>
                             <input
                                 type="radio"
@@ -232,7 +242,7 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
                             ? "Tell us about your creative skills and experience..."
                             : "Tell us about your business and what kind of creative services you need..."
                         }
-                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-beacon-blue focus:border-transparent resize-none"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-transparent resize-none transition-all duration-200"
                         {...register('bio')}
                     />
                     {errors.bio && (

@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
-import { ButtonHTMLAttributes, forwardRef } from 'react'
+import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef } from 'react'
 
 // Define button variants using class-variance-authority
 const buttonVariants = cva(
@@ -14,14 +15,14 @@ const buttonVariants = cva(
         variants: {
             // Button variants (primary, secondary, etc.)
             variant: {
-                default: 'bg-beacon-blue text-white hover:bg-beacon-blue-dark',
-                primary: 'bg-beacon-blue text-white hover:bg-beacon-blue-dark',
-                secondary: 'bg-white text-beacon-blue border border-beacon-blue hover:bg-blue-50',
-                purple: 'bg-beacon-purple text-white hover:bg-beacon-purple-dark',
-                outline: 'border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700',
-                ghost: 'hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900',
-                destructive: 'bg-beacon-red text-white hover:bg-red-700',
-                link: 'text-beacon-blue underline-offset-4 hover:underline p-0 h-auto',
+                default: 'bg-beacon-purple text-white hover:bg-beacon-purple-dark focus:ring-beacon-purple',
+                primary: 'bg-beacon-purple text-white hover:bg-beacon-purple-dark focus:ring-beacon-purple',
+                secondary: 'bg-white text-beacon-purple border border-beacon-purple hover:bg-purple-50 focus:ring-beacon-purple',
+                purple: 'bg-beacon-purple text-white hover:bg-beacon-purple-dark focus:ring-beacon-purple',
+                outline: 'border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 focus:ring-neutral-300',
+                ghost: 'hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900 focus:ring-neutral-300',
+                destructive: 'bg-beacon-red text-white hover:bg-red-700 focus:ring-beacon-red',
+                link: 'text-beacon-purple underline-offset-4 hover:underline p-0 h-auto focus:ring-beacon-purple',
             },
             // Button sizes
             size: {
