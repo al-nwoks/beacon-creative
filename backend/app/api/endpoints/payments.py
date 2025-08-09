@@ -1,3 +1,4 @@
+import logging
 from typing import Any, List, Optional
 import uuid
 from datetime import datetime
@@ -26,6 +27,8 @@ from app.auth.dependencies import (
 )
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 @router.post("/create-intent", response_model=PaymentIntentResponse)
@@ -38,9 +41,13 @@ def create_payment_intent(
     """
     Create a payment intent (client only).
     """
+    logger.info(f"Creating payment intent for project ID: {payment_in.project_id} by user ID: {current_user.id}")
+    logger.debug(f"Payment data: amount={payment_in.amount}, creative_id={payment_in.creative_id}, milestone_description={payment_in.milestone_description}")
+    
     # Check if project exists
     project = db.query(Project).filter(Project.id == payment_in.project_id).first()
     if not project:
+        logger.warning(f"Payment intent creation failed: Project {payment_in.project_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
@@ -48,6 +55,7 @@ def create_payment_intent(
     
     # Check if user is the project client
     if project.client_id != current_user.id:
+        logger.warning(f"Payment intent creation failed: User {current_user.id} is not the client for project {payment_in.project_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -55,6 +63,7 @@ def create_payment_intent(
     
     # Check if project is in a state where payments can be made
     if project.status not in ["hired", "completed"]:
+        logger.warning(f"Payment intent creation failed: Project {payment_in.project_id} is not in a valid state for payments (status: {project.status})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payments can only be made for hired or completed projects",
@@ -63,6 +72,7 @@ def create_payment_intent(
     # Check if creative exists
     creative = db.query(User).filter(User.id == payment_in.creative_id).first()
     if not creative:
+        logger.warning(f"Payment intent creation failed: Creative {payment_in.creative_id} not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Creative not found",
@@ -70,6 +80,7 @@ def create_payment_intent(
     
     # Check if creative is the hired creative for the project
     if project.hired_creative_id != creative.id:
+        logger.warning(f"Payment intent creation failed: Creative {payment_in.creative_id} is not hired for project {payment_in.project_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Creative is not hired for this project",
@@ -95,6 +106,8 @@ def create_payment_intent(
     db.add(db_payment)
     db.commit()
     db.refresh(db_payment)
+    
+    logger.info(f"Payment intent created successfully with payment ID: {db_payment.id}")
     
     # Return payment intent details
     return {
@@ -151,9 +164,12 @@ def release_payment(
     """
     Release a payment from escrow to the creative (client only).
     """
+    logger.info(f"Releasing payment ID: {payment_id} by user ID: {current_user.id}")
+    
     payment_id_uuid = uuid.UUID(payment_id)
     payment = db.query(Payment).filter(Payment.id == payment_id_uuid).first()
     if not payment:
+        logger.warning(f"Payment release failed: Payment {payment_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment not found",
@@ -161,6 +177,7 @@ def release_payment(
     
     # Check if user is the payment client
     if payment.client_id != current_user.id:
+        logger.warning(f"Payment release failed: User {current_user.id} is not the client for payment {payment_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -168,6 +185,7 @@ def release_payment(
     
     # Check if payment is in held_in_escrow status
     if payment.status != "held_in_escrow":
+        logger.warning(f"Payment release failed: Payment {payment_id} is not in escrow (status: {payment.status})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payment is not in escrow",
@@ -179,6 +197,8 @@ def release_payment(
     db.add(payment)
     db.commit()
     db.refresh(payment)
+    
+    logger.info(f"Payment released successfully: {payment_id}")
     return payment
 
 @router.get("/project/{project_id}", response_model=List[PaymentWithDetails])

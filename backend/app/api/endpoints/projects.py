@@ -1,208 +1,194 @@
-from typing import Any, List, Optional
-import uuid
+from typing import Any, List
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
 from app.db.database import get_db
-from app.models.user import User
 from app.models.project import Project
-from app.schemas.project import (
-    Project as ProjectSchema,
-    ProjectCreate,
-    ProjectUpdate,
-    ProjectWithClient,
-    ProjectWithUsers
-)
-from app.auth.dependencies import (
-    get_current_active_user,
-    get_current_client_user,
-    get_current_creative_user
-)
+from app.schemas.project import ProjectCreate, ProjectUpdate, Project as ProjectSchema
+from app.auth.dependencies import get_current_active_user_dependency, get_current_client_user_dependency
+from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+@router.get("/", response_model=List[ProjectSchema])
+def get_projects(
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_active_user_dependency)
+) -> Any:
+    """
+    Retrieve projects.
+    """
+    logger.info(f"Fetching projects for user {current_user.id}")
+    projects = db.query(Project).offset(skip).limit(limit).all()
+    logger.debug(f"Found {len(projects)} projects")
+    return projects
+
 
 @router.post("/", response_model=ProjectSchema)
 def create_project(
     *,
     db: Session = Depends(get_db),
     project_in: ProjectCreate,
-    current_user: User = Depends(get_current_client_user),
+    current_user: User = Depends(get_current_client_user_dependency)
 ) -> Any:
     """
-    Create a new project (client only).
+    Create new project.
+    Only clients can create projects.
     """
-    # Create new project
+    logger.info(f"Creating project for client user {current_user.id}")
+    logger.debug(f"Project data: {project_in.dict()}")
+    
     db_project = Project(
-        **project_in.dict(),
+        title=project_in.title,
+        description=project_in.description,
+        category=project_in.category,
+        budget_min=project_in.budget_min,
+        budget_max=project_in.budget_max,
+        timeline_weeks=project_in.timeline_weeks,
         client_id=current_user.id,
-        status="active"
+        required_skills=project_in.required_skills or []
     )
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
+    
+    logger.info(f"Project created successfully with ID: {db_project.id}")
     return db_project
 
-@router.get("/", response_model=List[ProjectWithClient])
-def get_projects(
-    *,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-    skip: int = 0,
-    limit: int = 100,
-    status: Optional[str] = None,
-    category: Optional[str] = None,
-    search: Optional[str] = None,
-) -> Any:
-    """
-    Get all projects with filters.
-    """
-    # Base query
-    query = db.query(Project)
-    
-    # Apply filters
-    if status:
-        query = query.filter(Project.status == status)
-    else:
-        # By default, only show active projects
-        query = query.filter(Project.status == "active")
-    
-    if category:
-        query = query.filter(Project.category == category)
-    
-    if search:
-        query = query.filter(
-            or_(
-                Project.title.ilike(f"%{search}%"),
-                Project.description.ilike(f"%{search}%")
-            )
-        )
-    
-    # Get projects with pagination
-    projects = query.offset(skip).limit(limit).all()
-    return projects
 
-@router.get("/my-projects", response_model=List[ProjectSchema])
-def get_my_projects(
-    *,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-    status: Optional[str] = None,
-) -> Any:
-    """
-    Get all projects created by the current user (client) or hired for (creative).
-    """
-    if current_user.role == "client":
-        # Get projects created by the client
-        query = db.query(Project).filter(Project.client_id == current_user.id)
-    else:
-        # Get projects the creative is hired for
-        query = db.query(Project).filter(Project.hired_creative_id == current_user.id)
-    
-    # Apply status filter if provided
-    if status:
-        query = query.filter(Project.status == status)
-    
-    projects = query.all()
-    return projects
-
-@router.get("/{project_id}", response_model=ProjectWithUsers)
+@router.get("/{project_id}", response_model=ProjectSchema)
 def get_project(
     *,
     db: Session = Depends(get_db),
-    project_id: str,
-    current_user: User = Depends(get_current_active_user),
+    project_id: int,
+    current_user: User = Depends(get_current_active_user_dependency)
 ) -> Any:
     """
-    Get a specific project by id.
+    Get project by ID.
     """
-    project_id_uuid = uuid.UUID(project_id)
-    project = db.query(Project).filter(Project.id == project_id_uuid).first()
+    logger.info(f"Fetching project {project_id} for user {current_user.id}")
+    
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
+        logger.warning(f"Project {project_id} not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
+            detail="Project not found"
         )
+    
+    # Check if user has permission to view this project
+    if current_user.role == "client" and project.client_id != current_user.id:
+        logger.warning(f"Client user {current_user.id} attempted to access project {project_id} belonging to another client")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions to access this project"
+        )
+    
+    logger.debug(f"Project {project_id} found")
     return project
+
 
 @router.put("/{project_id}", response_model=ProjectSchema)
 def update_project(
     *,
     db: Session = Depends(get_db),
-    project_id: str,
+    project_id: int,
     project_in: ProjectUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_client_user_dependency)
 ) -> Any:
     """
-    Update a project (client only, unless updating status).
+    Update a project.
+    Only the client who created the project can update it.
     """
-    project_id_uuid = uuid.UUID(project_id)
-    project = db.query(Project).filter(Project.id == project_id_uuid).first()
+    logger.info(f"Updating project {project_id} for client user {current_user.id}")
+    
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
+        logger.warning(f"Project {project_id} not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
+            detail="Project not found"
         )
     
-    # Check permissions
-    if project.client_id != current_user.id and current_user.role != "creative":
+    # Check if user is the owner of the project
+    if project.client_id != current_user.id:
+        logger.warning(f"Client user {current_user.id} attempted to update project {project_id} belonging to another client")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
+            detail="Not enough permissions to update this project"
         )
     
-    # If user is creative, they can only update status
-    if current_user.role == "creative" and project.hired_creative_id == current_user.id:
-        if project_in.status:
-            project.status = project_in.status
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Creative can only update project status",
-            )
-    else:
-        # Update project attributes
-        for field, value in project_in.dict(exclude_unset=True).items():
-            setattr(project, field, value)
+    # Update project attributes
+    for field, value in project_in.dict(exclude_unset=True).items():
+        setattr(project, field, value)
     
     db.add(project)
     db.commit()
     db.refresh(project)
+    
+    logger.info(f"Project {project_id} updated successfully")
     return project
 
-@router.delete("/{project_id}", status_code=status.HTTP_200_OK)
+
+@router.delete("/{project_id}", response_model=ProjectSchema)
 def delete_project(
     *,
     db: Session = Depends(get_db),
-    project_id: str,
-    current_user: User = Depends(get_current_client_user),
+    project_id: int,
+    current_user: User = Depends(get_current_client_user_dependency)
 ) -> Any:
     """
-    Delete a project (client only).
+    Delete a project.
+    Only the client who created the project can delete it.
     """
-    project_id_uuid = uuid.UUID(project_id)
-    project = db.query(Project).filter(Project.id == project_id_uuid).first()
+    logger.info(f"Deleting project {project_id} for client user {current_user.id}")
+    
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
+        logger.warning(f"Project {project_id} not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
+            detail="Project not found"
         )
     
-    # Check if user is the project owner
+    # Check if user is the owner of the project
     if project.client_id != current_user.id:
+        logger.warning(f"Client user {current_user.id} attempted to delete project {project_id} belonging to another client")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-    
-    # Check if project can be deleted (only draft or active projects)
-    if project.status not in ["draft", "active"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a project that is already hired, completed, or cancelled",
+            detail="Not enough permissions to delete this project"
         )
     
     db.delete(project)
     db.commit()
-    return {"message": "Project deleted successfully"}
+    
+    logger.info(f"Project {project_id} deleted successfully")
+    return project
+
+
+@router.get("/my-projects", response_model=List[ProjectSchema])
+def get_my_projects(
+    *,
+    db: Session = Depends(get_db),
+    status: str = None,
+    current_user: User = Depends(get_current_client_user_dependency)
+) -> Any:
+    """
+    Get current user's projects.
+    Only clients can view their own projects.
+    """
+    logger.info(f"Fetching projects for client user {current_user.id}")
+    
+    query = db.query(Project).filter(Project.client_id == current_user.id)
+    if status:
+        query = query.filter(Project.status == status)
+    
+    projects = query.all()
+    logger.debug(f"Found {len(projects)} projects for client user {current_user.id}")
+    return projects

@@ -1,263 +1,176 @@
-'use client'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import JobCard from '@/components/dashboard/JobCard'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import Button from '@/components/ui/Button'
+import { Briefcase, DollarSign, MessageSquare, PlusCircle, TrendingUp, Users } from 'lucide-react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { MainLayout } from '@/components/layout'
-import { EnhancedLoadingSpinner } from '@/components/ui/EnhancedLoadingSpinner'
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { useNotification } from '@/components/ui/NotificationProvider'
-import { Briefcase, Calendar, DollarSign, Users } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
-
-interface Project {
-    id: string
-    title: string
-    description: string
-    status: string
-    budget_min?: number
-    budget_max?: number
-    created_at: string
-    deadline?: string
-    applications_count: number
+export const metadata: Metadata = {
+    title: 'Dashboard | B3ACON Creative Connect',
+    description: 'Manage your projects, track applications, and connect with creative talent.',
 }
 
 export default function ClientDashboardPage() {
-    const [projects, setProjects] = useState<Project[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const { showNotification } = useNotification()
+    // Mock data - replace with real API calls
+    const stats = [
+        { label: 'Active Projects', value: '12', icon: Briefcase, color: 'text-blue-600' },
+        { label: 'Total Spent', value: '$24,500', icon: DollarSign, color: 'text-green-600' },
+        { label: 'Applications', value: '48', icon: Users, color: 'text-purple-600' },
+        { label: 'Messages', value: '7', icon: MessageSquare, color: 'text-orange-600' },
+    ]
 
-    const loadProjects = useCallback(async () => {
-        try {
-            setLoading(true)
-            // Mock data for demonstration
-            const mockProjects: Project[] = [
-                {
-                    id: '1',
-                    title: 'Brand Identity Design',
-                    description: 'Create a complete brand identity for a new tech startup including logo, color palette, and brand guidelines.',
-                    status: 'active',
-                    budget_min: 2000,
-                    budget_max: 3500,
-                    created_at: '2023-06-15T10:30:00Z',
-                    deadline: '2023-07-30T00:00:00Z',
-                    applications_count: 8
-                },
-                {
-                    id: '2',
-                    title: 'Website Redesign',
-                    description: 'Redesign our company website with a modern, responsive design and improved user experience.',
-                    status: 'hired',
-                    budget_min: 5000,
-                    budget_max: 8000,
-                    created_at: '2023-06-10T14:20:00Z',
-                    deadline: '2023-08-15T00:00:00Z',
-                    applications_count: 1
-                },
-                {
-                    id: '3',
-                    title: 'Social Media Content',
-                    description: 'Create monthly social media content for our fashion brand including images and captions.',
-                    status: 'completed',
-                    budget_min: 1500,
-                    budget_max: 2500,
-                    created_at: '2023-05-20T09:15:00Z',
-                    deadline: '2023-06-20T00:00:00Z',
-                    applications_count: 5
-                }
-            ]
-            setProjects(mockProjects)
-        } catch (err) {
-            console.error('Error loading projects:', err)
-            setError('Failed to load projects. Please try again.')
-            showNotification('Failed to load projects', 'error')
-        } finally {
-            setLoading(false)
-        }
-    }, [showNotification])
+    const recentProjects = [
+        {
+            id: '1',
+            title: 'Brand Identity Design',
+            company: 'Your Company',
+            description: 'Complete brand identity package including logo, business cards, and style guide.',
+            budget_min: 2000,
+            budget_max: 4000,
+            timeline_weeks: 3,
+            required_skills: ['Logo Design', 'Brand Identity', 'Adobe Illustrator'],
+            created_at: '2024-01-15T08:00:00Z',
+        },
+        {
+            id: '2',
+            title: 'Website Redesign',
+            company: 'Your Company',
+            description: 'Modern, responsive website redesign for e-commerce platform.',
+            budget_min: 5000,
+            budget_max: 8000,
+            timeline_weeks: 6,
+            required_skills: ['UI/UX Design', 'React', 'Figma'],
+            created_at: '2024-01-10T08:00:00Z',
+        },
+    ]
 
-    useEffect(() => {
-        loadProjects()
-    }, [loadProjects])
-
-
-    if (loading) {
-        return (
-            <MainLayout>
-                <div className="container mx-auto px-4 py-8">
-                    <div className="flex justify-center items-center h-64">
-                        <EnhancedLoadingSpinner size="lg" message="Loading dashboard..." />
-                    </div>
-                </div>
-            </MainLayout>
-        )
-    }
-
-    if (error) {
-        return (
-            <MainLayout>
-                <div className="container mx-auto px-4 py-8">
-                    <ErrorBoundary>
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                            <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading Dashboard</h2>
-                            <p className="text-red-600 mb-4">{error}</p>
-                            <button
-                                onClick={loadProjects}
-                                className="px-4 py-2 bg-beacon-purple text-white rounded-md hover:bg-beacon-purple-dark transition-colors"
-                            >
-                                Try Again
-                            </button>
-                        </div>
-                    </ErrorBoundary>
-                </div>
-            </MainLayout>
-        )
-    }
-
-    // Calculate stats
-    const activeProjects = projects.filter(p => p.status === 'active').length
-    const totalBudget = projects.reduce((sum, project) => sum + (project.budget_max || 0), 0)
-    const totalApplications = projects.reduce((sum, project) => sum + project.applications_count, 0)
+    const recentActivity = [
+        { action: 'New application received', project: 'Brand Identity Design', time: '2 hours ago' },
+        { action: 'Message from Sarah M.', project: 'Website Redesign', time: '4 hours ago' },
+        { action: 'Project milestone completed', project: 'Mobile App UI', time: '1 day ago' },
+        { action: 'Payment released', project: 'Logo Design', time: '2 days ago' },
+    ]
 
     return (
-        <MainLayout>
-            <div className="container mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Client Dashboard</h1>
-                    <p className="text-neutral-600">Manage your projects and connect with creative talent.</p>
-                </div>
+        <ProtectedRoute requiredRole="client">
+            <SimplifiedLayout userType="client" showSearch={false}>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-white rounded-lg shadow p-6 border border-neutral-200">
-                        <div className="flex items-center">
-                            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                                <Briefcase className="h-6 w-6" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-neutral-600">Total Projects</p>
-                                <p className="text-2xl font-bold text-neutral-900">{projects.length}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6 border border-neutral-200">
-                        <div className="flex items-center">
-                            <div className="p-3 rounded-full bg-green-100 text-green-600">
-                                <Users className="h-6 w-6" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-neutral-600">Active Projects</p>
-                                <p className="text-2xl font-bold text-neutral-900">{activeProjects}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6 border border-neutral-200">
-                        <div className="flex items-center">
-                            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                                <DollarSign className="h-6 w-6" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-neutral-600">Total Budget</p>
-                                <p className="text-2xl font-bold text-neutral-900">${totalBudget.toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6 border border-neutral-200">
-                        <div className="flex items-center">
-                            <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                                <Users className="h-6 w-6" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-neutral-600">Applications</p>
-                                <p className="text-2xl font-bold text-neutral-900">{totalApplications}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Projects Section */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-neutral-900">Your Projects</h2>
-                        <button className="px-4 py-2 bg-beacon-purple text-white rounded-md hover:bg-beacon-purple-dark transition-colors">
-                            Create New Project
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {projects.map((project) => (
-                            <div key={project.id} className="bg-white rounded-lg shadow p-6 border border-neutral-200 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-neutral-900 mb-1">{project.title}</h3>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === 'active' ? 'bg-green-100 text-green-800' :
-                                            project.status === 'hired' ? 'bg-blue-100 text-blue-800' :
-                                                project.status === 'completed' ? 'bg-purple-100 text-purple-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                                        </span>
-                                    </div>
-                                    <div className="text-right">
-                                        {project.budget_min && project.budget_max && (
-                                            <p className="text-sm font-medium text-neutral-900">
-                                                ${project.budget_min.toLocaleString()} - ${project.budget_max.toLocaleString()}
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-neutral-500">
-                                            Created: {new Date(project.created_at).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p className="text-neutral-700 mb-4 line-clamp-2">
-                                    {project.description}
-                                </p>
-
+                <main className="container mx-auto px-4 py-8">
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {stats.map((stat, index) => (
+                            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center text-sm text-neutral-600">
-                                        <Users className="h-4 w-4 mr-1" />
-                                        <span>{project.applications_count} applications</span>
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-600">{stat.label}</p>
+                                        <p className="text-2xl font-bold text-neutral-900 mt-1">{stat.value}</p>
                                     </div>
-                                    <div className="flex space-x-2">
-                                        <button className="text-sm text-beacon-purple hover:underline">
-                                            View Details
-                                        </button>
-                                        <button className="text-sm text-neutral-600 hover:text-neutral-900">
-                                            Edit
-                                        </button>
+                                    <div className={`p-3 rounded-full bg-neutral-100 ${stat.color}`}>
+                                        <stat.icon className="h-6 w-6" />
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
 
-                {/* Quick Actions */}
-                <div className="bg-white rounded-lg shadow p-6 border border-neutral-200">
-                    <h2 className="text-xl font-bold text-neutral-900 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <button className="flex flex-col items-center justify-center p-6 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
-                            <Briefcase className="h-8 w-8 text-beacon-purple mb-2" />
-                            <span className="font-medium text-neutral-900">Post a Project</span>
-                            <p className="text-sm text-neutral-600 mt-1 text-center">Find creative talent for your next project</p>
-                        </button>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Recent Projects */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-semibold text-neutral-900">Your Recent Projects</h2>
+                                    <Link href="/projects">
+                                        <Button variant="outline" size="sm">View All</Button>
+                                    </Link>
+                                </div>
+                                <div className="space-y-4">
+                                    {recentProjects.map((project) => (
+                                        <JobCard
+                                            key={project.id}
+                                            {...project}
+                                            showApplyButton={false}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
 
-                        <button className="flex flex-col items-center justify-center p-6 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
-                            <Users className="h-8 w-8 text-beacon-purple mb-2" />
-                            <span className="font-medium text-neutral-900">Browse Talent</span>
-                            <p className="text-sm text-neutral-600 mt-1 text-center">Discover creative professionals</p>
-                        </button>
+                        {/* Quick Actions & Activity */}
+                        <div className="space-y-6">
+                            {/* Quick Actions */}
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h3>
+                                <div className="space-y-3">
+                                    <Link href="/projects/create" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <PlusCircle className="h-4 w-4" />
+                                            Post New Project
+                                        </Button>
+                                    </Link>
+                                    <Link href="/creatives" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <Users className="h-4 w-4" />
+                                            Browse Creatives
+                                        </Button>
+                                    </Link>
+                                    <Link href="/messages" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <MessageSquare className="h-4 w-4" />
+                                            View Messages
+                                        </Button>
+                                    </Link>
+                                    <Link href="/payments" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <DollarSign className="h-4 w-4" />
+                                            Manage Payments
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
 
-                        <button className="flex flex-col items-center justify-center p-6 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
-                            <Calendar className="h-8 w-8 text-beacon-purple mb-2" />
-                            <span className="font-medium text-neutral-900">View Calendar</span>
-                            <p className="text-sm text-neutral-600 mt-1 text-center">Manage project deadlines</p>
-                        </button>
+                            {/* Recent Activity */}
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Activity</h3>
+                                <div className="space-y-4">
+                                    {recentActivity.map((activity, index) => (
+                                        <div key={index} className="flex items-start space-x-3">
+                                            <div className="w-2 h-2 bg-beacon-purple rounded-full mt-2 flex-shrink-0"></div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-neutral-900">{activity.action}</p>
+                                                <p className="text-sm text-neutral-600">{activity.project}</p>
+                                                <p className="text-xs text-neutral-500 mt-1">{activity.time}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Performance Summary */}
+                            <div className="bg-gradient-to-r from-beacon-purple to-beacon-purple-dark rounded-lg p-6 text-white">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <TrendingUp className="h-6 w-6" />
+                                    <h3 className="text-lg font-semibold">This Month</h3>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Projects Posted</span>
+                                        <span className="font-semibold">3</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Applications Received</span>
+                                        <span className="font-semibold">24</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Projects Completed</span>
+                                        <span className="font-semibold">2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </MainLayout>
+                </main>
+            </SimplifiedLayout>
+        </ProtectedRoute>
     )
 }

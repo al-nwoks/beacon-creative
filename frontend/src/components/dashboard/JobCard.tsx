@@ -63,6 +63,9 @@ export default function JobCard({
     const handleApply = () => {
         if (onApply) {
             onApply(id)
+        } else {
+            // If no onApply handler, navigate to application page
+            window.location.href = `/projects/${id}/apply`
         }
     }
 

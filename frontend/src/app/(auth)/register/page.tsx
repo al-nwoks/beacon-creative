@@ -23,7 +23,7 @@ export default async function RegisterPage({
             {/* Header */}
             <header className="bg-white border-b border-neutral-200">
                 <div className="container mx-auto px-4 py-4">
-                    <Link href="/" className="text-2xl font-bold text-beacon-blue">
+                    <Link href="/" className="text-2xl font-bold text-beacon-purple">
                         B3ACON
                     </Link>
                 </div>
@@ -41,9 +41,9 @@ export default async function RegisterPage({
                 <div className="container mx-auto px-4">
                     <p>&copy; {new Date().getFullYear()} B3ACON Creative Connect. All rights reserved.</p>
                     <div className="mt-2 space-x-4">
-                        <Link href="/terms" className="hover:text-beacon-blue">Terms</Link>
-                        <Link href="/privacy" className="hover:text-beacon-blue">Privacy</Link>
-                        <Link href="/help" className="hover:text-beacon-blue">Help</Link>
+                        <Link href="/terms" className="hover:text-beacon-purple">Terms</Link>
+                        <Link href="/privacy" className="hover:text-beacon-purple">Privacy</Link>
+                        <Link href="/help" className="hover:text-beacon-purple">Help</Link>
                     </div>
                 </div>
             </footer>

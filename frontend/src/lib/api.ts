@@ -1,35 +1,89 @@
-import axios from 'axios'
+import axios from 'axios';
+
+// Resolve backend API base URL from a single source of truth (.env at repo root)
+// and normalize it to avoid double/missing slashes when joining with endpoint paths.
+const resolveApiBaseURL = () => {
+    const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+    const base = raw.length > 0 ? raw : 'http://backend:8000/api/v1';
+    // Normalize:
+    // - force a single trailing slash
+    // - ensure we have the /api/v1 prefix present (backend is mounted under settings.API_V1_STR)
+    let url = base.replace(/\/+$/, '');
+    // If user supplied origin only (e.g., http://localhost:8000), append /api/v1
+    // Accept either with or without trailing slash
+    if (!/\/api\/v\d+$/i.test(url)) {
+        url = `${url}/api/v1`;
+    }
+    // Return with trailing slash removed; axios will handle paths starting with /
+    return url;
+};
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+    baseURL: resolveApiBaseURL(), // resolves to http://backend:8000/api/v1 when running inside Docker container
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 15000,
+    validateStatus: (status) => status >= 200 && status < 500,
 })
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
+        // Force server-side calls only: when running in the browser, route through Next.js API
+        const isBrowser = typeof window !== 'undefined';
+        if (isBrowser) {
+            const url = (config.url || '').toString();
+            // Normalize to start-with checks for top-level resource groups
+            const rewrite = (from: string, to: string) => {
+                if (url === from || url.startsWith(from + '/') || url.startsWith(from + '?')) {
+                    config.baseURL = '';
+                    config.url = to + url.slice(from.length);
+                    return true;
+                }
+                return false;
+            };
+            // Auth
+            if (rewrite('/auth/login', '/api/auth/login')) { /* no-op */ }
+            else if (rewrite('/auth/register', '/api/auth/register')) { /* no-op */ }
+            // Users
+            else if (rewrite('/users/me', '/api/users/me')) { /* browser -> Next proxy */ }
+            // Projects
+            else if (rewrite('/projects', '/api/projects')) { /* list/detail CRUD via Next proxies */ }
+            // Applications
+            else if (rewrite('/applications', '/api/applications')) { /* CRUD via Next */ }
+            // Messages
+            else if (rewrite('/messages', '/api/messages')) { /* CRUD via Next */ }
+            // Files
+            else if (rewrite('/files', '/api/files')) { /* upload/list/delete via Next (multipart aware) */ }
+            // Payments
+            else if (rewrite('/payments', '/api/payments')) { /* via Next */ }
+            // otherwise leave as-is (SSR or server route handlers)
+        } else {
+            // Server-side (Next API routes / server components) -> use backend base
+            config.baseURL = resolveApiBaseURL(); // normalized to include /api/v1
         }
-        return config
+        // Token is handled automatically via HttpOnly cookies for browser requests
+        // Server-side requests will use cookies passed through Next.js API routes
+        return config;
     },
-    (error) => {
-        return Promise.reject(error)
-    }
+    (error) => Promise.reject(error)
 )
 
 // Add response interceptor to handle errors
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // Clear token and redirect to login
-            localStorage.removeItem('access_token')
-            window.location.href = '/login'
+        const status = error?.response?.status
+        if (status === 401) {
+            // Redirect to login on unauthorized responses
+            if (typeof window !== 'undefined') {
+                // Avoid loops: only navigate if not already on /login
+                if (!window.location.pathname.startsWith('/login')) {
+                    window.location.href = '/login'
+                }
+            }
         }
         return Promise.reject(error)
     }
@@ -38,18 +92,24 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
     login: async (email: string, password: string) => {
-        const formData = new FormData()
-        formData.append('username', email)
-        formData.append('password', password)
-        
-        const response = await api.post('/auth/login', formData, {
+        const params = new URLSearchParams()
+        params.append('username', email)
+        params.append('password', password)
+
+        // Important: ensure URL is absolute against normalized backend baseURL
+        // baseURL: http(s)://host:port/api/v1 + path '/auth/login' => http(s)://host:port/api/v1/auth/login
+        const response = await api.post('/auth/login', params, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         })
+        if (response.status === 404) {
+            // Provide a clearer error for misconfigured baseURL
+            throw new Error(`Login endpoint not found at ${api.defaults.baseURL}/auth/login. Check NEXT_PUBLIC_API_URL or backend server.`);
+        }
         return response.data
     },
-    
+
     register: async (userData: {
         email: string
         password: string
@@ -60,7 +120,16 @@ export const authAPI = {
         bio?: string
         location?: string
     }) => {
-        const response = await api.post('/auth/register', userData)
+        const backendData = {
+            ...userData,
+            role: userData.user_type
+        };
+        delete (backendData as any).user_type;
+
+        const response = await api.post('/auth/register', backendData)
+        if (response.status === 404) {
+            throw new Error(`Register endpoint not found at ${api.defaults.baseURL}/auth/register. Check NEXT_PUBLIC_API_URL or backend server.`);
+        }
         return response.data
     },
 }
@@ -175,6 +244,22 @@ export const applicationsAPI = {
 // Users API
 export const usersAPI = {
     getCurrentUser: async () => {
+        // In the browser, call our Next.js API proxy to avoid hitting backend hostnames directly
+        if (typeof window !== 'undefined') {
+            const resp = await fetch('/api/users/me', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store',
+            });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                let data: any = null;
+                try { data = text ? JSON.parse(text) : null; } catch {}
+                throw new Error(data?.message || data?.detail || `Failed to fetch current user (${resp.status})`);
+            }
+            return resp.json();
+        }
+        // On the server (SSR/Next API), use direct backend call via axios baseURL
         const response = await api.get('/users/me')
         return response.data
     },

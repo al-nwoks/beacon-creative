@@ -1,15 +1,27 @@
-import type { PageProps } from '@/types/common';
-import { ProjectDetails } from './ProjectDetails';
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import type { Metadata } from 'next'
+import { ProjectDetails } from './ProjectDetails'
 
-export default async function ProjectDetailsPage({
-    params
-}: PageProps) {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+export const metadata: Metadata = {
+    title: 'Project Details | B3ACON Creative Connect',
+    description: 'View project details.',
+}
 
-    if (!id) {
-        throw new Error('Project ID is required');
-    }
+export default function ProjectDetailsPage() {
+    return (
+        <ProtectedRoute>
+            <div className="min-h-screen bg-neutral-50">
+                <header className="bg-white shadow">
+                    <div className="container mx-auto px-4 py-6">
+                        <h1 className="text-2xl font-bold text-neutral-900">Project Details</h1>
+                        <p className="text-neutral-600 mt-1">View project details.</p>
+                    </div>
+                </header>
 
-    return <ProjectDetails id={id} />;
+                <main className="container mx-auto px-4 py-8">
+                    <ProjectDetails id="1" />
+                </main>
+            </div>
+        </ProtectedRoute>
+    )
 }

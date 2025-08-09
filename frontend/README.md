@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# B3ACON Frontend (Next.js 15)
 
-## Getting Started
+This is the Next.js frontend for B3ACON Creative Connect.
 
-First, run the development server:
+## Auth and Security Model
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Server-side route handlers (Next.js App Router):
+  - POST `/api/auth/login`:
+    - Body: `{ "email": string, "password": string }`
+    - Proxies to backend `/api/v1/auth/login` (form urlencoded) and sets `access_token` as HttpOnly; Secure; SameSite=Lax cookie on success.
+    - Returns `204` on success.
+  - POST `/api/auth/register`:
+    - Body (JSON backend schema):
+      ```
+      {
+        "email": "...",
+        "password": "...",
+        "confirm_password": "...",
+        "first_name": "...",
+        "last_name": "...",
+        "role": "creative" | "client" | "admin",
+        "bio": "...?",
+        "location": "...?",
+        "profile_image_url": "...?"
+      }
+      ```
+    - Proxies to `/api/v1/auth/register`, then auto-logs-in and sets the `access_token` cookie. Returns `201` on success.
+  - POST `/api/auth/logout`:
+    - Clears `access_token` and `csrf_token` cookies. Returns `204`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Tokens are not stored in localStorage. They reside in HttpOnly cookies.
+- Browser only calls same-origin `/api/*` endpoints. The Next server (inside Docker) uses internal DNS `http://backend:8000` to reach FastAPI.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Relevant files:
+- Login handler: [frontend/src/app/api/auth/login/route.ts](frontend/src/app/api/auth/login/route.ts:1)
+- Register handler: [frontend/src/app/api/auth/register/route.ts](frontend/src/app/api/auth/register/route.ts:1)
+- Logout handler: [frontend/src/app/api/auth/logout/route.ts](frontend/src/app/api/auth/logout/route.ts:1)
+- Login form: [frontend/src/components/forms/LoginForm.tsx](frontend/src/components/forms/LoginForm.tsx:1) (posts to `/api/auth/login`, redirects on 204)
+- Register form: [frontend/src/components/forms/RegisterForm.tsx](frontend/src/components/forms/RegisterForm.tsx:1) (posts to `/api/auth/register`, redirects on 201)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+- Root `/.env` (git-ignored) is the single source of truth.
+  - `NEXT_PUBLIC_API_URL=http://backend:8000` (Compose internal DNS; the client normalizes to include `/api/v1`)
+  - `NEXT_PUBLIC_WS_URL=ws://backend:8000/ws`
+- Ensure frontend runs in Docker (exposing 3000:3000) so it can reach `backend` internally.
 
-To learn more about Next.js, take a look at the following resources:
+## Run with Docker Compose
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create `/.env`:
+   ```
+   NEXT_PUBLIC_API_URL=http://backend:8000
+   NEXT_PUBLIC_WS_URL=ws://backend:8000/ws
+   MOCK_MODE=True
+   SEED_DATA=True
+   ```
+2. Build and start:
+   ```
+   docker-compose build --no-cache
+   docker-compose up
+   ```
+3. Open http://localhost:3000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Mock Credentials
 
-## Deploy on Vercel
+When the backend runs with `MOCK_MODE=True` (and/or `SEED_DATA=True`), mock users are seeded. Use the credentials listed in the backend README (admin, client, creative) to sign in quickly.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Security headers are added in [frontend/src/app/middleware.ts](frontend/src/app/middleware.ts:1).
+- Avoid exposing internal Docker hostnames to the browser. Keep all external calls to `/api/*` and proxy server-side.

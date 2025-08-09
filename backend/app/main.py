@@ -5,17 +5,33 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.api import api_router
-from app.db.database import SessionLocal
+from app.db.database import get_db_context
 from app.db.seed_data import seed_mock_data, seed_admin_user
+from app.middleware.logging_middleware import LoggingMiddleware
+
+# Set up logging with custom formatter to include request ID
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        # Add request_id to the log record if it exists
+        if hasattr(record, 'request_id'):
+            record.request_id = record.request_id
+        else:
+            record.request_id = 'N/A'
+        return super().format(record)
 
 # Set up logging
 logging.basicConfig(
     level=settings.LOG_LEVEL,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout)
     ]
 )
+
+# Get the root logger and set the custom formatter
+root_logger = logging.getLogger()
+for handler in root_logger.handlers:
+    handler.setFormatter(CustomFormatter("%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s"))
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +43,9 @@ app = FastAPI(
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
 )
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
 
 # Set up CORS middleware
 app.add_middleware(
@@ -55,24 +74,20 @@ async def startup_event():
     logger.info(f"SEED_DATA: {settings.SEED_DATA}")
     if settings.MOCK_MODE:
         logger.info("Seeding mock data...")
-        db = SessionLocal()
         try:
-            seed_mock_data(db)
-            logger.info("Mock data seeded successfully!")
+            with get_db_context() as db:
+                seed_mock_data(db)
+                logger.info("Mock data seeded successfully!")
         except Exception as e:
             logger.error(f"Error seeding mock data: {e}")
-        finally:
-            db.close()
     elif settings.SEED_DATA:
         logger.info("Seeding admin user...")
-        db = SessionLocal()
         try:
-            seed_admin_user(db)
-            logger.info("Admin user seeded successfully!")
+            with get_db_context() as db:
+                seed_admin_user(db)
+                logger.info("Admin user seeded successfully!")
         except Exception as e:
             logger.error(f"Error seeding admin user: {e}")
-        finally:
-            db.close()
 
 if __name__ == "__main__":
     import uvicorn

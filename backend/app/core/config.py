@@ -36,6 +36,6 @@ class Settings(BaseModel):
     SEED_DATA: bool = os.getenv("SEED_DATA", "false").lower() == "true"
     
     # Logging settings
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "DEBUG")
 
 settings = Settings()

@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('role', sa.Enum('creative', 'client', 'admin', name='userrole'), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('is_verified', sa.Boolean(), nullable=True),
-    sa.Column('profile_image', sa.String(), nullable=True),
+    sa.Column('profile_image_url', sa.String(), nullable=True),
     sa.Column('bio', sa.String(), nullable=True),
     sa.Column('location', sa.String(), nullable=True),
     sa.Column('website', sa.String(), nullable=True),

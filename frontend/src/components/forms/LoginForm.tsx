@@ -3,7 +3,6 @@
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useNotification } from '@/components/ui/NotificationProvider'
-import { authAPI, usersAPI } from '@/lib/api'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -20,8 +19,12 @@ const loginSchema = z.object({
 // Infer the type from the schema
 type LoginFormValues = z.infer<typeof loginSchema>
 
+interface LoginFormProps {
+    redirectUrl?: string;
+}
+
 import { Switch } from '@headlessui/react'
-export default function LoginForm() {
+export default function LoginForm({ redirectUrl }: LoginFormProps) {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { showNotification } = useNotification()
@@ -45,52 +48,42 @@ export default function LoginForm() {
         setIsLoading(true)
 
         try {
-            // Call the login API
-            const response = await authAPI.login(data.email, data.password)
+            // POST credentials to secure server-side route
+            const resp = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email: data.email, password: data.password }),
+                // Ensure cookies (HttpOnly) set by the server are handled correctly
+                credentials: 'same-origin',
+            })
 
-            // Store the access token
-            localStorage.setItem('access_token', response.access_token)
-
-            // Get user information to determine redirect
-            const user = await usersAPI.getCurrentUser()
-
-            // Redirect based on user role
-            switch (user.role) {
-                case 'creative':
-                    router.push('/creative-dashboard')
-                    break
-                case 'client':
-                    router.push('/dashboard')
-                    break
-                case 'admin':
-                    router.push('/admin')
-                    break
-                default:
-                    router.push('/creative-dashboard')
+            if (resp.status === 204) {
+                // Cookie set; avoid client-side race by performing a full navigation
+                // to a server-side post-login route which will validate the cookie and
+                // redirect the user to the appropriate dashboard.
+                if (redirectUrl) {
+                    // If a return URL was specified, navigate directly to it (trusted internal path).
+                    window.location.href = redirectUrl
+                } else {
+                    // Server will read HttpOnly cookie and send the correct redirect for the user's role.
+                    window.location.href = '/post-login'
+                }
+                return
             }
+
+            // Attempt to parse error body
+            let msg = 'Invalid email or password. Please try again.'
+            try {
+                const body = await resp.json()
+                msg = body?.message || body?.detail || msg
+            } catch { }
+            if (resp.status === 403) {
+                msg = 'Your account has been deactivated. Please contact support.'
+            }
+            showNotification(msg, 'error')
         } catch (error) {
             console.error('Login error:', error)
-
-            // Handle different error types
-            if (error instanceof Error) {
-                // Handle axios errors
-                if ('response' in error && error.response && typeof error.response === 'object') {
-                    const response = error.response as { status?: number; data?: { detail?: string } };
-                    if (response.status === 401) {
-                        showNotification('Invalid email or password. Please try again.', 'error')
-                    } else if (response.status === 403) {
-                        showNotification('Your account has been deactivated. Please contact support.', 'error')
-                    } else if (response.data?.detail) {
-                        showNotification(response.data.detail, 'error')
-                    } else {
-                        showNotification('An error occurred during login. Please try again.', 'error')
-                    }
-                } else {
-                    showNotification('An error occurred during login. Please try again.', 'error')
-                }
-            } else {
-                showNotification('An error occurred during login. Please try again.', 'error')
-            }
+            showNotification('An error occurred during login. Please try again.', 'error')
         } finally {
             setIsLoading(false)
         }
@@ -157,7 +150,7 @@ export default function LoginForm() {
 
             <div className="mt-6 text-center">
                 <p className="text-neutral-600">
-                    Don&apos;t have an account?{' '}
+                    Don't have an account?{' '}
                     <Link href="/register" className="text-beacon-blue hover:underline">
                         Sign up
                     </Link>

@@ -18,10 +18,18 @@ __pycache__/
 *.pyo
 *.pyd
 venv/
+
+# Dotenv (single source of truth)
 .env
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/.env.test
+
 # Node
 node_modules/
 dist/
-.env
+
 # Mac
 .DS_Store

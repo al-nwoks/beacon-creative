@@ -1,6 +1,7 @@
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 
@@ -22,8 +23,13 @@ export const metadata: Metadata = {
   description: 'Connect with top creative talent and clients through a seamless platform for project management, collaboration, and discovery.',
   keywords: ['creative', 'freelance', 'project management', 'collaboration', 'talent'],
   authors: [{ name: 'B3ACON Team' }],
-  viewport: 'width=device-width, initial-scale=1',
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 
 export default function RootLayout({
   children,
@@ -35,7 +41,7 @@ export default function RootLayout({
       <body>
         <NotificationProvider>
           <PageTransitionLayout>
-            {children}
+            <LayoutWrapper>{children}</LayoutWrapper>
           </PageTransitionLayout>
         </NotificationProvider>
       </body>

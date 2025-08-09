@@ -1,16 +1,27 @@
-import type { PageProps } from '@/types/common';
-import { CreativeProfile } from './CreativeProfile';
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import type { Metadata } from 'next'
+import { CreativeProfile } from './CreativeProfile'
 
-export default async function CreativeProfilePage({
-    params,
-    searchParams
-}: PageProps) {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+export const metadata: Metadata = {
+    title: 'Creative Profile | B3ACON Creative Connect',
+    description: 'View creative professional profile.',
+}
 
-    if (!id) {
-        throw new Error('Creative ID is required');
-    }
+export default function CreativeProfilePage() {
+    return (
+        <ProtectedRoute>
+            <div className="min-h-screen bg-neutral-50">
+                <header className="bg-white shadow">
+                    <div className="container mx-auto px-4 py-6">
+                        <h1 className="text-2xl font-bold text-neutral-900">Creative Profile</h1>
+                        <p className="text-neutral-600 mt-1">View creative professional profile.</p>
+                    </div>
+                </header>
 
-    return <CreativeProfile id={id} />;
+                <main className="container mx-auto px-4 py-8">
+                    <CreativeProfile id="1" />
+                </main>
+            </div>
+        </ProtectedRoute>
+    )
 }

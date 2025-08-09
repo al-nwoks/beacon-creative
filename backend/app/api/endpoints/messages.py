@@ -33,10 +33,14 @@ def create_message(
     """
     Create a new message.
     """
+    logger.info(f"Creating message from user ID: {current_user.id} to recipient ID: {message_in.recipient_id}")
+    logger.debug(f"Message data: content_length={len(message_in.content)}, project_id={message_in.project_id}, application_id={message_in.application_id}")
+    
     # Convert recipient_id to integer (user IDs are integers, not UUIDs)
     recipient_id_int = int(message_in.recipient_id)
     recipient = db.query(User).filter(User.id == recipient_id_int).first()
     if not recipient:
+        logger.warning(f"Message creation failed: Recipient {recipient_id_int} not found for sender {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Recipient not found",
@@ -47,6 +51,7 @@ def create_message(
         project_id_uuid = uuid.UUID(message_in.project_id)
         project = db.query(Project).filter(Project.id == project_id_uuid).first()
         if not project:
+            logger.warning(f"Message creation failed: Project {message_in.project_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Project not found",
@@ -55,6 +60,7 @@ def create_message(
         # Check if both users are involved in the project
         if (project.client_id != current_user.id and project.hired_creative_id != current_user.id) or \
            (project.client_id != recipient.id and project.hired_creative_id != recipient.id):
+            logger.warning(f"Message creation failed: Users {current_user.id} and {recipient_id_int} not both involved in project {message_in.project_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Both users must be involved in the project",
@@ -65,6 +71,7 @@ def create_message(
         application_id_uuid = uuid.UUID(message_in.application_id)
         application = db.query(Application).filter(Application.id == application_id_uuid).first()
         if not application:
+            logger.warning(f"Message creation failed: Application {message_in.application_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Application not found",
@@ -76,6 +83,7 @@ def create_message(
         # Check if both users are involved in the application
         if (application.creative_id != current_user.id and project.client_id != current_user.id) or \
            (application.creative_id != recipient.id and project.client_id != recipient.id):
+            logger.warning(f"Message creation failed: Users {current_user.id} and {recipient_id_int} not both involved in application {message_in.application_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Both users must be involved in the application",
@@ -93,6 +101,8 @@ def create_message(
     db.add(db_message)
     db.commit()
     db.refresh(db_message)
+    
+    logger.info(f"Message created successfully with ID: {db_message.id} from user {current_user.id} to {recipient_id_int}")
     return db_message
 
 @router.get("/", response_model=List[MessageWithSender])

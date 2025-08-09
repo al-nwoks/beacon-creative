@@ -1,356 +1,233 @@
-'use client'
-
-import CreativeCard from '@/components/dashboard/CreativeCard'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import JobCard from '@/components/dashboard/JobCard'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useNotification } from '@/components/ui/NotificationProvider'
-import { StaggeredAnimationContainer } from '@/components/ui/StaggeredAnimationContainer'
-import { applicationsAPI, projectsAPI, usersAPI } from '@/lib/api'
-import { Star } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { CheckCircle, DollarSign, FileText, MessageSquare, Search, Star, TrendingUp } from 'lucide-react'
+import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
+import Link from 'next/link'
 
-interface Project {
-    id: string
-    title: string
-    description: string
-    category: string
-    budget_min?: number
-    budget_max?: number
-    timeline_weeks?: number
-    required_skills?: string[]
-    status: string
-    created_at: string
-    client: {
-        id: string
-        first_name: string
-        last_name: string
-        email: string
-    }
+export const metadata: Metadata = {
+    title: 'Creative Dashboard | B3ACON Creative Connect',
+    description: 'Find projects, manage applications, and grow your creative career.',
 }
 
-interface User {
-    id: string
-    first_name: string
-    last_name: string
-    email: string
-    profile_image_url?: string
-    user_type: string
-    is_verified: boolean
-    bio?: string
-    location?: string
-    hourly_rate?: number
-    skills?: string[]
-    portfolio_links?: string[]
-}
+export default async function CreativeDashboardPage() {
+    // Read token from HttpOnly cookie on the server
+    const token = (await cookies()).get('access_token')?.value
 
-export default function CreativeDashboard() {
-    const [filterOpen, setFilterOpen] = useState(false)
-    const [selectedFilter, setSelectedFilter] = useState('Newest First')
-    const [projects, setProjects] = useState<Project[]>([])
-    const [topCreators, setTopCreators] = useState<User[]>([])
-    const [loading, setLoading] = useState(true)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [currentUser, setCurrentUser] = useState<User | null>(null)
-    const { showNotification } = useNotification()
+    // Compose internal backend base and ensure /api/v1
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000').replace(/\/+$/, '')
+    const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-    const filterOptions = [
-        'Newest First',
-        'Most Popular',
-        'Highest Rated',
-        'Nearby Location'
+    // Fetch current user to tailor UI; do not cache to keep it fresh
+    const meResp = await fetch(`${apiBase}/users/me`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: 'no-store',
+    })
+
+    const isAuthed = meResp.ok
+    const me = isAuthed ? await meResp.json() : null
+
+    // Mock data - replace with real API calls
+    const stats = [
+        { label: 'Active Applications', value: '8', icon: FileText, color: 'text-blue-600' },
+        { label: 'Earnings This Month', value: '$3,200', icon: DollarSign, color: 'text-green-600' },
+        { label: 'Projects Completed', value: '12', icon: CheckCircle, color: 'text-purple-600' },
+        { label: 'New Messages', value: '5', icon: MessageSquare, color: 'text-orange-600' },
     ]
 
-    const loadData = useCallback(async () => {
-        try {
-            setLoading(true)
+    const availableProjects = [
+        {
+            id: '1',
+            title: 'E-commerce Website Design',
+            company: 'TechStart Inc.',
+            description: 'Design a modern, responsive e-commerce website with clean UI/UX. Need someone experienced with Figma and user experience principles.',
+            budget_min: 3000,
+            budget_max: 5000,
+            timeline_weeks: 4,
+            required_skills: ['UI/UX Design', 'Figma', 'E-commerce'],
+            created_at: '2024-01-20T08:00:00Z',
+        },
+        {
+            id: '2',
+            title: 'Brand Identity Package',
+            company: 'Green Earth Co.',
+            description: 'Complete brand identity including logo, color palette, typography, and brand guidelines for sustainable products company.',
+            budget_min: 2000,
+            budget_max: 3500,
+            timeline_weeks: 3,
+            required_skills: ['Logo Design', 'Brand Identity', 'Adobe Illustrator'],
+            created_at: '2024-01-18T08:00:00Z',
+        },
+        {
+            id: '3',
+            title: 'Mobile App UI Design',
+            company: 'FitLife App',
+            description: 'Design intuitive and engaging UI for fitness tracking mobile app. Experience with mobile design patterns required.',
+            budget_min: 4000,
+            budget_max: 6000,
+            timeline_weeks: 5,
+            required_skills: ['Mobile Design', 'UI/UX', 'Sketch', 'Prototyping'],
+            created_at: '2024-01-16T08:00:00Z',
+        },
+    ]
 
-            // Load current user
-            const user = await usersAPI.getCurrentUser()
-            setCurrentUser(user)
+    const myApplications = [
+        { project: 'Website Redesign', status: 'Under Review', applied: '3 days ago', statusColor: 'text-yellow-600' },
+        { project: 'Logo Design', status: 'Accepted', applied: '1 week ago', statusColor: 'text-green-600' },
+        { project: 'Mobile App UI', status: 'Rejected', applied: '2 weeks ago', statusColor: 'text-red-600' },
+        { project: 'Brand Guidelines', status: 'In Progress', applied: '3 weeks ago', statusColor: 'text-blue-600' },
+    ]
 
-            // Load featured projects
-            const projectsData = await projectsAPI.getProjects({
-                limit: 6,
-                status: 'active'
-            })
-            setProjects(projectsData)
-
-            // Mock top creators data (since we don't have a specific endpoint)
-            setTopCreators([
-                {
-                    id: '1',
-                    first_name: 'Sarah',
-                    last_name: 'Johnson',
-                    email: 'sarah@example.com',
-                    user_type: 'creative',
-                    is_verified: true,
-                    bio: 'Passionate photographer with 8+ years of experience in fashion and portrait photography.',
-                    location: 'New York, NY',
-                    hourly_rate: 75,
-                    skills: ['Photography', 'Fashion', 'Portrait'],
-                    portfolio_links: ['https://sarahjohnson.com']
-                },
-                {
-                    id: '2',
-                    first_name: 'Mike',
-                    last_name: 'Chen',
-                    email: 'mike@example.com',
-                    user_type: 'creative',
-                    is_verified: true,
-                    bio: 'Creative director and graphic designer with expertise in brand identity.',
-                    location: 'San Francisco, CA',
-                    hourly_rate: 85,
-                    skills: ['Graphic Design', 'Branding', 'Web Design'],
-                    portfolio_links: ['https://mikechen.design']
-                },
-                {
-                    id: '3',
-                    first_name: 'Emma',
-                    last_name: 'Davis',
-                    email: 'emma@example.com',
-                    user_type: 'creative',
-                    is_verified: false,
-                    bio: 'Professional model and content creator specializing in fashion.',
-                    location: 'Los Angeles, CA',
-                    hourly_rate: 120,
-                    skills: ['Modeling', 'Fashion', 'Commercial'],
-                    portfolio_links: ['https://emmadavis.model']
-                }
-            ])
-        } catch (error) {
-            console.error('Error loading data:', error)
-        } finally {
-            setLoading(false)
-        }
-    }, [projectsAPI, usersAPI])
-
-    useEffect(() => {
-        loadData()
-    }, [loadData])
-
-
-    const handleSearch = async (query: string) => {
-        if (!query.trim()) return
-
-        try {
-            const searchResults = await projectsAPI.getProjects({
-                search: query,
-                status: 'active'
-            })
-            setProjects(searchResults)
-        } catch (error) {
-            console.error('Error searching projects:', error)
-        }
-    }
-
-    const handleApplyToJob = async (projectId: string) => {
-        try {
-            await applicationsAPI.createApplication({
-                project_id: projectId,
-                cover_letter: 'I am interested in this project and would like to apply.',
-            })
-            showNotification('Application submitted successfully!', 'success')
-        } catch (error) {
-            console.error('Error applying to job:', error)
-            showNotification('Error submitting application. Please try again.', 'error')
-        }
-    }
-
-    const handleContactCreative = (creativeId: string) => {
-        // Navigate to messages or open contact modal
-        console.log('Contact creative:', creativeId)
-    }
-
-    const handleViewCreativeProfile = (creativeId: string) => {
-        // Navigate to creative profile
-        console.log('View creative profile:', creativeId)
-    }
-
-    const handleFilter = () => {
-        setFilterOpen(!filterOpen)
-    }
-
-    const handleFilterSelect = (option: string) => {
-        setSelectedFilter(option)
-        setFilterOpen(false)
-    }
-
-    if (loading) {
-        return (
-            <SimplifiedLayout userType="creative">
-                <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-                    <div className="text-center">
-                        <LoadingSpinner size="lg" className="mx-auto mb-4" />
-                        <p className="text-gray-600">Loading dashboard...</p>
-                    </div>
-                </div>
-            </SimplifiedLayout>
-        )
-    }
+    const recentActivity = [
+        { action: 'Application accepted', project: 'Logo Design Project', time: '2 hours ago' },
+        { action: 'New message from client', project: 'Website Redesign', time: '4 hours ago' },
+        { action: 'Payment received', project: 'Brand Identity', time: '1 day ago' },
+        { action: 'Project milestone completed', project: 'Mobile App UI', time: '2 days ago' },
+    ]
 
     return (
-        <SimplifiedLayout
-            showSearch={true}
-            showFilter={true}
-            onSearch={handleSearch}
-            onFilter={handleFilter}
-            searchPlaceholder="Search creators, jobs, skills..."
-            userType="creative"
-        >
-            {/* Filter Dropdown */}
-            {filterOpen && (
-                <div className="relative z-10">
-                    <div className="absolute right-4 top-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg">
-                        <div className="p-4 border-b border-neutral-100">
-                            <h3 className="font-semibold text-neutral-900">Filter By</h3>
-                        </div>
-                        <div className="p-2">
-                            {filterOptions.map((option) => (
-                                <button
-                                    key={option}
-                                    onClick={() => handleFilterSelect(option)}
-                                    className={`w-full text-left px-4 py-3 rounded-lg hover:bg-neutral-50 transition-colors ${selectedFilter === option
-                                        ? 'bg-beacon-purple-light/20 text-beacon-purple font-medium'
-                                        : 'text-neutral-700'
-                                        }`}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+        <ProtectedRoute requiredRole="creative">
+            <SimplifiedLayout userType="creative" showSearch={false}>
 
-            <div className="max-w-7xl mx-auto px-4 py-6">
-                {/* Welcome Banner */}
-                <div className="bg-gradient-to-r from-beacon-purple to-beacon-purple-dark rounded-2xl p-6 mb-8 text-white">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex items-start space-x-3">
-                            <div className="mt-1 p-2 bg-white/20 rounded-lg">
-                                <Star className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold mb-2">Welcome back, {currentUser?.first_name}!</h1>
-                                <p className="text-purple-100 mb-4">Connect with top creative talent and exciting opportunities worldwide.</p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="secondary"
-                            className="bg-white/20 text-white border-white/30 hover:bg-white/30 whitespace-nowrap"
-                        >
-                            Complete Your Profile
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Stats Section */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-xl p-4 border border-neutral-200">
-                        <div className="text-2xl font-bold text-neutral-900">12</div>
-                        <div className="text-sm text-neutral-600">Active Applications</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-neutral-200">
-                        <div className="text-2xl font-bold text-neutral-900">8</div>
-                        <div className="text-sm text-neutral-600">Messages</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-neutral-200">
-                        <div className="text-2xl font-bold text-neutral-900">3</div>
-                        <div className="text-sm text-neutral-600">Ongoing Projects</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-neutral-200">
-                        <div className="text-2xl font-bold text-neutral-900">4.8</div>
-                        <div className="text-sm text-neutral-600">Rating</div>
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <Button variant="primary" className="py-3">
-                        <span className="text-sm font-medium">Browse Jobs</span>
-                    </Button>
-                    <Button variant="outline" className="py-3 border-beacon-purple text-beacon-purple hover:bg-beacon-purple-light/10">
-                        <span className="text-sm font-medium">My Portfolio</span>
-                    </Button>
-                    <Button variant="outline" className="py-3">
-                        <span className="text-sm font-medium">Messages</span>
-                    </Button>
-                    <Button variant="outline" className="py-3">
-                        <span className="text-sm font-medium">Settings</span>
-                    </Button>
-                </div>
-
-                {/* Featured Jobs Section */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-neutral-900">Featured Jobs</h2>
-                        <button className="text-beacon-purple hover:text-beacon-purple-dark font-medium flex items-center">
-                            View All
-                            <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <StaggeredAnimationContainer staggerDelay={0.1} className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-                        {projects.slice(0, 3).map((project) => (
-                            <div key={project.id}>
-                                <JobCard
-                                    id={project.id}
-                                    title={project.title}
-                                    company={`${project.client.first_name} ${project.client.last_name}`}
-                                    description={project.description}
-                                    location={project.category}
-                                    budget_min={project.budget_min}
-                                    budget_max={project.budget_max}
-                                    timeline_weeks={project.timeline_weeks}
-                                    required_skills={project.required_skills}
-                                    created_at={project.created_at}
-                                    onApply={handleApplyToJob}
-                                />
+                <main className="container mx-auto px-4 py-8">
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {stats.map((stat, index) => (
+                            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-600">{stat.label}</p>
+                                        <p className="text-2xl font-bold text-neutral-900 mt-1">{stat.value}</p>
+                                    </div>
+                                    <div className={`p-3 rounded-full bg-neutral-100 ${stat.color}`}>
+                                        <stat.icon className="h-6 w-6" />
+                                    </div>
+                                </div>
                             </div>
                         ))}
-                    </StaggeredAnimationContainer>
-                </div>
-
-                {/* Top Creators Section */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-neutral-900">Top Creators</h2>
-                        <button className="text-beacon-purple hover:text-beacon-purple-dark font-medium flex items-center">
-                            View All
-                            <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
                     </div>
 
-                    <StaggeredAnimationContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {topCreators.map((creator, index) => (
-                            <div key={creator.id}>
-                                <CreativeCard
-                                    id={creator.id}
-                                    first_name={creator.first_name}
-                                    last_name={creator.last_name}
-                                    email={creator.email}
-                                    bio={creator.bio}
-                                    location={creator.location}
-                                    hourly_rate={creator.hourly_rate}
-                                    skills={creator.skills}
-                                    portfolio_links={creator.portfolio_links}
-                                    profile_image_url={creator.profile_image_url}
-                                    is_verified={creator.is_verified}
-                                    featured={index === 0}
-                                    onContact={handleContactCreative}
-                                    onViewProfile={handleViewCreativeProfile}
-                                />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Available Projects */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-semibold text-neutral-900">Recommended Projects</h2>
+                                    <Link href="/projects">
+                                        <Button variant="outline" size="sm">Browse All</Button>
+                                    </Link>
+                                </div>
+                                <div className="space-y-4">
+                                    {availableProjects.map((project) => (
+                                        <JobCard
+                                            key={project.id}
+                                            {...project}
+                                            showApplyButton={true}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        ))}
-                    </StaggeredAnimationContainer>
-                </div>
-            </div>
-        </SimplifiedLayout>
+                        </div>
+
+                        {/* Sidebar */}
+                        <div className="space-y-6">
+                            {/* Quick Actions */}
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h3>
+                                <div className="space-y-3">
+                                    <Link href="/projects" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <Search className="h-4 w-4" />
+                                            Find Projects
+                                        </Button>
+                                    </Link>
+                                    <Link href="/applications" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <FileText className="h-4 w-4" />
+                                            My Applications
+                                        </Button>
+                                    </Link>
+                                    <Link href="/messages" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <MessageSquare className="h-4 w-4" />
+                                            Messages
+                                        </Button>
+                                    </Link>
+                                    <Link href="/profile" className="block">
+                                        <Button variant="outline" fullWidth className="justify-start gap-3">
+                                            <Star className="h-4 w-4" />
+                                            Update Profile
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+
+                            {/* My Applications Status */}
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Application Status</h3>
+                                <div className="space-y-4">
+                                    {myApplications.map((app, index) => (
+                                        <div key={index} className="flex items-center justify-between">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-neutral-900 truncate">{app.project}</p>
+                                                <p className="text-xs text-neutral-500">{app.applied}</p>
+                                            </div>
+                                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${app.statusColor} bg-opacity-10`}>
+                                                {app.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Link href="/applications" className="block mt-4">
+                                    <Button variant="outline" size="sm" fullWidth>View All Applications</Button>
+                                </Link>
+                            </div>
+
+                            {/* Recent Activity */}
+                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Activity</h3>
+                                <div className="space-y-4">
+                                    {recentActivity.map((activity, index) => (
+                                        <div key={index} className="flex items-start space-x-3">
+                                            <div className="w-2 h-2 bg-beacon-purple rounded-full mt-2 flex-shrink-0"></div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-neutral-900">{activity.action}</p>
+                                                <p className="text-sm text-neutral-600">{activity.project}</p>
+                                                <p className="text-xs text-neutral-500 mt-1">{activity.time}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Performance Summary */}
+                            <div className="bg-gradient-to-r from-beacon-purple to-beacon-purple-dark rounded-lg p-6 text-white">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <TrendingUp className="h-6 w-6" />
+                                    <h3 className="text-lg font-semibold">This Month</h3>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Applications Sent</span>
+                                        <span className="font-semibold">12</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Projects Won</span>
+                                        <span className="font-semibold">3</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-100">Earnings</span>
+                                        <span className="font-semibold">$3,200</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </SimplifiedLayout>
+        </ProtectedRoute>
     )
 }

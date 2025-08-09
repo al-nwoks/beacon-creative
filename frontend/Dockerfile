@@ -17,40 +17,41 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Set environment variables
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
-
-# Disable type checking during build
-ENV DISABLE_TYPE_CHECKING true
-
-# Build the Next.js application
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Build the Next.js application using npm scripts
+# Expect package.json to define "build" and "start" scripts (Next.js default)
 RUN npm run build
 
-# Production image, copy all the files and run next
+# Production image
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 # Create a non-root user to run the app
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
-# Copy necessary files from the builder stage
+# Copy only the necessary artifacts to run "npm run start"
+# 1) App files for runtime (package.json + lock for npm to run scripts if needed)
+COPY package.json package-lock.json* ./
+# 2) Compiled output and required runtime assets from builder
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# 3) Node modules from deps (contains production deps)
+COPY --from=deps /app/node_modules ./node_modules
 
-# Set the correct permissions
+# Set correct ownership
 USER nextjs
 
 # Expose the port the app will run on
 EXPOSE 3000
 
-# Set environment variables
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# Start the application
-CMD ["node", "server.js"]
+# Run using npm scripts (Next.js will serve via "next start")
+CMD ["npm", "run", "start"]

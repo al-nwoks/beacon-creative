@@ -7,9 +7,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    # Use a single dotenv file at repo root for both local and container builds
+    # env_file:
+    #   - ./.env
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://backend:8000/ws
+      - NEXT_PUBLIC_APP_NAME=B3ACON Creative Connect
+      # - NODE_ENV=development
     depends_on:
       - backend
     restart: unless-stopped
@@ -22,9 +27,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000"
+    # env_file:
+    #   - ./.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/beacon
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkey}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=supersecretkey
       - JWT_ALGORITHM=HS256
       - JWT_EXPIRATION_TIME=3600
       - CORS_ORIGINS=http://localhost:3000,http://frontend:3000

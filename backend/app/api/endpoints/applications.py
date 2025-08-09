@@ -34,9 +34,13 @@ def create_application(
     """
     Create a new application for a project (creative only).
     """
+    logger.info(f"Creating application for project ID: {application_in.project_id} by user ID: {current_user.id}")
+    logger.debug(f"Application data: cover_letter_length={len(application_in.cover_letter)}, proposed_budget={application_in.proposed_budget}")
+    
     # Check if project exists
     project = db.query(Project).filter(Project.id == application_in.project_id).first()
     if not project:
+        logger.warning(f"Application failed: Project {application_in.project_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
@@ -44,6 +48,7 @@ def create_application(
     
     # Check if project is open for applications
     if project.status != "active":
+        logger.warning(f"Application failed: Project {application_in.project_id} is not accepting applications (status: {project.status})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project is not accepting applications",
@@ -56,6 +61,7 @@ def create_application(
     ).first()
     
     if existing_application:
+        logger.warning(f"Application failed: User {current_user.id} has already applied to project {application_in.project_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You have already applied to this project",
@@ -74,6 +80,8 @@ def create_application(
     db.add(db_application)
     db.commit()
     db.refresh(db_application)
+    
+    logger.info(f"Application created successfully with ID: {db_application.id} for project ID: {application_in.project_id}")
     return db_application
 
 @router.get("/me", response_model=List[ApplicationWithProject])

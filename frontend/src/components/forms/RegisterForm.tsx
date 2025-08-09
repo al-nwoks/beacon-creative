@@ -3,7 +3,7 @@
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useNotification } from '@/components/ui/NotificationProvider'
-import { authAPI } from '@/lib/api'
+import { usersAPI } from '@/lib/api'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -67,46 +67,55 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
         setIsLoading(true)
 
         try {
-            // Call the register API
-            await authAPI.register(data)
+            // Submit to secure server-side route handler
+            const resp = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    email: data.email,
+                    password: data.password,
+                    confirm_password: data.confirm_password,
+                    first_name: data.first_name,
+                    last_name: data.last_name,
+                    role: data.user_type,      // backend expects "role"
+                    bio: data.bio || undefined,
+                    location: data.location || undefined,
+                }),
+            })
 
-            // After successful registration, log the user in
-            const loginResponse = await authAPI.login(data.email, data.password)
+            if (resp.status === 201) {
+                // Cookie set by server after auto-login; optionally fetch user to route precisely
+                let role = data.user_type
+                try {
+                    const me = await usersAPI.getCurrentUser()
+                    role = (me?.role as 'creative' | 'client') || role
+                } catch { /* ignore if unavailable; fall back to selected type */ }
 
-            // Store the access token
-            localStorage.setItem('access_token', loginResponse.access_token)
-
-            // Redirect based on user type
-            if (data.user_type === 'creative') {
-                router.push('/creative-dashboard')
-            } else {
-                router.push('/dashboard')
+                if (role === 'creative') {
+                    router.push('/creative-dashboard')
+                } else {
+                    router.push('/dashboard')
+                }
+                return
             }
+
+            // Parse and surface error message
+            let msg = 'An error occurred during registration. Please try again.'
+            try {
+                const body = await resp.json()
+                const detail = body?.detail || body?.message
+                if (typeof detail === 'string' && detail.length > 0) msg = detail
+            } catch { }
+            if (resp.status === 400) {
+                // heuristic for duplicate email
+                if (msg.toLowerCase().includes('already')) {
+                    msg = 'An account with this email already exists. Please try logging in instead.'
+                }
+            }
+            showNotification(msg, 'error')
         } catch (error) {
             console.error('Registration error:', error)
-
-            // Handle different error types
-            if (error instanceof Error) {
-                // Handle axios errors
-                if ('response' in error && error.response && typeof error.response === 'object') {
-                    const response = error.response as { status?: number; data?: { detail?: string } };
-                    if (response.status === 400) {
-                        if (response.data?.detail?.includes('email already exists')) {
-                            showNotification('An account with this email already exists. Please try logging in instead.', 'error')
-                        } else {
-                            showNotification(response.data?.detail || 'Please check your information and try again.', 'error')
-                        }
-                    } else if (response.data?.detail) {
-                        showNotification(response.data.detail, 'error')
-                    } else {
-                        showNotification('An error occurred during registration. Please try again.', 'error')
-                    }
-                } else {
-                    showNotification('An error occurred during registration. Please try again.', 'error')
-                }
-            } else {
-                showNotification('An error occurred during registration. Please try again.', 'error')
-            }
+            showNotification('An error occurred during registration. Please try again.', 'error')
         } finally {
             setIsLoading(false)
         }

@@ -10,19 +10,26 @@ from app.db.database import get_db
 from app.core.config import settings
 from app.models.user import User
 from app.schemas.user import UserCreate, User as UserSchema, Token
-from app.auth.password import verify_password, get_password_hash
-from app.auth.jwt import create_access_token
+from app.auth.password import get_password_hash
+from app.auth.providers.factory import get_provider
+from app.auth.config import get_current_auth_provider
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Get the authentication provider based on settings
+AUTH_PROVIDER_NAME = get_current_auth_provider()
+auth_provider = get_provider(AUTH_PROVIDER_NAME)
+
+
 @router.post("/register", response_model=UserSchema)
-def register(*, db: Session = Depends(get_db), user_in: UserCreate) -> Any:
+async def register(*, db: Session = Depends(get_db), user_in: UserCreate) -> Any:
     """
     Register a new user.
     """
     logger.info(f"Registering new user with email: {user_in.email}")
+    logger.debug(f"Registration data: first_name={user_in.first_name}, last_name={user_in.last_name}, role={user_in.role}")
     
     # Check if user with this email already exists
     user = db.query(User).filter(User.email == user_in.email).first()
@@ -69,28 +76,26 @@ def register(*, db: Session = Depends(get_db), user_in: UserCreate) -> Any:
     logger.info(f"User {db_user.email} created with ID {db_user.id}")
     return db_user
 
+
 @router.post("/login", response_model=Token)
-def login(
+async def login(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
     logger.info(f"Login attempt for user: {form_data.username}")
+    logger.debug(f"Login request from IP: (would be added in production)")
     
-    # Find user by email
-    user = db.query(User).filter(User.email == form_data.username).first()
+    # Authenticate user using the configured provider
+    credentials = {
+        "email": form_data.username,
+        "password": form_data.password
+    }
+    
+    user = await auth_provider.authenticate(db, credentials)
     if not user:
-        logger.warning(f"Login failed: User {form_data.username} not found")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Check if password is correct
-    if not verify_password(form_data.password, user.hashed_password):
-        logger.warning(f"Login failed: Incorrect password for user {form_data.username}")
+        logger.warning(f"Login failed: Invalid credentials for user {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -106,11 +111,8 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        subject=str(user.id), expires_delta=access_token_expires
-    )
+    # Create access token using the configured provider
+    access_token = await auth_provider.create_token(user)
     
     logger.info(f"User {user.email} logged in successfully")
     return {"access_token": access_token, "token_type": "bearer"}
