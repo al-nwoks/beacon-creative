@@ -4,10 +4,50 @@ import { HeroIllustration } from '@/components/home/HeroIllustration'
 import Button from '@/components/ui/Button'
 import { ArrowRight, Briefcase, Star, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
-
-
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [user, setUser] = useState<{ role: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/users/me', {
+          method: 'GET',
+          credentials: 'include'
+        })
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error('Failed to check auth status:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuthStatus()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      // Make POST request to logout endpoint
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      // Redirect to homepage after logout
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // Still redirect to homepage even if logout request fails
+      window.location.href = '/'
+    }
+  }
+
   return (
     <>
       {/* Hero Section */}

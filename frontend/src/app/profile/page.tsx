@@ -1,60 +1,81 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { SimplifiedLayout } from '@/components/layout'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import { serverFetch } from '@/lib/api'
+import type { User } from '@/types/api'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
     title: 'Profile | B3ACON Creative Connect',
-    description: 'Manage your profile information.',
+    description: 'View and edit your profile.',
 }
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+    let user: User | null = null
+
+    try {
+        // Fetch current user info
+        user = await serverFetch('/users/me') as User
+    } catch (err) {
+        console.error('Failed to fetch user info', err)
+    }
+
     return (
         <ProtectedRoute>
-            <SimplifiedLayout userType="creative" showSearch={false}>
+            <SimplifiedLayout showSearch={false}>
                 <main className="container mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Profile card */}
-                        <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
-                            <div className="flex items-center gap-4">
-                                <div className="h-20 w-20 rounded-full bg-beacon-purple text-white flex items-center justify-center text-2xl font-bold">
-                                    U
-                                </div>
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-8">Profile</h1>
+
+                    {user ? (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
+                            <div className="flex items-center space-x-6 mb-8">
+                                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-24 h-24 flex-shrink-0" />
                                 <div>
-                                    <h2 className="text-xl font-semibold text-neutral-900">Your Name</h2>
-                                    <p className="text-sm text-neutral-600">Creative • UI/UX Designer</p>
+                                    <h2 className="text-2xl font-bold text-neutral-900">{user.name || 'Unnamed User'}</h2>
+                                    <p className="text-neutral-600">{user.email}</p>
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mt-2">
+                                        {user.role || 'user'}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="mt-6 space-y-3">
-                                <p className="text-sm text-neutral-700">you@example.com</p>
-                                <p className="text-sm text-neutral-700">Location: Lagos, NG</p>
-                                <p className="text-sm text-neutral-700">Hourly rate: $75/hr</p>
+                            <div className="border-t border-neutral-200 pt-6">
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Profile Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
+                                        <p className="text-neutral-900">{user.name || 'Not provided'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                                        <p className="text-neutral-900">{user.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Member Since</label>
+                                        <p className="text-neutral-900">
+                                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown date'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Last Updated</label>
+                                        <p className="text-neutral-900">
+                                            {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="mt-6">
-                                <a href="/profile/edit" className="inline-block bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-purple-700">
+                            <div className="border-t border-neutral-200 pt-6 mt-6">
+                                <button className="bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-beacon-purple-dark transition-colors">
                                     Edit Profile
-                                </a>
+                                </button>
                             </div>
                         </div>
-
-                        {/* Main profile content */}
-                        <div className="lg:col-span-2 space-y-6">
-                            <section className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-3">About</h3>
-                                <p className="text-neutral-600">Your bio, portfolio links, and highlighted work appear here. Use this space to succinctly describe your specialties and experience.</p>
-                            </section>
-
-                            <section className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-3">Skills</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="px-3 py-1 rounded-full bg-beacon-purple-light/20 text-beacon-purple text-sm">UI/UX Design</span>
-                                    <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 text-sm">Figma</span>
-                                    <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 text-sm">Illustration</span>
-                                </div>
-                            </section>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
+                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">Failed to load profile</h2>
+                            <p className="text-neutral-600">There was an error loading your profile information.</p>
                         </div>
-                    </div>
+                    )}
                 </main>
             </SimplifiedLayout>
         </ProtectedRoute>

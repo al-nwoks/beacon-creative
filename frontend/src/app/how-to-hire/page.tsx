@@ -49,26 +49,6 @@ export default function HowToHire() {
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Header */}
-            <header className="bg-white border-b border-neutral-200 sticky top-0 z-50">
-                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <Link href="/" className="text-2xl font-bold text-beacon-purple">
-                            B3ACON
-                        </Link>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        <Link href="/login" className="text-neutral-700 hover:text-beacon-purple transition-colors font-medium">
-                            Log in
-                        </Link>
-                        <Link href="/register">
-                            <Button variant="primary" size="sm">
-                                Sign up
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
 
             {/* Hero Section */}
             <section className="py-16 md:py-24 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">

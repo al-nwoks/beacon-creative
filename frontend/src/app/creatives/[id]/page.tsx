@@ -1,4 +1,5 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import SimplifiedLayout from '@/components/layout/SimplifiedLayout'
 import type { Metadata } from 'next'
 import { CreativeProfile } from './CreativeProfile'
 
@@ -10,18 +11,16 @@ export const metadata: Metadata = {
 export default function CreativeProfilePage() {
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-neutral-50">
-                <header className="bg-white shadow">
-                    <div className="container mx-auto px-4 py-6">
-                        <h1 className="text-2xl font-bold text-neutral-900">Creative Profile</h1>
-                        <p className="text-neutral-600 mt-1">View creative professional profile.</p>
-                    </div>
+            <SimplifiedLayout showSearch={false}>
+                <header>
+                    <h1 className="text-2xl font-bold text-neutral-900">Creative Profile</h1>
+                    <p className="text-neutral-600 mt-1">View creative professional profile.</p>
                 </header>
 
-                <main className="container mx-auto px-4 py-8">
+                <main>
                     <CreativeProfile id="1" />
                 </main>
-            </div>
+            </SimplifiedLayout>
         </ProtectedRoute>
     )
 }

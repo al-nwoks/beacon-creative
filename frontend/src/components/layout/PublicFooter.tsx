@@ -1,5 +1,6 @@
 'use client'
 
+import { B3aconLogo } from '@/components/icons/B3aconLogo'
 import Link from 'next/link'
 
 export default function PublicFooter() {
@@ -8,7 +9,7 @@ export default function PublicFooter() {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
                     <div className="md:col-span-2">
-                        <h3 className="text-white text-xl font-bold mb-4">B3ACON</h3>
+                        <h3 className="text-white text-xl font-bold mb-4"><B3aconLogo className="h-8 w-auto" /></h3>
                         <p className="mb-4 max-w-xs">
                             Connecting creative talent with opportunities worldwide.
                         </p>

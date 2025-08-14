@@ -300,3 +300,25 @@ body {
     transform: scale(1);
   }
 }
+
+/* Hide global header/footer and prevent pointer events when ProtectedRoute shows modal */
+.hide-global-shell header[data-global-shell],
+.hide-global-shell footer[data-global-shell] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Ensure modal backdrop covers everything */
+.hide-global-shell body,
+.hide-global-shell .__next,
+.hide-global-shell #__next {
+  overflow: hidden !important;
+}
+
+/* Accessibility: restore focus outline inside modal when active */
+.hide-global-shell :focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Small helper: if any header/footer use fixed positioning with high z-index, ensure modal sits above */

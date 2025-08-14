@@ -1,5 +1,6 @@
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
+import Shell from '@/components/layout/Shell'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
@@ -41,7 +42,10 @@ export default function RootLayout({
       <body>
         <NotificationProvider>
           <PageTransitionLayout>
-            <LayoutWrapper>{children}</LayoutWrapper>
+            {/* Global Shell wraps LayoutWrapper — internal pages can use SimplifiedLayout to opt out */}
+            <Shell>
+              <LayoutWrapper>{children}</LayoutWrapper>
+            </Shell>
           </PageTransitionLayout>
         </NotificationProvider>
       </body>

@@ -2,6 +2,11 @@
 
 This is the Next.js frontend for B3ACON Creative Connect.
 
+## Comprehensive Documentation
+
+For detailed information about the frontend architecture, components, data flow, and development practices, see:
+- [Frontend Codebase Documentation](docs/FRONTEND_CODEBASE.md)
+
 ## Auth and Security Model
 
 - Server-side route handlers (Next.js App Router):

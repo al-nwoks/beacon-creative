@@ -1,64 +1,88 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { SimplifiedLayout } from '@/components/layout'
-import Button from '@/components/ui/Button'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import { serverFetch } from '@/lib/api'
+import type { Application } from '@/types/api'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Applications | B3ACON Creative Connect',
-    description: 'Your project applications.',
+    title: 'My Applications | B3ACON Creative Connect',
+    description: 'View and manage your project applications.',
 }
 
-export default function ApplicationsPage() {
-    const applications = [
-        { id: 'a1', project: 'Website Redesign', status: 'Under Review', applied: '3 days ago', budget: '$3,000' },
-        { id: 'a2', project: 'Logo Design', status: 'Accepted', applied: '1 week ago', budget: '$1,200' },
-        { id: 'a3', project: 'Mobile App UI', status: 'Rejected', applied: '2 weeks ago', budget: '$4,500' },
-    ]
+export default async function ApplicationsPage() {
+    let applications: Application[] = []
+
+    try {
+        // Fetch user's applications
+        const applicationsResp = await serverFetch('/applications/me')
+        if (Array.isArray(applicationsResp)) {
+            applications = applicationsResp as Application[]
+        }
+    } catch (err) {
+        console.error('Failed to fetch applications', err)
+    }
 
     return (
-        <ProtectedRoute>
+        <ProtectedRoute requiredRole="creative">
             <SimplifiedLayout userType="creative" showSearch={false}>
                 <main className="container mx-auto px-4 py-8">
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold text-neutral-900">Applications</h1>
-                        <p className="text-neutral-600 mt-1">Track the status of your project applications and follow up with clients.</p>
-                    </div>
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-8">My Applications</h1>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <aside className="lg:col-span-1 bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
-                            <h3 className="text-lg font-semibold text-neutral-900 mb-3">Quick Actions</h3>
-                            <div className="space-y-3">
-                                <Button variant="outline" fullWidth className="justify-start">View Open Projects</Button>
-                                <Button variant="outline" fullWidth className="justify-start">Manage Proposals</Button>
-                            </div>
-                        </aside>
-
-                        <section className="lg:col-span-2 space-y-4">
-                            <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
-                                <h2 className="text-xl font-semibold text-neutral-900 mb-2">My Applications</h2>
-                                <div className="divide-y">
-                                    {applications.map((app) => (
-                                        <div key={app.id} className="px-4 py-4 flex items-start justify-between">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-neutral-900 truncate">{app.project}</p>
-                                                <p className="text-xs text-neutral-500">{app.applied} • {app.budget}</p>
-                                            </div>
-                                            <div className="ml-4 text-right">
-                                                <span className={`text-sm font-medium ${app.status === 'Accepted' ? 'text-green-600' : app.status === 'Rejected' ? 'text-red-600' : 'text-yellow-600'}`}>{app.status}</span>
-                                                <div className="mt-2">
-                                                    <a href={`/applications/${app.id}`} className="text-sm text-beacon-purple hover:underline">View</a>
-                                                </div>
-                                            </div>
+                    {applications.length > 0 ? (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 divide-y divide-neutral-200">
+                            {applications.map((application) => (
+                                <div key={application.id} className="p-6">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h2 className="text-xl font-semibold text-neutral-900">
+                                                {typeof application.project === 'object' && application.project !== null
+                                                    ? (application.project as any).title || 'Untitled Project'
+                                                    : 'Project'}
+                                            </h2>
+                                            <p className="text-neutral-600">
+                                                Applied on {application.applied_at ? new Date(application.applied_at).toLocaleDateString() : 'Unknown date'}
+                                            </p>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${application.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                                application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {application.status || 'Pending'}
+                                        </span>
+                                    </div>
 
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200 text-center">
-                                <p className="text-neutral-600">No additional actions required. Keep your profile and portfolio up to date to improve your chances of getting hired.</p>
-                            </div>
-                        </section>
-                    </div>
+                                    {application.cover_letter && (
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-medium text-neutral-700 mb-1">Cover Letter</h3>
+                                            <p className="text-neutral-600">{application.cover_letter}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center">
+                                        <div className="text-sm text-neutral-500">
+                                            {application.proposed_budget && (
+                                                <span className="mr-4">Proposed Budget: ${application.proposed_budget}</span>
+                                            )}
+                                            {application.proposed_timeline_weeks && (
+                                                <span>Timeline: {application.proposed_timeline_weeks} weeks</span>
+                                            )}
+                                        </div>
+                                        <button className="text-beacon-purple hover:underline text-sm font-medium">
+                                            View Project Details
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
+                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">No applications yet</h2>
+                            <p className="text-neutral-600 mb-6">Your project applications will appear here once you apply to projects.</p>
+                            <a href="/projects" className="bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-beacon-purple-dark transition-colors">
+                                Browse Projects
+                            </a>
+                        </div>
+                    )}
                 </main>
             </SimplifiedLayout>
         </ProtectedRoute>

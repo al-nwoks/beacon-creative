@@ -58,17 +58,45 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
             })
 
             if (resp.status === 204) {
-                // Cookie set; avoid client-side race by performing a full navigation
-                // to a server-side post-login route which will validate the cookie and
-                // redirect the user to the appropriate dashboard.
-                if (redirectUrl) {
-                    // If a return URL was specified, navigate directly to it (trusted internal path).
-                    window.location.href = redirectUrl
-                } else {
-                    // Server will read HttpOnly cookie and send the correct redirect for the user's role.
+                // Cookie set; try to resolve the user's role server-side via our proxy
+                // endpoint and redirect immediately to the correct dashboard. This avoids
+                // the blocking experience and ensures we navigate to dashboard instead of home.
+                try {
+                    // Prefer an explicit redirectUrl if provided
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl
+                        return
+                    }
+
+                    // Query our lightweight /api/users/me proxy which reads the HttpOnly cookie server-side.
+                    const meResp = await fetch('/api/users/me', { method: 'GET', credentials: 'include' })
+                    if (meResp.ok) {
+                        const me = await meResp.json()
+                        switch (me?.role) {
+                            case 'creative':
+                                window.location.href = '/creative'
+                                return
+                            case 'client':
+                                window.location.href = '/client'
+                                return
+                            case 'admin':
+                                window.location.href = '/admin'
+                                return
+                            default:
+                                window.location.href = '/'
+                                return
+                        }
+                    } else {
+                        // Fallback to server-side post-login route if /api/auth/me fails for any reason.
+                        window.location.href = '/post-login'
+                        return
+                    }
+                } catch (err) {
+                    // If anything goes wrong, fallback to the post-login route which will attempt server-side routing.
+                    console.error('Post-login client redirection failed, falling back:', err)
                     window.location.href = '/post-login'
+                    return
                 }
-                return
             }
 
             // Attempt to parse error body

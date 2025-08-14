@@ -1,65 +1,61 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { SimplifiedLayout } from '@/components/layout'
+import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import { serverFetch } from '@/lib/api'
+import type { MessageSummary } from '@/types/api'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
     title: 'Messages | B3ACON Creative Connect',
-    description: 'Your messages and conversations.',
+    description: 'View your messages and conversations.',
 }
 
-export default function MessagesPage() {
-    // Mock conversations for initial UI
-    const conversations = [
-        { id: '1', name: 'Sarah Johnson', preview: 'Thanks — I loved your proposal on the project!', time: '2h', unread: true },
-        { id: '2', name: 'Michael Chen', preview: 'Can you share previous work samples for e-commerce?', time: '4h', unread: false },
-        { id: '3', name: 'Client Support', preview: 'Your payment was successful.', time: '1d', unread: false },
-    ]
+export default async function MessagesPage() {
+    let conversations: MessageSummary[] = []
+
+    try {
+        // Fetch user's conversations
+        const conversationsResp = await serverFetch('/messages/conversations')
+        if (Array.isArray(conversationsResp)) {
+            conversations = conversationsResp as MessageSummary[]
+        }
+    } catch (err) {
+        console.error('Failed to fetch conversations', err)
+    }
 
     return (
         <ProtectedRoute>
-            <SimplifiedLayout userType="creative" showSearch={false}>
+            <SimplifiedLayout showSearch={false}>
                 <main className="container mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Conversation list */}
-                        <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-                            <div className="px-4 py-4 border-b border-neutral-100">
-                                <h2 className="text-lg font-semibold text-neutral-900">Conversations</h2>
-                                <p className="text-xs text-neutral-500">Recent chats and message threads</p>
-                            </div>
-                            <div className="divide-y">
-                                {conversations.map((c) => (
-                                    <a key={c.id} href={`/messages/${c.id}`} className={`block px-4 py-3 hover:bg-neutral-50 ${c.unread ? 'bg-neutral-50' : ''}`}>
-                                        <div className="flex items-start gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-neutral-200 flex-shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-medium text-neutral-900 truncate">{c.name}</p>
-                                                    <p className="text-xs text-neutral-500">{c.time}</p>
-                                                </div>
-                                                <p className="text-xs text-neutral-600 truncate">{c.preview}</p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-8">Messages</h1>
 
-                        {/* Active conversation / placeholder */}
-                        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 className="text-xl font-semibold text-neutral-900">Select a conversation</h3>
-                                    <p className="text-sm text-neutral-600">Choose a thread from the left to view messages and reply.</p>
+                    {conversations.length > 0 ? (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 divide-y divide-neutral-200">
+                            {conversations.map((conversation) => (
+                                <div key={conversation.id} className="p-6 hover:bg-neutral-50 transition-colors cursor-pointer">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-12 h-12 flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center">
+                                                <h2 className="text-lg font-semibold text-neutral-900 truncate">{conversation.name}</h2>
+                                                <span className="text-sm text-neutral-500 whitespace-nowrap">
+                                                    {conversation.time || 'Unknown time'}
+                                                </span>
+                                            </div>
+                                            <p className="text-neutral-600 truncate">{conversation.preview || 'No message preview'}</p>
+                                        </div>
+                                        {conversation.unread && (
+                                            <div className="w-3 h-3 bg-beacon-purple rounded-full flex-shrink-0"></div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
-                                    <a href="/messages/new" className="inline-block bg-beacon-purple text-white px-3 py-2 rounded-md text-sm hover:bg-purple-700">New Message</a>
-                                </div>
-                            </div>
-                            <div className="border border-dashed border-neutral-100 rounded-md p-8 text-center text-neutral-500">
-                                No conversation selected. Pick a thread or start a new message.
-                            </div>
+                            ))}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
+                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">No conversations yet</h2>
+                            <p className="text-neutral-600">Your messages will appear here once you start a conversation.</p>
+                        </div>
+                    )}
                 </main>
             </SimplifiedLayout>
         </ProtectedRoute>

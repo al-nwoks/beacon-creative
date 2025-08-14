@@ -340,7 +340,271 @@ def seed_mock_data(db: Session):
     
     db.commit()
     
+    # Create mock messages
+    messages_data = [
+        # Conversation between Sarah (creative) and Style Magazine (client) about Fashion Photographer project
+        {
+            "sender_id": style_magazine.id,
+            "recipient_id": sarah.id,
+            "project_id": created_projects[0].id,
+            "content": "Hi Sarah, I'm interested in your application for our fashion photography project. Could you tell me more about your experience with studio lighting?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=11)
+        },
+        {
+            "sender_id": sarah.id,
+            "recipient_id": style_magazine.id,
+            "project_id": created_projects[0].id,
+            "content": "Hi John, I'd be happy to discuss my experience! I've been working with studio lighting for over 6 years, specializing in fashion photography. I have a full setup with Profoto lights and modifiers. Would you like to see some examples from my portfolio?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=10)
+        },
+        {
+            "sender_id": style_magazine.id,
+            "recipient_id": sarah.id,
+            "project_id": created_projects[0].id,
+            "content": "Yes, that would be great! Please share some portfolio examples that are similar to what we're looking for.",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=9)
+        },
+        
+        # Conversation between Emma (creative) and Beach Vibes (client) about Summer Campaign
+        {
+            "sender_id": beach_vibes.id,
+            "recipient_id": emma.id,
+            "project_id": created_projects[1].id,
+            "content": "Hi Emma, I saw your application for our summer campaign. You look perfect for what we're looking for! Are you available for a test shoot next week?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=7)
+        },
+        {
+            "sender_id": emma.id,
+            "recipient_id": beach_vibes.id,
+            "project_id": created_projects[1].id,
+            "content": "Hi Maria! I'm excited about this opportunity. Yes, I'm available for a test shoot next week. What should I prepare?",
+            "is_read": False,
+            "created_at": datetime.utcnow() - timedelta(hours=6)
+        },
+        
+        # Conversation between Alex (creative) and Runway Productions (client) about Fashion Show DJ
+        {
+            "sender_id": runway_productions.id,
+            "recipient_id": alex.id,
+            "project_id": created_projects[2].id,
+            "content": "Hey Alex, just wanted to confirm the details for our fashion show after-party. The event is on June 15th from 9 PM to 2 AM. Can you send me your setlist preferences?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=23)
+        },
+        {
+            "sender_id": alex.id,
+            "recipient_id": runway_productions.id,
+            "project_id": created_projects[2].id,
+            "content": "Hi David, I'm looking forward to the event! I'll send you my setlist preferences by tomorrow. Do you have any specific requests for the music genre?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=22)
+        },
+        
+        # Conversation between Mike (creative) and Tech Startup (client) about Brand Identity
+        {
+            "sender_id": tech_startup.id,
+            "recipient_id": mike.id,
+            "project_id": created_projects[3].id,
+            "content": "Hi Mike, we're excited to work with you on our brand identity project. Can we schedule a kickoff meeting for next Monday to discuss our requirements in detail?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=5)
+        },
+        {
+            "sender_id": mike.id,
+            "recipient_id": tech_startup.id,
+            "project_id": created_projects[3].id,
+            "content": "Hi Jennifer, I'm looking forward to working with TechStartup Inc. Next Monday works great for me. What time would you prefer for the meeting?",
+            "is_read": False,
+            "created_at": datetime.utcnow() - timedelta(hours=4)
+        },
+        
+        # Conversation between Lisa (creative) and Style Magazine (client) about Video Content
+        {
+            "sender_id": style_magazine.id,
+            "recipient_id": lisa.id,
+            "project_id": created_projects[4].id,
+            "content": "Hi Lisa, I reviewed your application for our video content project. We'd like to move forward with you. Can you provide a timeline for the deliverables?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(hours=3)
+        },
+        {
+            "sender_id": lisa.id,
+            "recipient_id": style_magazine.id,
+            "project_id": created_projects[4].id,
+            "content": "Hi John, I'm excited to work with Style Magazine! I can deliver the first set of behind-the-scenes content within 2 weeks, and the promotional videos within 4 weeks. Does that work for you?",
+            "is_read": False,
+            "created_at": datetime.utcnow() - timedelta(hours=2)
+        },
+        
+        # General messages not tied to specific projects
+        {
+            "sender_id": sarah.id,
+            "recipient_id": mike.id,
+            "content": "Hey Mike, are you available for a collaboration on a fashion project next month?",
+            "is_read": True,
+            "created_at": datetime.utcnow() - timedelta(days=1, hours=5)
+        },
+        {
+            "sender_id": mike.id,
+            "recipient_id": sarah.id,
+            "content": "Hi Sarah! Yes, I'm interested. Let's discuss the details over a call.",
+            "is_read": False,
+            "created_at": datetime.utcnow() - timedelta(days=1, hours=4)
+        }
+    ]
+    
+    # Create messages
+    for msg_data in messages_data:
+        message = Message(**msg_data)
+        db.add(message)
+    
+    db.commit()
+    
+    # Create mock payments
+    payments_data = [
+        # Payment for DJ services (accepted application)
+        {
+            "project_id": created_projects[2].id,
+            "client_id": runway_productions.id,
+            "creative_id": alex.id,
+            "amount": 1000.0,
+            "milestone_description": "Payment for DJ services at fashion show after-party",
+            "stripe_payment_intent_id": "pi_dj_payment_001",
+            "status": "released",
+            "created_at": datetime.utcnow() - timedelta(days=2),
+            "released_at": datetime.utcnow() - timedelta(days=1)
+        },
+        # Payment for brand identity project (pending)
+        {
+            "project_id": created_projects[3].id,
+            "client_id": tech_startup.id,
+            "creative_id": mike.id,
+            "amount": 2800.0,
+            "milestone_description": "50% deposit for brand identity design",
+            "stripe_payment_intent_id": "pi_brand_payment_001",
+            "status": "held_in_escrow",
+            "created_at": datetime.utcnow() - timedelta(hours=5)
+        },
+        # Payment for video content (pending)
+        {
+            "project_id": created_projects[4].id,
+            "client_id": style_magazine.id,
+            "creative_id": lisa.id,
+            "amount": 1000.0,
+            "milestone_description": "Initial payment for video content creation",
+            "stripe_payment_intent_id": "pi_video_payment_001",
+            "status": "held_in_escrow",
+            "created_at": datetime.utcnow() - timedelta(hours=3)
+        }
+    ]
+    
+    # Create payments
+    for payment_data in payments_data:
+        payment = Payment(**payment_data)
+        db.add(payment)
+    
+    db.commit()
+    
+    # Create mock project files
+    project_files_data = [
+        # Files for Fashion Photographer project
+        {
+            "project_id": created_projects[0].id,
+            "uploader_id": sarah.id,
+            "filename": "fashion_portfolio_samples.zip",
+            "file_url": "https://example.com/files/fashion_portfolio_samples.zip",
+            "file_size": 15728640,  # 15MB
+            "file_type": "application/zip",
+            "created_at": datetime.utcnow() - timedelta(hours=9)
+        },
+        {
+            "project_id": created_projects[0].id,
+            "uploader_id": style_magazine.id,
+            "filename": "brand_guidelines.pdf",
+            "file_url": "https://example.com/files/brand_guidelines.pdf",
+            "file_size": 2097152,  # 2MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=8)
+        },
+        
+        # Files for Model for Summer Campaign project
+        {
+            "project_id": created_projects[1].id,
+            "uploader_id": emma.id,
+            "filename": "model_comp_card.pdf",
+            "file_url": "https://example.com/files/model_comp_card.pdf",
+            "file_size": 3145728,  # 3MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=6)
+        },
+        
+        # Files for DJ for Fashion Show project
+        {
+            "project_id": created_projects[2].id,
+            "uploader_id": alex.id,
+            "filename": "dj_setlist.pdf",
+            "file_url": "https://example.com/files/dj_setlist.pdf",
+            "file_size": 1048576,  # 1MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=22)
+        },
+        {
+            "project_id": created_projects[2].id,
+            "uploader_id": runway_productions.id,
+            "filename": "event_details.pdf",
+            "file_url": "https://example.com/files/event_details.pdf",
+            "file_size": 2097152,  # 2MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=21)
+        },
+        
+        # Files for Brand Identity Designer project
+        {
+            "project_id": created_projects[3].id,
+            "uploader_id": mike.id,
+            "filename": "logo_concepts_v1.pdf",
+            "file_url": "https://example.com/files/logo_concepts_v1.pdf",
+            "file_size": 5242880,  # 5MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=4)
+        },
+        {
+            "project_id": created_projects[3].id,
+            "uploader_id": tech_startup.id,
+            "filename": "company_brief.pdf",
+            "file_url": "https://example.com/files/company_brief.pdf",
+            "file_size": 1048576,  # 1MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=5)
+        },
+        
+        # Files for Video Content Creator project
+        {
+            "project_id": created_projects[4].id,
+            "uploader_id": lisa.id,
+            "filename": "video_treatment.pdf",
+            "file_url": "https://example.com/files/video_treatment.pdf",
+            "file_size": 3145728,  # 3MB
+            "file_type": "application/pdf",
+            "created_at": datetime.utcnow() - timedelta(hours=2)
+        }
+    ]
+    
+    # Create project files
+    for file_data in project_files_data:
+        project_file = ProjectFile(**file_data)
+        db.add(project_file)
+    
+    db.commit()
+    
     print("Mock data seeded successfully!")
     print(f"Created {len(created_users)} users")
     print(f"Created {len(created_projects)} projects")
     print(f"Created {len(applications_data)} applications")
+    print(f"Created {len(messages_data)} messages")
+    print(f"Created {len(payments_data)} payments")
+    print(f"Created {len(project_files_data)} project files")

@@ -73,6 +73,7 @@ See `backend/app/auth/README.md` for detailed documentation.
 │   ├── alembic/          # Database migrations
 │   └── requirements.txt  # Python dependencies
 ├── frontend/
+│   ├── docs/             # Frontend documentation
 │   ├── src/
 │   │   ├── app/          # Next.js app router pages
 │   │   ├── components/   # React components
@@ -125,6 +126,11 @@ See `backend/app/auth/README.md` for detailed documentation.
    ```bash
    ./start-dev.sh
    ```
+
+### Frontend Documentation
+
+For detailed information about the frontend architecture, components, data flow, and development practices, see:
+- [Frontend Codebase Documentation](frontend/docs/FRONTEND_CODEBASE.md)
 
 ### Frontend Setup
 

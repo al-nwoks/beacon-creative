@@ -2,7 +2,8 @@ import logging
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -116,3 +117,18 @@ async def login(
     
     logger.info(f"User {user.email} logged in successfully")
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+async def logout():
+    """
+    Logout user by clearing the JWT token cookie and redirecting to homepage
+    """
+    logger.info("User logout requested")
+    
+    # Create a response that clears the token cookie and redirects to homepage
+    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("access_token")  # Clear the access token cookie if it exists
+    
+    logger.info("User logged out successfully")
+    return response

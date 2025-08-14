@@ -1,6 +1,6 @@
 'use client'
 
-import Button from '@/components/ui/Button'
+import { B3aconLogo } from '@/components/icons/B3aconLogo'
 import Link from 'next/link'
 
 export default function PublicHeader() {
@@ -9,7 +9,7 @@ export default function PublicHeader() {
             <div className="container mx-auto px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center">
                     <Link href="/" className="text-2xl font-bold text-beacon-purple">
-                        B3ACON
+                        <B3aconLogo className="h-8 w-auto" />
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center space-x-6" aria-label="Main">
@@ -28,9 +28,7 @@ export default function PublicHeader() {
                         Log in
                     </Link>
                     <Link href="/register">
-                        <Button variant="primary" size="sm">
-                            Sign up
-                        </Button>
+                        <a className="inline-flex items-center justify-center px-3 py-1.5 bg-beacon-purple text-white rounded text-sm">Sign up</a>
                     </Link>
                 </div>
             </div>

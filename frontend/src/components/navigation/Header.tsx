@@ -1,5 +1,6 @@
 'use client'
 
+import { B3aconLogo } from '@/components/icons/B3aconLogo'
 import { Bell, Filter, Menu, MessageSquare, Search, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -42,7 +43,7 @@ export default function Header({
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link href="/" className="text-2xl font-bold text-gray-900">
-                            B3ACON
+                            <B3aconLogo className="h-8 w-auto" />
                         </Link>
                     </div>
 

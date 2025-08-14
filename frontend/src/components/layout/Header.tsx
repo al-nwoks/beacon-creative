@@ -50,7 +50,6 @@ export function Header({
                     >
                         <Link href="/" className="flex items-center space-x-2">
                             <B3aconLogo className="h-8 w-auto" />
-                            <span className="font-bold text-xl text-neutral-900">B3ACON</span>
                         </Link>
                     </motion.div>
 
