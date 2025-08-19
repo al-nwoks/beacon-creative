@@ -6,7 +6,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3003:3000"
     # Use a single dotenv file at repo root for both local and container builds
     # env_file:
     #   - ./.env
