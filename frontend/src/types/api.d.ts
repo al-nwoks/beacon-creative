@@ -10,10 +10,18 @@ export interface User {
   id: number | string
   email: string
   name?: string
+  first_name?: string
+  last_name?: string
   role?: 'creative' | 'client' | 'admin'
+  bio?: string | null
+  location?: string | null
+  profile_image_url?: string | null
   avatar_url?: string | null
   created_at?: string
   updated_at?: string
+  hourly_rate?: number | null
+  skills?: string[]
+  portfolio_links?: string[]
 }
 
 /* Project */
@@ -22,6 +30,7 @@ export interface Project {
   title: string
   company?: string
   description?: string
+  category?: string
   budget_min?: number | null
   budget_max?: number | null
   timeline_weeks?: number | null
@@ -38,9 +47,12 @@ export interface Project {
 export interface Application {
   id: number | string
   project: Project | string | number
+  project_id?: number | string
   applicant_id?: number | string
+  creative_id?: number | string
   status?: string
   applied_at?: string
+  created_at?: string
   cover_letter?: string
   proposed_budget?: number
   proposed_timeline_weeks?: number

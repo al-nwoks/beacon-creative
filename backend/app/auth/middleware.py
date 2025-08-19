@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -20,13 +20,17 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security, use_cache=False),
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Get the current authenticated user using the configured authentication provider
+    Get the current authenticated user using the configured authentication provider.
+    Supports both Bearer token in Authorization header and token in access_token cookie.
     """
-    logger.debug("Authenticating user with token")
+    logger.debug(f"Authenticating user with token. Request path: {request.url.path}")
+    logger.debug(f"Request headers: {dict(request.headers)}")
+    logger.debug(f"Request cookies: {dict(request.cookies)}")
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,8 +38,26 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Get token from Authorization header or cookie
+    token = None
+    if credentials:
+        # Token from Authorization header
+        token = credentials.credentials
+        logger.debug("Using token from Authorization header")
+    else:
+        # Try to get token from cookie
+        token = request.cookies.get("access_token")
+        if token:
+            logger.debug("Using token from access_token cookie")
+        else:
+            logger.debug("No token found in Authorization header or access_token cookie")
+    
+    if not token:
+        logger.warning("No authentication token provided")
+        raise credentials_exception
+    
     try:
-        user = await auth_provider.get_user_by_token(db, credentials.credentials)
+        user = await auth_provider.get_user_by_token(db, token)
         if user is None:
             logger.warning("Invalid token: User not found or inactive")
             raise credentials_exception

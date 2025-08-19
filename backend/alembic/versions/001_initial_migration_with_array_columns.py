@@ -37,6 +37,7 @@ def upgrade() -> None:
     sa.Column('portfolio_links', postgresql.ARRAY(sa.String()), nullable=True),
     sa.Column('hourly_rate', sa.Float(), nullable=True),
     sa.Column('availability', sa.String(), nullable=True),
+    sa.Column('creative_type', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')

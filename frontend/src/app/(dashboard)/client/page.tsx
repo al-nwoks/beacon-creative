@@ -16,10 +16,10 @@ export default async function ClientDashboardPage() {
     // Server-side initial data fetch (hybrid approach)
     let user: User | null = null
     let stats = [
-        { label: 'Active Projects', value: '0', icon: Briefcase, color: 'text-blue-600' },
-        { label: 'Total Spent', value: '$0', icon: DollarSign, color: 'text-green-600' },
-        { label: 'Applications', value: '0', icon: Users, color: 'text-purple-600' },
-        { label: 'Messages', value: '0', icon: MessageSquare, color: 'text-orange-600' },
+        { label: 'Active Projects', value: '0', icon: Briefcase, color: 'text-beacon-blue' },
+        { label: 'Total Spent', value: '$0', icon: DollarSign, color: 'text-beacon-green' },
+        { label: 'Applications', value: '0', icon: Users, color: 'text-beacon-purple' },
+        { label: 'Messages', value: '0', icon: MessageSquare, color: 'text-beacon-orange' },
     ]
 
     let recentProjects: Project[] = []
@@ -82,6 +82,11 @@ export default async function ClientDashboardPage() {
                         <p className="text-neutral-600">
                             Manage your projects and connect with creative talent from this dashboard.
                         </p>
+                        {user?.created_at && (
+                            <p className="text-sm text-neutral-500 mt-2">
+                                Member since {new Date(user.created_at).toLocaleDateString()}
+                            </p>
+                        )}
                     </div>
 
                     {/* Statistics Cards */}
@@ -127,6 +132,13 @@ export default async function ClientDashboardPage() {
                                                         View Details
                                                     </Link>
                                                 </div>
+                                                {project.status && (
+                                                    <div className="mt-2">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {project.status}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))
                                     ) : (

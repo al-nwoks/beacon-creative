@@ -104,6 +104,10 @@ def get_db() -> Generator[Session, None, None]:
     except Exception as e:
         session.rollback()
         logger.error(f"Database session error in dependency: {str(e)}")
+        # Log more details about the error
+        logger.error(f"Error type: {type(e).__name__}")
+        if hasattr(e, 'status_code'):
+            logger.error(f"Error status code: {e.status_code}")
         raise
     finally:
         session.close()

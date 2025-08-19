@@ -12,6 +12,8 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
+    # Creative classification (e.g., Photographer, Model, DJ, Screenwriter)
+    creative_type: Optional[str] = None
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -47,6 +49,8 @@ class UserInDBBase(BaseModel):
     hourly_rate: Optional[float] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None
+    # Expose creative_type on API responses
+    creative_type: Optional[str] = None
 
     class Config:
         from_attributes = True

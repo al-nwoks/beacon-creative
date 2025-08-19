@@ -8,62 +8,94 @@ export const metadata: Metadata = {
     description: 'Find and connect with talented creatives.',
 }
 
+import CreativeCard from '@/components/dashboard/CreativeCard'
+
 export default function CreativesPage() {
-    // Mock data for creatives
+    // Mock data for creatives (now aligned with CreativeCard props)
     const creatives = [
         {
-            id: 1,
-            name: 'Alex Johnson',
-            role: 'Graphic Designer',
+            id: '1',
+            first_name: 'Alex',
+            last_name: 'Johnson',
+            creative_type: 'Graphic Designer',
+            bio: 'Experienced brand designer focusing on identity systems and logos.',
             skills: ['Branding', 'Logo Design', 'Illustration'],
-            rating: 4.8,
-            projects: 24,
-            hourlyRate: 45,
+            hourly_rate: 45,
+            profile_image_url: undefined,
+            location: 'New York, NY',
+            portfolio_links: ['https://alexjohnson.design'],
+            is_verified: true,
+            featured: false,
         },
         {
-            id: 2,
-            name: 'Maria Garcia',
-            role: 'UI/UX Designer',
+            id: '2',
+            first_name: 'Maria',
+            last_name: 'Garcia',
+            creative_type: 'UI/UX Designer',
+            bio: 'User-centered designer with a passion for research-driven interfaces.',
             skills: ['Figma', 'Prototyping', 'User Research'],
-            rating: 4.9,
-            projects: 32,
-            hourlyRate: 65,
+            hourly_rate: 65,
+            profile_image_url: undefined,
+            location: 'San Francisco, CA',
+            portfolio_links: ['https://mariagarcia.design'],
+            is_verified: true,
+            featured: false,
         },
         {
-            id: 3,
-            name: 'David Kim',
-            role: 'Frontend Developer',
+            id: '3',
+            first_name: 'David',
+            last_name: 'Kim',
+            creative_type: 'Frontend Developer',
+            bio: 'Front-end engineer focused on performant React applications and accessible UI.',
             skills: ['React', 'TypeScript', 'Next.js'],
-            rating: 4.7,
-            projects: 18,
-            hourlyRate: 75,
+            hourly_rate: 75,
+            profile_image_url: undefined,
+            location: 'Austin, TX',
+            portfolio_links: ['https://davidkim.dev'],
+            is_verified: false,
+            featured: false,
         },
         {
-            id: 4,
-            name: 'Sarah Williams',
-            role: 'Content Writer',
+            id: '4',
+            first_name: 'Sarah',
+            last_name: 'Williams',
+            creative_type: 'Content Writer',
+            bio: 'Copywriter specializing in brand storytelling, blogs, and SEO content.',
             skills: ['Copywriting', 'SEO', 'Blog Posts'],
-            rating: 4.9,
-            projects: 42,
-            hourlyRate: 35,
+            hourly_rate: 35,
+            profile_image_url: undefined,
+            location: 'Chicago, IL',
+            portfolio_links: ['https://sarahwrites.com'],
+            is_verified: false,
+            featured: false,
         },
         {
-            id: 5,
-            name: 'James Brown',
-            role: 'Video Editor',
+            id: '5',
+            first_name: 'James',
+            last_name: 'Brown',
+            creative_type: 'Video Editor',
+            bio: 'Editor and motion designer experienced in short-form and long-form video content.',
             skills: ['Premiere Pro', 'After Effects', 'Motion Graphics'],
-            rating: 4.6,
-            projects: 15,
-            hourlyRate: 55,
+            hourly_rate: 55,
+            profile_image_url: undefined,
+            location: 'Los Angeles, CA',
+            portfolio_links: ['https://jamesbrownvids.com'],
+            is_verified: true,
+            featured: false,
         },
         {
-            id: 6,
-            name: 'Emma Davis',
-            role: 'Photographer',
+            id: '6',
+            first_name: 'Emma',
+            last_name: 'Davis',
+            creative_type: 'Photographer',
+            bio: 'Fashion and lifestyle photographer available for editorials and commercial work.',
             skills: ['Portrait', 'Product', 'Event Photography'],
-            rating: 4.8,
-            projects: 28,
-            hourlyRate: 85,
+            hourly_rate: 85,
+            profile_image_url: undefined,
+            location: 'Los Angeles, CA',
+            portfolio_links: ['https://emmadavis.photos'],
+            is_verified: true,
+            featured: true,
         },
     ]
 
@@ -90,49 +122,21 @@ export default function CreativesPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {creatives.map((creative) => (
-                            <div key={creative.id} className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 hover:shadow-md transition-shadow">
-                                <div className="flex items-center space-x-4 mb-4">
-                                    <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16 flex-shrink-0" />
-                                    <div>
-                                        <h2 className="text-xl font-semibold text-neutral-900">{creative.name}</h2>
-                                        <p className="text-neutral-600">{creative.role}</p>
-                                    </div>
-                                </div>
-
-                                <div className="mb-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        {creative.skills.slice(0, 3).map((skill, index) => (
-                                            <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                        {creative.skills.length > 3 && (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                                                +{creative.skills.length - 3} more
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center">
-                                        <div className="flex text-yellow-400">
-                                            {[...Array(5)].map((_, i) => (
-                                                <svg key={i} className={`w-4 h-4 ${i < Math.floor(creative.rating) ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                                                </svg>
-                                            ))}
-                                        </div>
-                                        <span className="ml-2 text-sm text-neutral-600">{creative.rating}</span>
-                                    </div>
-                                    <span className="text-sm text-neutral-600">{creative.projects} projects</span>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                    <span className="text-lg font-semibold text-neutral-900">${creative.hourlyRate}/hr</span>
-                                    <Button variant="outline" size="sm">View Profile</Button>
-                                </div>
-                            </div>
+                            <CreativeCard
+                                key={String(creative.id)}
+                                id={String(creative.id)}
+                                first_name={creative.first_name}
+                                last_name={creative.last_name}
+                                bio={creative.bio}
+                                location={creative.location}
+                                hourly_rate={creative.hourly_rate}
+                                skills={creative.skills ?? []}
+                                portfolio_links={creative.portfolio_links ?? []}
+                                profile_image_url={creative.profile_image_url}
+                                is_verified={creative.is_verified ?? false}
+                                featured={creative.featured ?? false}
+                                creative_type={creative.creative_type}
+                            />
                         ))}
                     </div>
 

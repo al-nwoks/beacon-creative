@@ -63,7 +63,8 @@ def seed_mock_data(db: Session):
             "skills": ["Photography", "Fashion", "Portrait", "Studio", "Retouching"],
             "portfolio_links": ["https://sarahjohnson.com", "https://instagram.com/sarahj_photo"],
             "is_verified": True,
-            "is_active": True
+            "is_active": True,
+            "creative_type": "Photographer"
         },
         {
             "email": "mike.chen@example.com",
@@ -77,7 +78,8 @@ def seed_mock_data(db: Session):
             "skills": ["Graphic Design", "Branding", "Web Design", "UI/UX", "Adobe Creative Suite"],
             "portfolio_links": ["https://mikechen.design", "https://behance.net/mikechen"],
             "is_verified": True,
-            "is_active": True
+            "is_active": True,
+            "creative_type": "Designer"
         },
         {
             "email": "emma.davis@example.com",
@@ -91,7 +93,8 @@ def seed_mock_data(db: Session):
             "skills": ["Modeling", "Fashion", "Commercial", "Lifestyle", "Content Creation"],
             "portfolio_links": ["https://emmadavis.model", "https://instagram.com/emma_davis_model"],
             "is_verified": True,
-            "is_active": True
+            "is_active": True,
+            "creative_type": "Model"
         },
         {
             "email": "alex.rodriguez@example.com",
@@ -105,7 +108,8 @@ def seed_mock_data(db: Session):
             "skills": ["DJ", "Music Production", "Events", "Electronic Music", "Sound Design"],
             "portfolio_links": ["https://alexrodriguezdj.com", "https://soundcloud.com/alexrodriguez"],
             "is_verified": True,
-            "is_active": True
+            "is_active": True,
+            "creative_type": "DJ"
         },
         {
             "email": "lisa.wang@example.com",
@@ -119,7 +123,8 @@ def seed_mock_data(db: Session):
             "skills": ["Videography", "Filmmaking", "Editing", "Storytelling", "Corporate Video"],
             "portfolio_links": ["https://lisawangfilms.com", "https://vimeo.com/lisawang"],
             "is_verified": True,
-            "is_active": True
+            "is_active": True,
+            "creative_type": "Videographer"
         },
         
         # Clients

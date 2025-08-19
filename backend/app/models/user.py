@@ -22,6 +22,9 @@ class User(Base):
     portfolio_links = Column(ARRAY(String), nullable=True)
     hourly_rate = Column(Float, nullable=True)
     availability = Column(String, nullable=True)
+
+    # Creative-specific classification (e.g., Photographer, Model, DJ, Screenwriter)
+    creative_type = Column(String, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

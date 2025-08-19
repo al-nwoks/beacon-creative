@@ -15,10 +15,10 @@ export const metadata: Metadata = {
 export default async function AdminPage() {
     // Server-side initial data fetch (hybrid approach)
     let stats = [
-        { label: 'Total Users', value: '0', icon: Users, color: 'text-blue-600' },
-        { label: 'Active Projects', value: '0', icon: Briefcase, color: 'text-green-600' },
-        { label: 'Total Payments', value: '0', icon: Wallet, color: 'text-purple-600' },
-        { label: 'Platform Analytics', value: '0', icon: BarChart3, color: 'text-orange-600' },
+        { label: 'Total Users', value: '0', icon: Users, color: 'text-beacon-blue' },
+        { label: 'Active Projects', value: '0', icon: Briefcase, color: 'text-beacon-green' },
+        { label: 'Total Payments', value: '0', icon: Wallet, color: 'text-beacon-purple' },
+        { label: 'Platform Analytics', value: '0', icon: BarChart3, color: 'text-beacon-orange' },
     ]
 
     let recentUsers: User[] = []
@@ -93,7 +93,7 @@ export default async function AdminPage() {
                                                 <div className="flex items-center space-x-4">
                                                     <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-12 h-12 flex-shrink-0" />
                                                     <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-semibold text-neutral-900 mb-1">{user.name || 'Unnamed User'}</h3>
+                                                        <h3 className="text-lg font-semibold text-neutral-900 mb-1">{user.name || `${user.first_name} ${user.last_name}` || 'Unnamed User'}</h3>
                                                         <p className="text-neutral-600 text-sm mb-1">{user.email}</p>
                                                         <div className="flex items-center space-x-2">
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -103,6 +103,16 @@ export default async function AdminPage() {
                                                                 Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown date'}
                                                             </span>
                                                         </div>
+                                                        {user.location && (
+                                                            <p className="text-xs text-neutral-500 mt-1">
+                                                                {user.location}
+                                                            </p>
+                                                        )}
+                                                        {user.bio && (
+                                                            <p className="text-xs text-neutral-600 mt-1 line-clamp-2">
+                                                                {user.bio}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -166,6 +176,13 @@ export default async function AdminPage() {
                                                         View Details
                                                     </Link>
                                                 </div>
+                                                {project.status && (
+                                                    <div className="mt-2">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {project.status}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))
                                     ) : (

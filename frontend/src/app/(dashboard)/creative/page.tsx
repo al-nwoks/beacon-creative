@@ -1,4 +1,5 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import JobCard from '@/components/dashboard/JobCard'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
 import { serverFetch } from '@/lib/api'
@@ -16,10 +17,10 @@ export default async function CreativeDashboardPage() {
     // Server-side initial data fetch (hybrid approach)
     let user: User | null = null
     let stats = [
-        { label: 'Active Applications', value: '0', icon: Briefcase, color: 'text-blue-600' },
-        { label: 'Earnings', value: '$0', icon: DollarSign, color: 'text-green-600' },
-        { label: 'Completed Projects', value: '0', icon: Users, color: 'text-purple-600' },
-        { label: 'Messages', value: '0', icon: MessageSquare, color: 'text-orange-600' },
+        { label: 'Active Applications', value: '0', icon: Briefcase, color: 'text-beacon-blue' },
+        { label: 'Earnings', value: '$0', icon: DollarSign, color: 'text-beacon-green' },
+        { label: 'Completed Projects', value: '0', icon: Users, color: 'text-beacon-purple' },
+        { label: 'Messages', value: '0', icon: MessageSquare, color: 'text-beacon-orange' },
     ]
 
     let recentProjects: Project[] = []
@@ -78,14 +79,35 @@ export default async function CreativeDashboardPage() {
         <ProtectedRoute requiredRole="creative">
             <SimplifiedLayout userType="creative" showSearch={false}>
                 <main className="container mx-auto px-4 py-8">
-                    {/* Welcome Section */}
-                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8 mb-8">
-                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                            Welcome, {user?.name || 'Creative'}!
-                        </h1>
-                        <p className="text-neutral-600">
-                            Manage your profile, projects, and applications from this dashboard.
-                        </p>
+                    {/* Welcome Banner (beacon purple gradient) */}
+                    <div className="rounded-lg overflow-hidden mb-8 shadow-sm">
+                        <div className="bg-gradient-to-r from-beacon-purple to-beacon-purple-dark p-8">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
+                                        Welcome to B3ACON
+                                    </h1>
+                                    <p className="text-beacon-purple-light max-w-xl">
+                                        Connect with top creative talent and exciting opportunities worldwide.
+                                    </p>
+                                    {user?.created_at && (
+                                        <p className="text-sm text-beacon-purple-light mt-3">
+                                            Member since {new Date(user.created_at).toLocaleDateString()}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Link href="/profile">
+                                        <Button className="bg-white text-beacon-purple hover:bg-neutral-100" size="md">
+                                            Complete Your Profile
+                                        </Button>
+                                    </Link>
+                                    <Button variant="outline" className="border-white text-white hidden md:inline-flex">
+                                        <span className="mr-2">🔍</span> Filter
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Statistics Cards */}
@@ -117,22 +139,26 @@ export default async function CreativeDashboardPage() {
                                 </div>
                                 <div className="space-y-4">
                                     {recentProjects.length > 0 ? (
-                                        recentProjects.map((project) => (
-                                            <div key={project.id} className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                                <h3 className="text-lg font-semibold text-neutral-900 mb-2">{project.title ?? 'Untitled project'}</h3>
-                                                <p className="text-neutral-600 text-sm mb-3 line-clamp-2">{project.description ?? ''}</p>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-neutral-500">
-                                                        {project.budget_min && project.budget_max
-                                                            ? `$${project.budget_min} - $${project.budget_max}`
-                                                            : 'Budget not specified'}
-                                                    </span>
-                                                    <Link href={`/projects/${project.id}`} className="text-beacon-purple hover:underline text-sm font-medium">
-                                                        View Details
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        ))
+                                        recentProjects.map((project) => {
+                                            // cast to any to avoid strict backend Project differences and safely coerce fields
+                                            const p: any = project as any
+                                            return (
+                                                <JobCard
+                                                    key={String(p.id)}
+                                                    id={String(p.id)}
+                                                    title={p.title ?? 'Untitled project'}
+                                                    company={p.client?.name ?? p.company ?? 'Client'}
+                                                    description={p.description ?? ''}
+                                                    location={p.location ?? p.city ?? ''}
+                                                    budget_min={typeof p.budget_min === 'number' ? p.budget_min : undefined}
+                                                    budget_max={typeof p.budget_max === 'number' ? p.budget_max : undefined}
+                                                    required_skills={Array.isArray(p.skills) ? p.skills : (p.required_skills ?? [])}
+                                                    deadline={p.deadline ?? undefined}
+                                                    created_at={p.created_at ?? new Date().toISOString()}
+                                                    showApplyButton={true}
+                                                />
+                                            )
+                                        })
                                     ) : (
                                         <p className="text-neutral-600">No available projects at the moment.</p>
                                     )}

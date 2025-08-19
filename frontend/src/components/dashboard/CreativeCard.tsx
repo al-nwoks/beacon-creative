@@ -20,6 +20,7 @@ interface CreativeCardProps {
     profile_image_url?: string
     is_verified: boolean
     featured?: boolean
+    creative_type?: string
     onContact?: (creativeId: string) => void
     onViewProfile?: (creativeId: string) => void
     className?: string
@@ -37,6 +38,7 @@ export default function CreativeCard({
     profile_image_url,
     is_verified,
     featured = false,
+    creative_type,
     onContact,
     onViewProfile,
     className = ""
@@ -63,7 +65,7 @@ export default function CreativeCard({
             transition={{ duration: 0.3 }}
             whileHover={{ y: -5 }}
         >
-            <AnimatedCard className={`border border-gray-200 p-4 relative rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 h-full flex flex-col ${className}`}>
+            <AnimatedCard className={`border border-gray-200 p-4 relative rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col ${className}`}>
                 {featured && (
                     <motion.span
                         className="absolute top-2 right-2 bg-beacon-purple text-white text-xs px-2 py-1 rounded-full"
@@ -104,6 +106,11 @@ export default function CreativeCard({
                     >
                         {fullName}
                     </motion.h3>
+
+                    {/* creative_type display */}
+                    {bio == null && creative_type && (
+                        <p className="text-sm text-neutral-600 mb-1 text-center">{creative_type}</p>
+                    )}
 
                     <div className="flex items-center justify-center mt-0.5">
                         {is_verified && (
@@ -187,7 +194,7 @@ export default function CreativeCard({
                     <Button
                         variant="default"
                         size="sm"
-                        className="w-full bg-beacon-purple hover:bg-purple-700"
+                        className="w-full bg-beacon-purple hover:bg-beacon-purple-dark text-white rounded-lg py-2 shadow-sm"
                         onClick={handleViewProfile}
                     >
                         View Profile
@@ -196,7 +203,7 @@ export default function CreativeCard({
                     <Button
                         variant="outline"
                         size="sm"
-                        className="w-full border-beacon-purple text-beacon-purple hover:bg-purple-50"
+                        className="w-full border-beacon-purple text-beacon-purple hover:bg-purple-50 rounded-lg py-2"
                         onClick={handleContact}
                     >
                         Send Message
