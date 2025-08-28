@@ -164,7 +164,7 @@ export default function Contact() {
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         <div className="text-center">
                             <div className="bg-neutral-200 rounded-full w-32 h-32 mx-auto mb-4"></div>
-                            <h3 className="text-xl font-semibold mb-2">Alex Johnson</h3>
+                            <h3 className="text-xl font-semibold mb-2">Francis Egwuatu</h3>
                             <p className="text-neutral-600">Founder & CEO</p>
                         </div>
                         <div className="text-center">
