@@ -14,8 +14,8 @@ export default function About() {
     ]
 
     const team = [
-        { name: 'Alex Johnson', role: 'Founder & CEO', bio: 'Creative industry veteran with 15+ years of experience connecting talent with opportunity.' },
-        { name: 'Maria Garcia', role: 'Chief Technology Officer', bio: 'Tech innovator focused on creating seamless platforms for creative collaboration.' },
+        { name: 'Francis Egwuatu', role: 'Founder & CEO', bio: 'Creative industry veteran with 15+ years of experience connecting talent with opportunity.' },
+        { name: 'Aloysius Nwokedike', role: 'Chief Technology Officer', bio: 'Tech innovator focused on creating seamless platforms for creative collaboration.' },
         { name: 'David Kim', role: 'Head of Talent Relations', bio: 'Passionate advocate for creative professionals and their career development.' },
         { name: 'Sarah Williams', role: 'Client Success Director', bio: 'Dedicated to ensuring exceptional experiences for our business clients.' }
     ]
