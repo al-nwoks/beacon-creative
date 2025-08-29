@@ -1,7 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import { serverFetch } from '@/lib/api'
 import type { Project } from '@/types/api'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -15,10 +14,31 @@ export default async function MyProjectsPage() {
     let projects: Project[] = []
 
     try {
-        // Fetch client's projects
-        const projectsResp = await serverFetch('/projects/my-projects')
-        if (Array.isArray(projectsResp)) {
-            projects = projectsResp as Project[]
+        // Fetch client's projects directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const projectsResp = await fetch(`${apiBase}/projects/my-projects`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (projectsResp.ok) {
+                const data = await projectsResp.json()
+                if (Array.isArray(data)) {
+                    projects = data as Project[]
+                }
+            }
         }
     } catch (err) {
         console.error('Failed to fetch projects', err)

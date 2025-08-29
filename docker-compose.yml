@@ -38,6 +38,7 @@ services:
       - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
       - MOCK_MODE=True
       - SEED_DATA=True
+      - SEED_ADMIN=True
       - LOG_LEVEL=DEBUG
     depends_on:
       - db

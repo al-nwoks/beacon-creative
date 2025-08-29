@@ -40,6 +40,33 @@ async function handleResponse(res: Response) {
  * serverFetch - for Next.js server components / server contexts
  */
 export async function serverFetch(path: string, init: FetchInit = {}) {
+  // If the path is a frontend API route (starts with /api/ but not /api/v1/),
+  // call the backend API directly instead of making an HTTP request to ourselves
+  if (path.startsWith('/api/') && !path.startsWith('/api/v1/')) {
+    // For /api/users/me, call the backend directly
+    if (path === '/api/users/me') {
+      const backendUrl = API_BASE || 'http://backend:8000/api/v1';
+      const url = `${backendUrl}/users/me`;
+      const res = await fetch(url, {
+        cache: 'no-store',
+        credentials: 'include',
+        ...init,
+      } as RequestInit)
+      return handleResponse(res)
+    }
+    
+    // For other frontend API routes, make a direct fetch to the local server
+    // Use the Docker service name for internal communication
+    const url = `http://frontend:3000${path}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      credentials: 'include',
+      ...init,
+    } as RequestInit)
+    return handleResponse(res)
+  }
+  
+  // For backend API routes, prepend the API_BASE
   const url =
     typeof path === 'string' && (path.startsWith('http') || (path.startsWith('/') && API_BASE === ''))
       ? path
@@ -58,6 +85,22 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
  * clientFetcher - suitable for SWR and client-side requests
  */
 export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) {
+  // If the input is a frontend API route (starts with /api/ but not /api/v1/), handle it locally
+  if (typeof input === 'string' && input.startsWith('/api/') && !input.startsWith('/api/v1/')) {
+    // For frontend API routes, make a direct fetch to the local server
+    const url = `${window.location.origin}${input}`;
+    const res = await fetch(url, {
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(init && (init as any).headers ? (init as any).headers : {}),
+      },
+      ...init,
+    })
+    return handleResponse(res)
+  }
+  
   const url =
     typeof input === 'string' && !input.startsWith('http')
       ? `${API_BASE}${input.startsWith('/') ? input : `/${input}`}`
@@ -121,10 +164,10 @@ export default api
 export const usersAPI = {
   async getCurrentUser() {
     // expected to return user object (or throw)
-    return clientFetcher('/users/me', { method: 'GET' })
+    return clientFetcher('/api/users/me', { method: 'GET' })
   },
   async getUserById(id: string) {
-    return clientFetcher(`/users/${id}`, { method: 'GET' })
+    return clientFetcher(`/api/users/${id}`, { method: 'GET' })
   },
   // add more user-related helpers here
 }
@@ -132,28 +175,28 @@ export const usersAPI = {
 export const projectsAPI = {
   async getProjects(params?: Record<string, any>) {
     const qs = buildQuery(params)
-    return clientFetcher(`/projects${qs}`, { method: 'GET' })
+    return clientFetcher(`/api/projects${qs}`, { method: 'GET' })
   },
   async getProject(id: string) {
-    return clientFetcher(`/projects/${id}`, { method: 'GET' })
+    return clientFetcher(`/api/projects/${id}`, { method: 'GET' })
   },
   async createProject(payload: any) {
-    return clientFetcher('/projects', { method: 'POST', body: JSON.stringify(payload) })
+    return clientFetcher('/api/projects', { method: 'POST', body: JSON.stringify(payload) })
   },
   // add update/delete as needed
 }
 
 export const authAPI = {
   async login(email: string, password: string) {
-    return clientFetcher('/auth/login', {
+    return clientFetcher('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
   },
   async logout() {
-    return clientFetcher('/auth/logout', { method: 'POST' })
+    return clientFetcher('/api/auth/logout', { method: 'POST' })
   },
   async register(payload: any) {
-    return clientFetcher('/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+    return clientFetcher('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) })
   },
 }

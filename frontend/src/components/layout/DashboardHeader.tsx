@@ -2,6 +2,8 @@
 
 import { B3aconLogo } from '@/components/icons/B3aconLogo'
 import { NavigationIcon } from '@/components/icons/NavigationIcons'
+import { MessageDropdown } from '@/components/layout/MessageDropdown'
+import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { Menu } from '@headlessui/react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -69,68 +71,8 @@ export function DashboardHeader({
                     ) : null}
 
                     <div className="flex items-center space-x-4">
-                        <Menu as="div" className="relative">
-                            <Menu.Button className="p-2 rounded-full hover:bg-neutral-100">
-                                <NavigationIcon type="messages" className="h-6 w-6 text-neutral-600" />
-                            </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg py-2 focus:outline-none z-50">
-                                <div className="px-4 py-2 border-b border-neutral-100 flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-neutral-900">Messages</span>
-                                    <Link href="/messages" className="text-xs text-beacon-purple hover:underline">View all</Link>
-                                </div>
-                                <div className="max-h-72 overflow-y-auto">
-                                    <Link href="/messages/1" className="block px-4 py-3 hover:bg-neutral-50">
-                                        <div className="flex items-start gap-3">
-                                            <div className="h-9 w-9 rounded-full bg-neutral-200 flex-shrink-0" />
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-medium text-neutral-900">Sarah Johnson</p>
-                                                    <p className="text-xs text-neutral-500">2h</p>
-                                                </div>
-                                                <p className="text-xs text-neutral-600 truncate">Thanks — I loved your proposal on the project!</p>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                    <Link href="/messages/2" className="block px-4 py-3 hover:bg-neutral-50">
-                                        <div className="flex items-start gap-3">
-                                            <div className="h-9 w-9 rounded-full bg-neutral-200 flex-shrink-0" />
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-medium text-neutral-900">Michael Chen</p>
-                                                    <p className="text-xs text-neutral-500">4h</p>
-                                                </div>
-                                                <p className="text-xs text-neutral-600 truncate">Can you share previous work samples for e-commerce?</p>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </div>
-                            </Menu.Items>
-                        </Menu>
-                        <Menu as="div" className="relative">
-                            <Menu.Button className="p-2 rounded-full hover:bg-neutral-100">
-                                <NavigationIcon type="notifications" className="h-6 w-6 text-neutral-600" />
-                            </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-2 focus:outline-none z-50">
-                                <div className="px-4 py-2 border-b border-neutral-100 flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-neutral-900">Notifications</span>
-                                    <Link href="/notifications" className="text-xs text-beacon-purple hover:underline">View all</Link>
-                                </div>
-                                <div className="max-h-60 overflow-y-auto">
-                                    <div className="px-4 py-3 hover:bg-neutral-50">
-                                        <p className="text-sm font-medium">Application accepted</p>
-                                        <p className="text-xs text-neutral-500">Your application for "Logo Design" was accepted • 2h</p>
-                                    </div>
-                                    <div className="px-4 py-3 hover:bg-neutral-50">
-                                        <p className="text-sm font-medium">New message</p>
-                                        <p className="text-xs text-neutral-500">Message from Sarah on "Website Redesign" • 4h</p>
-                                    </div>
-                                    <div className="px-4 py-3 hover:bg-neutral-50">
-                                        <p className="text-sm font-medium">Payment received</p>
-                                        <p className="text-xs text-neutral-500">$1,500 released for "Brand Identity" • 1d</p>
-                                    </div>
-                                </div>
-                            </Menu.Items>
-                        </Menu>
+                        <MessageDropdown />
+                        <NotificationDropdown />
                         <Menu as="div" className="relative">
                             <Menu.Button className="p-2 rounded-full hover:bg-neutral-100">
                                 <NavigationIcon type="profile" className="h-6 w-6 text-neutral-600" />

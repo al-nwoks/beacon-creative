@@ -1,6 +1,5 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
-import { serverFetch } from '@/lib/api'
 import type { Application } from '@/types/api'
 import type { Metadata } from 'next'
 
@@ -13,10 +12,31 @@ export default async function ApplicationsPage() {
     let applications: Application[] = []
 
     try {
-        // Fetch user's applications
-        const applicationsResp = await serverFetch('/applications/me')
-        if (Array.isArray(applicationsResp)) {
-            applications = applicationsResp as Application[]
+        // Fetch user's applications directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const applicationsResp = await fetch(`${apiBase}/applications/me`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (applicationsResp.ok) {
+                const data = await applicationsResp.json()
+                if (Array.isArray(data)) {
+                    applications = data as Application[]
+                }
+            }
         }
     } catch (err) {
         console.error('Failed to fetch applications', err)
@@ -44,8 +64,8 @@ export default async function ApplicationsPage() {
                                             </p>
                                         </div>
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${application.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                                application.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
+                                            application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {application.status || 'Pending'}
                                         </span>

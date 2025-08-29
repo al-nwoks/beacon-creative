@@ -22,6 +22,13 @@ export interface User {
   hourly_rate?: number | null
   skills?: string[]
   portfolio_links?: string[]
+  portfolio_images?: string[]
+  // Profile stats
+  projects_count?: number
+  followers_count?: number
+  reviews_count?: number
+  rating?: number
+  creative_type?: string | null
 }
 
 /* Project */

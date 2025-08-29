@@ -1,6 +1,5 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
-import { serverFetch } from '@/lib/api'
 import type { MessageSummary } from '@/types/api'
 import type { Metadata } from 'next'
 
@@ -13,10 +12,31 @@ export default async function MessagesPage() {
     let conversations: MessageSummary[] = []
 
     try {
-        // Fetch user's conversations
-        const conversationsResp = await serverFetch('/messages/conversations')
-        if (Array.isArray(conversationsResp)) {
-            conversations = conversationsResp as MessageSummary[]
+        // Fetch user's conversations directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const conversationsResp = await fetch(`${apiBase}/messages/conversations`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (conversationsResp.ok) {
+                const data = await conversationsResp.json()
+                if (Array.isArray(data)) {
+                    conversations = data as MessageSummary[]
+                }
+            }
         }
     } catch (err) {
         console.error('Failed to fetch conversations', err)

@@ -7,7 +7,8 @@ from app.api.endpoints import (
     applications,
     messages,
     project_file,
-    payments
+    payments,
+    notifications
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(applications.router, prefix="/applications", tags=["ap
 api_router.include_router(messages.router, prefix="/messages", tags=["messages"])
 api_router.include_router(project_file, prefix="/files", tags=["files"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

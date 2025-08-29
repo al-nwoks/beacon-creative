@@ -72,12 +72,19 @@ async def startup_event():
     """Initialize the application on startup"""
     logger.info(f"MOCK_MODE: {settings.MOCK_MODE}")
     logger.info(f"SEED_DATA: {settings.SEED_DATA}")
+    logger.info(f"SEED_ADMIN: {settings.SEED_ADMIN}")
+    
     if settings.MOCK_MODE:
         logger.info("Seeding mock data...")
         try:
             with get_db_context() as db:
                 seed_mock_data(db)
                 logger.info("Mock data seeded successfully!")
+                # Also seed admin user if SEED_ADMIN is enabled
+                if settings.SEED_ADMIN:
+                    logger.info("Seeding admin user...")
+                    seed_admin_user(db)
+                    logger.info("Admin user seeded successfully!")
         except Exception as e:
             logger.error(f"Error seeding mock data: {e}")
     elif settings.SEED_DATA:

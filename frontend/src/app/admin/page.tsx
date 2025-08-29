@@ -1,7 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import { serverFetch } from '@/lib/api'
 import type { Project, User } from '@/types/api'
 import { BarChart3, Briefcase, Users, Wallet } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -25,24 +24,53 @@ export default async function AdminPage() {
     let recentProjects: Project[] = []
 
     try {
-        // Use serverFetch which centralizes API base handling
-        // Note: Admin endpoints would need to be implemented in the backend
-        // For now, we'll use mock data or existing endpoints for demonstration
-        const [usersResp, projectsResp] = await Promise.allSettled([
-            serverFetch('/users?limit=6'), // This would need admin permissions
-            serverFetch('/projects?limit=6'), // This would need admin permissions
-        ])
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
 
-        if (usersResp.status === 'fulfilled' && Array.isArray(usersResp.value)) {
-            recentUsers = usersResp.value as User[]
-            // Update stats with real data
-            if (stats[0]) stats[0].value = String(recentUsers.length)
-        }
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-        if (projectsResp.status === 'fulfilled' && Array.isArray(projectsResp.value)) {
-            recentProjects = projectsResp.value as Project[]
-            // Update stats with real data
-            if (stats[1]) stats[1].value = String(recentProjects.length)
+            // Fetch all data in parallel
+            const [usersResp, projectsResp] = await Promise.allSettled([
+                fetch(`${apiBase}/users?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/projects?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+            ])
+
+            if (usersResp.status === 'fulfilled' && usersResp.value.ok) {
+                const usersData = await usersResp.value.json()
+                if (Array.isArray(usersData)) {
+                    recentUsers = usersData as User[]
+                    // Update stats with real data
+                    if (stats[0]) stats[0].value = String(recentUsers.length)
+                }
+            }
+
+            if (projectsResp.status === 'fulfilled' && projectsResp.value.ok) {
+                const projectsData = await projectsResp.value.json()
+                if (Array.isArray(projectsData)) {
+                    recentProjects = projectsData as Project[]
+                    // Update stats with real data
+                    if (stats[1]) stats[1].value = String(recentProjects.length)
+                }
+            }
         }
     } catch (err) {
         // Log on server; page will render with fallback/mock data

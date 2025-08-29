@@ -2,7 +2,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import JobCard from '@/components/dashboard/JobCard'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import { serverFetch } from '@/lib/api'
 import type { MessageSummary, Project, User } from '@/types/api'
 import { Briefcase, DollarSign, MessageSquare, Users } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -27,48 +26,106 @@ export default async function CreativeDashboardPage() {
     let recentMessages: MessageSummary[] = []
 
     try {
-        // Use serverFetch which centralizes API base handling
-        const [userResp, projectsResp, appsResp, messagesResp, paymentsResp] = await Promise.allSettled([
-            serverFetch('/users/me'),
-            serverFetch('/projects?limit=6'),
-            serverFetch('/applications/me?limit=6&status=accepted'),
-            serverFetch('/messages/conversations?limit=6'),
-            serverFetch('/payments/me'),
-        ])
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
 
-        if (userResp.status === 'fulfilled') {
-            user = userResp.value as User
-        }
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-        if (projectsResp.status === 'fulfilled' && Array.isArray(projectsResp.value)) {
-            recentProjects = projectsResp.value as Project[]
-        }
+            // Fetch all data in parallel
+            const [userResp, projectsResp, appsResp, messagesResp, paymentsResp] = await Promise.allSettled([
+                fetch(`${apiBase}/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/projects?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/applications/me?limit=6&status=accepted`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/messages/conversations?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/payments/me`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+            ])
 
-        if (appsResp.status === 'fulfilled' && Array.isArray(appsResp.value)) {
-            const apps = appsResp.value as any[]
-            const appsCount = apps.length
-            if (stats[0]) stats[0].value = String(appsCount)
+            if (userResp.status === 'fulfilled' && userResp.value.ok) {
+                user = await userResp.value.json() as User
+            }
 
-            // Calculate completed projects from accepted applications
-            // For now, we'll assume all accepted applications are for completed projects
-            // In a real implementation, we would check the project status
-            const completedProjectsCount = apps.filter((app: any) => app.status === 'accepted').length
-            if (stats[2]) stats[2].value = String(completedProjectsCount)
-        }
+            if (projectsResp.status === 'fulfilled' && projectsResp.value.ok) {
+                const projectsData = await projectsResp.value.json()
+                if (Array.isArray(projectsData)) {
+                    recentProjects = projectsData as Project[]
+                }
+            }
 
-        if (messagesResp.status === 'fulfilled' && Array.isArray(messagesResp.value)) {
-            recentMessages = messagesResp.value as MessageSummary[]
-            const messagesCount = recentMessages.length
-            if (stats[3]) stats[3].value = String(messagesCount)
-        }
+            if (appsResp.status === 'fulfilled' && appsResp.value.ok) {
+                const appsData = await appsResp.value.json()
+                if (Array.isArray(appsData)) {
+                    const apps = appsData as any[]
+                    const appsCount = apps.length
+                    if (stats[0]) stats[0].value = String(appsCount)
 
-        // Calculate earnings from payments
-        if (paymentsResp.status === 'fulfilled' && Array.isArray(paymentsResp.value)) {
-            const payments = paymentsResp.value as any[]
-            const earnings = payments
-                .filter((payment: any) => payment.status === 'released')
-                .reduce((sum: number, payment: any) => sum + payment.amount, 0)
-            if (stats[1]) stats[1].value = `$${earnings.toFixed(2)}`
+                    // Calculate completed projects from accepted applications
+                    // For now, we'll assume all accepted applications are for completed projects
+                    // In a real implementation, we would check the project status
+                    const completedProjectsCount = apps.filter((app: any) => app.status === 'accepted').length
+                    if (stats[2]) stats[2].value = String(completedProjectsCount)
+                }
+            }
+
+            if (messagesResp.status === 'fulfilled' && messagesResp.value.ok) {
+                const messagesData = await messagesResp.value.json()
+                if (Array.isArray(messagesData)) {
+                    recentMessages = messagesData as MessageSummary[]
+                    const messagesCount = recentMessages.length
+                    if (stats[3]) stats[3].value = String(messagesCount)
+                }
+            }
+
+            // Calculate earnings from payments
+            if (paymentsResp.status === 'fulfilled' && paymentsResp.value.ok) {
+                const paymentsData = await paymentsResp.value.json()
+                if (Array.isArray(paymentsData)) {
+                    const payments = paymentsData as any[]
+                    const earnings = payments
+                        .filter((payment: any) => payment.status === 'released')
+                        .reduce((sum: number, payment: any) => sum + payment.amount, 0)
+                    if (stats[1]) stats[1].value = `$${earnings.toFixed(2)}`
+                }
+            }
         }
     } catch (err) {
         // Log on server; page will render with fallback/mock data

@@ -20,8 +20,15 @@ class User(Base):
     website = Column(String, nullable=True)
     skills = Column(ARRAY(String), nullable=True)
     portfolio_links = Column(ARRAY(String), nullable=True)
+    portfolio_images = Column(ARRAY(String), nullable=True)  # Array of image URLs
     hourly_rate = Column(Float, nullable=True)
     availability = Column(String, nullable=True)
+    
+    # Profile stats
+    projects_count = Column(Integer, default=0)
+    followers_count = Column(Integer, default=0)
+    reviews_count = Column(Integer, default=0)
+    rating = Column(Float, default=0.0)
 
     # Creative-specific classification (e.g., Photographer, Model, DJ, Screenwriter)
     creative_type = Column(String, nullable=True)

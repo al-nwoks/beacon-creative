@@ -1,7 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import { serverFetch } from '@/lib/api'
 import type { Application, MessageSummary, Project, User } from '@/types/api'
 import { Briefcase, DollarSign, MessageSquare, Users } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -26,44 +25,102 @@ export default async function ClientDashboardPage() {
     let recentMessages: MessageSummary[] = []
 
     try {
-        // Use serverFetch which centralizes API base handling
-        const [userResp, projectsResp, appsResp, messagesResp, paymentsResp] = await Promise.allSettled([
-            serverFetch('/users/me'),
-            serverFetch('/projects/my-projects?limit=6'),
-            serverFetch('/applications/project/me?limit=6'),
-            serverFetch('/messages/conversations?limit=6'),
-            serverFetch('/payments/me'),
-        ])
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
 
-        if (userResp.status === 'fulfilled') {
-            user = userResp.value as User
-        }
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-        if (projectsResp.status === 'fulfilled' && Array.isArray(projectsResp.value)) {
-            recentProjects = projectsResp.value as Project[]
-            // Update stats with real data
-            if (stats[0]) stats[0].value = String(recentProjects.length)
-        }
+            // Fetch all data in parallel
+            const [userResp, projectsResp, appsResp, messagesResp, paymentsResp] = await Promise.allSettled([
+                fetch(`${apiBase}/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/projects/my-projects?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/applications/project/me?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/messages/conversations?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/payments/me`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+            ])
 
-        if (appsResp.status === 'fulfilled' && Array.isArray(appsResp.value)) {
-            const apps = appsResp.value as Application[]
-            const appsCount = apps.length
-            if (stats[2]) stats[2].value = String(appsCount)
-        }
+            if (userResp.status === 'fulfilled' && userResp.value.ok) {
+                user = await userResp.value.json() as User
+            }
 
-        if (messagesResp.status === 'fulfilled' && Array.isArray(messagesResp.value)) {
-            recentMessages = messagesResp.value as MessageSummary[]
-            const messagesCount = recentMessages.length
-            if (stats[3]) stats[3].value = String(messagesCount)
-        }
+            if (projectsResp.status === 'fulfilled' && projectsResp.value.ok) {
+                const projectsData = await projectsResp.value.json()
+                if (Array.isArray(projectsData)) {
+                    recentProjects = projectsData as Project[]
+                    // Update stats with real data
+                    if (stats[0]) stats[0].value = String(recentProjects.length)
+                }
+            }
 
-        // Calculate total spent from payments
-        if (paymentsResp.status === 'fulfilled' && Array.isArray(paymentsResp.value)) {
-            const payments = paymentsResp.value as any[]
-            const totalSpent = payments
-                .filter((payment: any) => payment.status === 'released')
-                .reduce((sum: number, payment: any) => sum + payment.amount, 0)
-            if (stats[1]) stats[1].value = `$${totalSpent.toFixed(2)}`
+            if (appsResp.status === 'fulfilled' && appsResp.value.ok) {
+                const appsData = await appsResp.value.json()
+                if (Array.isArray(appsData)) {
+                    const apps = appsData as Application[]
+                    const appsCount = apps.length
+                    if (stats[2]) stats[2].value = String(appsCount)
+                }
+            }
+
+            if (messagesResp.status === 'fulfilled' && messagesResp.value.ok) {
+                const messagesData = await messagesResp.value.json()
+                if (Array.isArray(messagesData)) {
+                    recentMessages = messagesData as MessageSummary[]
+                    const messagesCount = recentMessages.length
+                    if (stats[3]) stats[3].value = String(messagesCount)
+                }
+            }
+
+            // Calculate total spent from payments
+            if (paymentsResp.status === 'fulfilled' && paymentsResp.value.ok) {
+                const paymentsData = await paymentsResp.value.json()
+                if (Array.isArray(paymentsData)) {
+                    const payments = paymentsData as any[]
+                    const totalSpent = payments
+                        .filter((payment: any) => payment.status === 'released')
+                        .reduce((sum: number, payment: any) => sum + payment.amount, 0)
+                    if (stats[1]) stats[1].value = `$${totalSpent.toFixed(2)}`
+                }
+            }
         }
     } catch (err) {
         // Log on server; page will render with fallback/mock data

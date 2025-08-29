@@ -1,8 +1,11 @@
 'use client'
 
 import { B3aconLogo } from '@/components/icons/B3aconLogo'
+import { NavigationIcon } from '@/components/icons/NavigationIcons'
+import { MessageDropdown } from '@/components/layout/MessageDropdown'
+import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { Menu } from '@headlessui/react'
-import { Bell, Filter, MessageSquare, Search, User, X } from 'lucide-react'
+import { Filter, Search, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
@@ -92,15 +95,10 @@ export function UnifiedHeader({
                         )}
 
                         {/* Notifications */}
-                        <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                            <Bell className="h-6 w-6" />
-                            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <NotificationDropdown />
 
                         {/* Messages */}
-                        <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                            <MessageSquare className="h-6 w-6" />
-                        </button>
+                        <MessageDropdown />
 
                         {/* Profile */}
                         <Menu as="div" className="relative">
@@ -212,14 +210,14 @@ export function UnifiedHeader({
                         href="/messages"
                         className={`flex flex-col items-center space-y-1 p-2 ${isActive('/messages') ? 'text-beacon-purple' : 'text-gray-400'}`}
                     >
-                        <MessageSquare className="h-6 w-6" />
+                        <NavigationIcon type="messages" className="h-6 w-6" />
                         <span className="text-xs">Messages</span>
                     </Link>
                     <Link
                         href="/notifications"
                         className={`flex flex-col items-center space-y-1 p-2 ${isActive('/notifications') ? 'text-beacon-purple' : 'text-gray-400'}`}
                     >
-                        <Bell className="h-6 w-6" />
+                        <NavigationIcon type="notifications" className="h-6 w-6" />
                         <span className="text-xs">Notifications</span>
                     </Link>
                 </div>
