@@ -42,7 +42,7 @@ export function DashboardHeader({
                         whileHover={{ scale: 1.05 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     >
-                        <Link href="/" className="flex items-center space-x-2">
+                        <Link href={userType === 'admin' ? '/admin' : userType === 'client' ? '/client' : '/creative'} className="flex items-center space-x-2">
                             <B3aconLogo className="h-8 w-auto" />
                         </Link>
                     </motion.div>
