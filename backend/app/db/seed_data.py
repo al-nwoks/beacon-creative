@@ -1,3 +1,4 @@
+import logging
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.project import Project
@@ -9,15 +10,19 @@ from app.auth.password import get_password_hash
 import uuid
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
+
 def seed_admin_user(db: Session):
     """Seed the database with just the admin user"""
     
+    logger.info("Checking for existing admin user")
     # Check if admin user already exists
     admin_user = db.query(User).filter(User.email == "admin@beacon-connect.com").first()
     if admin_user:
-        print("Admin user already exists, skipping...")
+        logger.info("Admin user already exists, skipping...")
         return
     
+    logger.info("Creating admin user")
     # Create admin user
     admin_data = {
         "email": "admin@beacon-connect.com",
@@ -34,11 +39,12 @@ def seed_admin_user(db: Session):
     db.commit()
     db.refresh(admin_user)
     
-    print("Admin user seeded successfully!")
+    logger.info("Admin user seeded successfully!")
 
 def seed_mock_data(db: Session):
     """Seed the database with mock data for development and testing"""
     
+    logger.info("Clearing existing data")
     # Clear existing data
     db.query(Payment).delete()
     db.query(ProjectFile).delete()
@@ -48,6 +54,7 @@ def seed_mock_data(db: Session):
     db.query(User).delete()
     db.commit()
     
+    logger.info("Creating mock users")
     # Create mock users
     users_data = [
         # Creatives
@@ -257,6 +264,7 @@ def seed_mock_data(db: Session):
         created_users.append(user)
     
     db.commit()
+    logger.info(f"Created {len(created_users)} users")
     
     # Refresh users to get IDs
     for user in created_users:
@@ -268,6 +276,7 @@ def seed_mock_data(db: Session):
     runway_productions = next(u for u in created_users if u.email == "david.kim@runwayproductions.com")
     tech_startup = next(u for u in created_users if u.email == "jennifer.brown@techstartup.com")
     
+    logger.info("Creating mock projects")
     # Create mock projects
     projects_data = [
         {
@@ -352,6 +361,7 @@ def seed_mock_data(db: Session):
         created_projects.append(project)
     
     db.commit()
+    logger.info(f"Created {len(created_projects)} projects")
     
     # Refresh projects to get IDs
     for project in created_projects:
@@ -364,6 +374,7 @@ def seed_mock_data(db: Session):
     alex = next(u for u in created_users if u.email == "alex.rodriguez@example.com")
     lisa = next(u for u in created_users if u.email == "lisa.wang@example.com")
     
+    logger.info("Creating mock applications")
     # Create mock applications
     applications_data = [
         {
@@ -419,7 +430,9 @@ def seed_mock_data(db: Session):
         db.add(application)
     
     db.commit()
+    logger.info(f"Created {len(applications_data)} applications")
     
+    logger.info("Creating mock messages")
     # Create mock messages
     messages_data = [
         # Conversation between Sarah (creative) and Style Magazine (client) about Fashion Photographer project
@@ -543,7 +556,9 @@ def seed_mock_data(db: Session):
         db.add(message)
     
     db.commit()
+    logger.info(f"Created {len(messages_data)} messages")
     
+    logger.info("Creating mock payments")
     # Create mock payments
     payments_data = [
         # Payment for DJ services (accepted application)
@@ -588,7 +603,9 @@ def seed_mock_data(db: Session):
         db.add(payment)
     
     db.commit()
+    logger.info(f"Created {len(payments_data)} payments")
     
+    logger.info("Creating mock project files")
     # Create mock project files
     project_files_data = [
         # Files for Fashion Photographer project
@@ -680,11 +697,12 @@ def seed_mock_data(db: Session):
         db.add(project_file)
     
     db.commit()
+    logger.info(f"Created {len(project_files_data)} project files")
     
-    print("Mock data seeded successfully!")
-    print(f"Created {len(created_users)} users")
-    print(f"Created {len(created_projects)} projects")
-    print(f"Created {len(applications_data)} applications")
-    print(f"Created {len(messages_data)} messages")
-    print(f"Created {len(payments_data)} payments")
-    print(f"Created {len(project_files_data)} project files")
+    logger.info("Mock data seeded successfully!")
+    logger.info(f"Created {len(created_users)} users")
+    logger.info(f"Created {len(created_projects)} projects")
+    logger.info(f"Created {len(applications_data)} applications")
+    logger.info(f"Created {len(messages_data)} messages")
+    logger.info(f"Created {len(payments_data)} payments")
+    logger.info(f"Created {len(project_files_data)} project files")

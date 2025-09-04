@@ -58,6 +58,7 @@ export default function ImageGrid({
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        unoptimized={image.src.startsWith('data:image/')}
                     />
                 </div>
             ))}

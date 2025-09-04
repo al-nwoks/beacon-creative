@@ -26,6 +26,7 @@ export default function Avatar({
     fallback
 }: AvatarProps) {
     const sizeClass = sizeClasses[size]
+    const isDataUrl = src && src.startsWith('data:')
 
     return (
         <div className={cn(
@@ -34,12 +35,22 @@ export default function Avatar({
             className
         )}>
             {src ? (
-                <Image
-                    src={src}
-                    alt={alt}
-                    fill
-                    className="object-cover"
-                />
+                isDataUrl ? (
+                    // For data URLs, use regular img tag instead of Next.js Image
+                    <img
+                        src={src}
+                        alt={alt}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    // For regular URLs, use Next.js Image optimization
+                    <Image
+                        src={src}
+                        alt={alt}
+                        fill
+                        className="object-cover"
+                    />
+                )
             ) : (
                 <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold">
                     {fallback || alt.charAt(0).toUpperCase()}

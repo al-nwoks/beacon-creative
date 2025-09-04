@@ -1,8 +1,8 @@
-"""Complete schema with all tables including notifications
+"""Initial migration with complete schema
 
 Revision ID: 001
 Revises: 
-Create Date: 2025-08-28 18:35:00.000000
+Create Date: 2025-09-03 17:00:00.000000
 
 """
 from alembic import op

@@ -1,7 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
-import ProfileContent from '@/components/profiles/ProfileContent'
-import ProfileHeader from '@/components/profiles/ProfileHeader'
+import ProfileClientWrapper from '@/components/profiles/ProfileClientWrapper'
 import type { User } from '@/types/api'
 import type { Metadata } from 'next'
 
@@ -41,45 +40,13 @@ export default async function ProfilePage() {
         console.error('Failed to fetch user info', err)
     }
 
-    // Format followers count for display
-    const formatFollowersCount = (count: number): string => {
-        if (count >= 1000) {
-            return `${(count / 1000).toFixed(1)}k`
-        }
-        return count.toString()
-    }
-
-    // Convert portfolio images to the format expected by ImageGrid
-    const portfolioImages = user?.portfolio_images?.map((src, index) => ({
-        id: index.toString(),
-        src,
-        alt: `Portfolio image ${index + 1}`
-    })) || []
-
-    // Since we can't pass event handlers to client components from server components,
-    // we'll remove the event handlers and handle interactions differently
     return (
         <ProtectedRoute>
             <SimplifiedLayout showSearch={false}>
                 <div className="container mx-auto px-4 py-8">
                     {user ? (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200">
-                            <ProfileHeader
-                                name={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Your Name'}
-                                title={user.creative_type || user.bio?.split('.')[0] || 'Creative Professional'}
-                                location={user.location || 'Location TBD'}
-                                rating={user.rating || 0}
-                                profileImage={user.profile_image_url || undefined}
-                                stats={{
-                                    projects: user.projects_count || 0,
-                                    followers: formatFollowersCount(user.followers_count || 0),
-                                    reviews: user.reviews_count || 0
-                                }}
-                            />
-
-                            <ProfileContent
-                                portfolioImages={portfolioImages}
-                            />
+                            <ProfileClientWrapper initialUser={user} />
                         </div>
                     ) : (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
