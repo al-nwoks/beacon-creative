@@ -28,6 +28,7 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
+    creative_type: Optional[str] = None
     hourly_rate: Optional[float] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None

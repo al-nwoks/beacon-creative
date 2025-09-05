@@ -42,6 +42,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [uploadError, setUploadError] = useState<string | null>(null)
 
     const handleAvatarChange = () => {
         // Create a temporary file input for avatar
@@ -56,6 +57,7 @@ export default function ProfileHeader({
         event.target.value = ''
 
         setIsUploading(true)
+        setUploadError(null)
 
         try {
             const formData = new FormData()
@@ -102,7 +104,8 @@ export default function ProfileHeader({
                     errorMessage = 'Failed to upload avatar. Please try again.'
                 }
             }
-            alert(`Avatar upload failed: ${errorMessage}`)
+            // Show error in a more user-friendly way
+            setUploadError(errorMessage)
         } finally {
             setIsUploading(false)
         }
@@ -161,6 +164,13 @@ export default function ProfileHeader({
                         </button>
                     </div>
                 </div>
+
+                {/* Upload error message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-center">
+                        {uploadError}
+                    </div>
+                )}
 
                 {/* BEACON Logo */}
                 <div className="text-center mb-4">

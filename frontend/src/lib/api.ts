@@ -112,7 +112,15 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
         Accept: 'application/json',
         // Only set Content-Type for non-FormData requests
         ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
-        ...(init && (init as any).headers ? (init as any).headers : {}),
+        // For FormData requests, spread original headers but exclude Content-Type
+        ...(isFormData && init && (init as any).headers ?
+          Object.fromEntries(
+            Object.entries((init as any).headers).filter(
+              ([key]) => key.toLowerCase() !== 'content-type'
+            )
+          ) : {}),
+        // For non-FormData requests, spread all original headers
+        ...(!isFormData && init && (init as any).headers ? (init as any).headers : {}),
       },
       ...init,
     })
@@ -131,7 +139,15 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
       Accept: 'application/json',
       // Only set Content-Type for non-FormData requests
       ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(init && (init as any).headers ? (init as any).headers : {}),
+      // For FormData requests, spread original headers but exclude Content-Type
+      ...(isFormData && init && (init as any).headers ?
+        Object.fromEntries(
+          Object.entries((init as any).headers).filter(
+            ([key]) => key.toLowerCase() !== 'content-type'
+          )
+        ) : {}),
+      // For non-FormData requests, spread all original headers
+      ...(!isFormData && init && (init as any).headers ? (init as any).headers : {}),
     },
     ...init,
   })
