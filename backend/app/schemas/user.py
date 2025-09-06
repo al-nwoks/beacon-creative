@@ -3,6 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Union
 
+from app.schemas.notification_setting import NotificationSetting
+
 # Shared properties
 class UserBase(BaseModel):
     email: EmailStr
@@ -59,6 +61,8 @@ class UserInDBBase(BaseModel):
     rating: Optional[float] = 0.0
     # Expose creative_type on API responses
     creative_type: Optional[str] = None
+    # Notification settings
+    notification_settings: Optional[NotificationSetting] = None
 
     class Config:
         from_attributes = True

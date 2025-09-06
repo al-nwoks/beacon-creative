@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Import all models to ensure they are registered with SQLAlchemy
 from app.db.database import Base
-from app.models import user, project, application, message, payment, project_file, notification
+from app.models import user, project, application, message, payment, project_file, notification, notification_setting
 
 target_metadata = Base.metadata
 

@@ -50,29 +50,42 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
   // If the path is a frontend API route (starts with /api/ but not /api/v1/),
   // call the backend API directly instead of making an HTTP request to ourselves
   if (path.startsWith('/api/') && !path.startsWith('/api/v1/')) {
-    // For /api/users/me, call the backend directly
-    if (path === '/api/users/me') {
-      const backendUrl = API_BASE || 'http://backend:8000/api/v1';
-      const url = `${backendUrl}/users/me`;
-      logger.debug(`Making direct backend call to: ${url}`)
+      // For /api/users/me, call the backend directly
+      if (path === '/api/users/me') {
+          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
+          const url = `${backendUrl}/users/me`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              cache: 'no-store',
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/notification-settings/me, call the backend directly
+      if (path === '/api/notification-settings/me') {
+          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
+          const url = `${backendUrl}/notification-settings/me`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              cache: 'no-store',
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For other frontend API routes, make a direct fetch to the local server
+      // Use the Docker service name for internal communication
+      const url = `http://frontend:3000${path}`;
+      logger.debug(`Making direct frontend call to: ${url}`)
       const res = await fetch(url, {
-        cache: 'no-store',
-        credentials: 'include',
-        ...init,
+          cache: 'no-store',
+          credentials: 'include',
+          ...init,
       } as RequestInit)
       return handleResponse(res)
-    }
-    
-    // For other frontend API routes, make a direct fetch to the local server
-    // Use the Docker service name for internal communication
-    const url = `http://frontend:3000${path}`;
-    logger.debug(`Making direct frontend call to: ${url}`)
-    const res = await fetch(url, {
-      cache: 'no-store',
-      credentials: 'include',
-      ...init,
-    } as RequestInit)
-    return handleResponse(res)
   }
   
   // For backend API routes, prepend the API_BASE
@@ -244,7 +257,18 @@ export const authAPI = {
     return clientFetcher('/api/auth/logout', { method: 'POST' })
   },
   async register(payload: any) {
-    logger.info('User registration', payload)
-    return clientFetcher('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+      logger.info('User registration', payload)
+      return clientFetcher('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+  },
+}
+
+export const notificationSettingsAPI = {
+  async getNotificationSettings() {
+      logger.info('Fetching notification settings')
+      return clientFetcher('/api/notification-settings/me', { method: 'GET' })
+  },
+  async updateNotificationSettings(payload: any) {
+      logger.info('Updating notification settings', payload)
+      return clientFetcher('/api/notification-settings/me', { method: 'PUT', body: JSON.stringify(payload) })
   },
 }

@@ -28,3 +28,6 @@ from app.schemas.notification import (
     Notification, NotificationCreate, NotificationUpdate,
     NotificationList
 )
+from app.schemas.notification_setting import (
+    NotificationSetting, NotificationSettingCreate, NotificationSettingUpdate
+)

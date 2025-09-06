@@ -21,6 +21,7 @@ router = APIRouter()
 
 @router.get("/me", response_model=UserSchema)
 def get_current_user_info(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user_dependency),
 ) -> Any:
     """
@@ -28,7 +29,18 @@ def get_current_user_info(
     """
     logger.info(f"Fetching current user info for user ID: {current_user.id}")
     logger.debug(f"User details: email={current_user.email}, role={current_user.role}")
-    return current_user
+    
+    # Load user with notification settings using join
+    from sqlalchemy.orm import joinedload
+    user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
+    
+    # Load notification settings to ensure they exist
+    try:
+        user_with_settings.get_notification_settings(db)
+    except Exception as e:
+        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    
+    return user_with_settings
 
 
 @router.put("/me", response_model=UserSchema)
@@ -70,7 +82,18 @@ def update_current_user(
     end_time = time.time()
     log_performance_metrics("update_user", start_time, end_time)
     logger.info(f"User info updated successfully for user ID: {current_user.id}")
-    return current_user
+    
+    # Load user with notification settings using join
+    from sqlalchemy.orm import joinedload
+    user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
+    
+    # Load notification settings to ensure they exist
+    try:
+        user_with_settings.get_notification_settings(db)
+    except Exception as e:
+        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    
+    return user_with_settings
 
 
 @router.post("/upload-avatar", response_model=UserSchema)
@@ -147,7 +170,18 @@ async def upload_avatar(
         "file_size": len(contents)
     })
     logger.info(f"Avatar uploaded successfully for user ID: {current_user.id}")
-    return current_user
+    
+    # Load user with notification settings using join
+    from sqlalchemy.orm import joinedload
+    user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
+    
+    # Load notification settings to ensure they exist
+    try:
+        user_with_settings.get_notification_settings(db)
+    except Exception as e:
+        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    
+    return user_with_settings
 
 
 @router.get("/{user_id}", response_model=UserSchema)
@@ -159,10 +193,18 @@ def get_user_by_id(
     """
     Get a specific user by id.
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
+    
+    # Load notification settings to ensure they exist
+    try:
+        user.get_notification_settings(db)
+    except Exception as e:
+        logger.error(f"Error loading notification settings for user {user.id}: {str(e)}")
+    
     return user

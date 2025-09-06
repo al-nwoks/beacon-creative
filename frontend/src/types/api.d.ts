@@ -29,6 +29,7 @@ export interface User {
   reviews_count?: number
   rating?: number
   creative_type?: string | null
+  notification_settings?: NotificationSetting | null
 }
 
 /* Project */
@@ -117,6 +118,27 @@ export interface Notification {
   read?: boolean
   created_at?: string
   // target, data payload etc.
+}
+
+/* Notification Settings */
+export interface NotificationSetting {
+  id: string
+  user_id: number
+  email_project_updates?: boolean
+  email_messages?: boolean
+  email_application_status?: boolean
+  email_payment_updates?: boolean
+  email_newsletter?: boolean
+  in_app_project_updates?: boolean
+  in_app_messages?: boolean
+  in_app_application_status?: boolean
+  in_app_payment_updates?: boolean
+  push_project_updates?: boolean
+  push_messages?: boolean
+  push_application_status?: boolean
+  push_payment_updates?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 /* Generic paginated response */

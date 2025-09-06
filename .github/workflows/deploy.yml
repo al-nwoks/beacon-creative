@@ -27,6 +27,10 @@ on:
         description: 'Use --no-cache when building images on the remote (true/false)'
         required: false
         default: 'false'
+      CLEAN_ROLLOUT:
+        description: 'Remove all existing resources to clean state on the remote (true/false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: read
@@ -52,6 +56,7 @@ jobs:
           echo "COMPOSE_FILE=${{ github.event.inputs.COMPOSE_FILE || 'docker-compose.prod.yml' }}" >> "$GITHUB_OUTPUT"
           echo "SERVICES=${{ github.event.inputs.SERVICES || 'all' }}" >> "$GITHUB_OUTPUT"
           echo "NO_CACHE=${{ github.event.inputs.NO_CACHE || 'false' }}" >> "$GITHUB_OUTPUT"
+          echo "CLEAN_ROLLOUT=${{ github.event.inputs.CLEAN_ROLLOUT   || 'false' }}" >> "$GITHUB_OUTPUT"
 
       - name: Setup SSH key
         run: |
