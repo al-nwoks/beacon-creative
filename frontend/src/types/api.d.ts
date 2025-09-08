@@ -76,14 +76,23 @@ export interface MessageSummary {
   unread?: boolean
 }
 
+/* Message with sender */
+export interface MessageWithSender extends Message {
+  sender: User
+}
+
 /* Full Message */
 export interface Message {
   id: number | string
-  conversation_id?: number | string
-  sender_id?: number | string
-  body: string
-  created_at?: string
-  // attachments, read status etc.
+  content: string
+  sender_id: number | string
+  recipient_id: number | string
+  is_read: boolean
+  created_at: string
+  project_id?: string
+  application_id?: string
+  sender?: User
+  recipient?: User
 }
 
 /* Payment */

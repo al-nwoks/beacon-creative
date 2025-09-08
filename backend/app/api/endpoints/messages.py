@@ -10,6 +10,7 @@ from sqlalchemy import or_, and_, desc, func
 from app.db.database import get_db
 from app.models.user import User
 from app.models.message import Message
+from app.models.notification import Notification
 from app.models.project import Project
 from app.models.application import Application
 from app.schemas.message import (
@@ -132,6 +133,26 @@ def create_message(
     db.refresh(db_message)
     
     logger.info(f"Message created successfully with ID: {db_message.id} from user {current_user.id} to {recipient_id_int}")
+    
+    # Create a notification for the recipient
+    try:
+        notification_title = f"New message from {current_user.first_name} {current_user.last_name}"
+        notification_body = db_message.content[:100] + "..." if len(db_message.content) > 100 else db_message.content
+        
+        db_notification = Notification(
+            user_id=recipient_id_int,
+            title=notification_title,
+            body=notification_body,
+            read=False
+        )
+        db.add(db_notification)
+        db.commit()
+        logger.info(f"Notification created for recipient {recipient_id_int} about new message {db_message.id}")
+    except Exception as e:
+        logger.error(f"Failed to create notification for recipient {recipient_id_int}: {str(e)}")
+        # Don't fail the message creation if notification creation fails
+        db.rollback()
+    
     return db_message
 
 @router.get("/", response_model=List[MessageWithSender])
@@ -382,3 +403,38 @@ def mark_message_as_read(
     
     logger.info(f"Message {message_id} marked as read for user ID: {current_user.id}")
     return message
+
+@router.get("/search", response_model=List[MessageWithSender])
+def search_messages(
+    *,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    query: str,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    """
+    Search messages for the current user by content.
+    """
+    logger.info(f"Searching messages for user ID: {current_user.id} with query: {query}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    if not query or len(query.strip()) < 2:
+        logger.warning(f"Search query too short for user ID: {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query must be at least 2 characters long",
+        )
+    
+    # Search messages where current user is sender or recipient and content contains the query
+    messages = db.query(Message).filter(
+        or_(
+            Message.sender_id == current_user.id,
+            Message.recipient_id == current_user.id
+        )
+    ).filter(
+        Message.content.ilike(f"%{query}%")
+    ).order_by(desc(Message.created_at)).offset(skip).limit(limit).all()
+    
+    logger.info(f"Found {len(messages)} messages matching query for user ID: {current_user.id}")
+    return messages
