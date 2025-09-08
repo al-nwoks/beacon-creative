@@ -1,5 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import Button from '@/components/ui/Button'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -7,15 +8,15 @@ export const metadata: Metadata = {
     description: 'Manage project categories.',
 }
 
-export default function AdminCategoriesPage() {
+export default async function AdminCategoriesPage() {
     // Mock data for categories
     const categories = [
-        { id: 1, name: 'Design', description: 'Graphic design, UI/UX, branding', projects: 120 },
-        { id: 2, name: 'Development', description: 'Web development, mobile apps, software', projects: 95 },
-        { id: 3, name: 'Marketing', description: 'Content marketing, SEO, social media', projects: 72 },
-        { id: 4, name: 'Video', description: 'Video production, editing, animation', projects: 37 },
-        { id: 5, name: 'Writing', description: 'Copywriting, technical writing, blogging', projects: 45 },
-        { id: 6, name: 'Other', description: 'Miscellaneous creative services', projects: 23 },
+        { id: 1, name: 'Web Development', description: 'Websites, web applications, and web services', created_at: '2023-01-15T10:30:00Z' },
+        { id: 2, name: 'Mobile Development', description: 'iOS and Android applications', created_at: '2023-01-15T10:30:00Z' },
+        { id: 3, name: 'UI/UX Design', description: 'User interface and user experience design', created_at: '2023-01-15T10:30:00Z' },
+        { id: 4, name: 'Graphic Design', description: 'Visual design and branding', created_at: '2023-01-15T10:30:00Z' },
+        { id: 5, name: 'Content Writing', description: 'Copywriting, technical writing, and content creation', created_at: '2023-01-15T10:30:00Z' },
+        { id: 6, name: 'Video Production', description: 'Video editing, animation, and production', created_at: '2023-01-15T10:30:00Z' },
     ]
 
     return (
@@ -24,9 +25,9 @@ export default function AdminCategoriesPage() {
                 <main className="container mx-auto px-4 py-8">
                     <div className="flex justify-between items-center mb-8">
                         <h1 className="text-3xl font-bold text-neutral-900">Project Categories</h1>
-                        <button className="bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-beacon-purple-dark transition-colors">
+                        <Button variant="primary" data-modal-target="add-category-modal" data-modal-toggle="add-category-modal">
                             Add New Category
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200">
@@ -38,17 +39,17 @@ export default function AdminCategoriesPage() {
                                             <h2 className="text-lg font-semibold text-neutral-900">{category.name}</h2>
                                             <p className="text-neutral-600">{category.description}</p>
                                         </div>
-                                        <div className="flex items-center space-x-6">
+                                        <div className="flex items-center space-x-4">
                                             <span className="text-sm text-neutral-500">
-                                                {category.projects} projects
+                                                Added {category.created_at ? new Date(category.created_at).toLocaleDateString() : 'Unknown date'}
                                             </span>
                                             <div className="flex space-x-2">
-                                                <button className="text-beacon-purple hover:underline text-sm font-medium">
+                                                <Button variant="outline" size="sm">
                                                     Edit
-                                                </button>
-                                                <button className="text-red-600 hover:underline text-sm font-medium">
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                                                     Delete
-                                                </button>
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
@@ -59,18 +60,21 @@ export default function AdminCategoriesPage() {
 
                     <div className="mt-8 flex justify-center">
                         <nav className="flex space-x-2">
-                            <button className="px-3 py-1 rounded-md border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                            <Button variant="outline" size="sm">
                                 Previous
-                            </button>
-                            <button className="px-3 py-1 rounded-md bg-beacon-purple text-white text-sm font-medium">
+                            </Button>
+                            <Button variant="outline" size="sm" className="bg-beacon-purple text-white">
                                 1
-                            </button>
-                            <button className="px-3 py-1 rounded-md border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                            </Button>
+                            <Button variant="outline" size="sm">
                                 2
-                            </button>
-                            <button className="px-3 py-1 rounded-md border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                            </Button>
+                            <Button variant="outline" size="sm">
+                                3
+                            </Button>
+                            <Button variant="outline" size="sm">
                                 Next
-                            </button>
+                            </Button>
                         </nav>
                     </div>
                 </main>

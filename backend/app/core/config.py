@@ -34,6 +34,7 @@ class Settings(BaseModel):
     # Mock data settings
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
     SEED_DATA: bool = os.getenv("SEED_DATA", "false").lower() == "true"
+    SEED_ADMIN: bool = os.getenv("SEED_ADMIN", "false").lower() == "true"
     
     # Logging settings
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "DEBUG")

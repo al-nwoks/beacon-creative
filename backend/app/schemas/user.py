@@ -3,6 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Union
 
+from app.schemas.notification_setting import NotificationSetting
+
 # Shared properties
 class UserBase(BaseModel):
     email: EmailStr
@@ -28,9 +30,11 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
+    creative_type: Optional[str] = None
     hourly_rate: Optional[float] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None
+    portfolio_images: Optional[List[str]] = None
 
 # Properties shared by models stored in DB
 class UserInDBBase(BaseModel):
@@ -49,8 +53,16 @@ class UserInDBBase(BaseModel):
     hourly_rate: Optional[float] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None
+    portfolio_images: Optional[List[str]] = None
+    # Profile stats
+    projects_count: Optional[int] = 0
+    followers_count: Optional[int] = 0
+    reviews_count: Optional[int] = 0
+    rating: Optional[float] = 0.0
     # Expose creative_type on API responses
     creative_type: Optional[str] = None
+    # Notification settings
+    notification_settings: Optional[NotificationSetting] = None
 
     class Config:
         from_attributes = True

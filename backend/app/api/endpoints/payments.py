@@ -125,9 +125,12 @@ def confirm_payment(
     """
     Confirm a payment after successful Stripe payment (client only).
     """
+    logger.info(f"Confirming payment intent {payment_intent_id} for user ID: {current_user.id}")
+    
     # Find payment by intent ID
     payment = db.query(Payment).filter(Payment.stripe_payment_intent_id == payment_intent_id).first()
     if not payment:
+        logger.warning(f"Payment confirmation failed: Payment with intent ID {payment_intent_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment not found",
@@ -135,6 +138,7 @@ def confirm_payment(
     
     # Check if user is the payment client
     if payment.client_id != current_user.id:
+        logger.warning(f"Payment confirmation failed: User {current_user.id} is not the client for payment {payment.id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -142,16 +146,20 @@ def confirm_payment(
     
     # Check if payment is in pending status
     if payment.status != "pending":
+        logger.warning(f"Payment confirmation failed: Payment {payment.id} is not in pending status (status: {payment.status})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payment is not in pending status",
         )
     
     # Update payment status to held in escrow
+    old_status = payment.status
     payment.status = "held_in_escrow"
     db.add(payment)
     db.commit()
     db.refresh(payment)
+    
+    logger.info(f"Payment {payment.id} status changed from {old_status} to held_in_escrow for user ID: {current_user.id}")
     return payment
 
 @router.post("/release/{payment_id}", response_model=PaymentSchema)
@@ -211,10 +219,13 @@ def get_project_payments(
     """
     Get all payments for a specific project.
     """
+    logger.info(f"Fetching payments for project {project_id} for user ID: {current_user.id}")
+    
     # Check if project exists
     project_id_uuid = uuid.UUID(project_id)
     project = db.query(Project).filter(Project.id == project_id_uuid).first()
     if not project:
+        logger.warning(f"Project payments fetch failed: Project {project_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
@@ -222,6 +233,7 @@ def get_project_payments(
     
     # Check if user is involved in the project
     if project.client_id != current_user.id and project.hired_creative_id != current_user.id:
+        logger.warning(f"Project payments fetch failed: User {current_user.id} is not involved in project {project_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -229,6 +241,7 @@ def get_project_payments(
     
     # Get all payments for the project
     payments = db.query(Payment).filter(Payment.project_id == project_id_uuid).all()
+    logger.info(f"Found {len(payments)} payments for project {project_id}")
     return payments
 
 @router.get("/me", response_model=List[PaymentWithProject])
@@ -241,17 +254,24 @@ def get_my_payments(
     """
     Get all payments for the current user (as client or creative).
     """
+    logger.info(f"Fetching payments for user ID: {current_user.id} with role: {current_user.role}")
+    logger.debug(f"Filtering by status: {status}")
+    
     # Base query
     if current_user.role == "client":
+        logger.debug(f"User is client, fetching payments where client_id = {current_user.id}")
         query = db.query(Payment).filter(Payment.client_id == current_user.id)
     else:
+        logger.debug(f"User is creative, fetching payments where creative_id = {current_user.id}")
         query = db.query(Payment).filter(Payment.creative_id == current_user.id)
     
     # Apply status filter if provided
     if status:
+        logger.debug(f"Applying status filter: {status}")
         query = query.filter(Payment.status == status)
     
     payments = query.all()
+    logger.info(f"Found {len(payments)} payments for user ID: {current_user.id}")
     return payments
 
 @router.get("/{payment_id}", response_model=PaymentWithDetails)
@@ -264,9 +284,12 @@ def get_payment(
     """
     Get a specific payment by id.
     """
+    logger.info(f"Fetching payment {payment_id} for user ID: {current_user.id}")
+    
     payment_id_uuid = uuid.UUID(payment_id)
     payment = db.query(Payment).filter(Payment.id == payment_id_uuid).first()
     if not payment:
+        logger.warning(f"Payment fetch failed: Payment {payment_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment not found",
@@ -274,9 +297,11 @@ def get_payment(
     
     # Check if user is involved in the payment
     if payment.client_id != current_user.id and payment.creative_id != current_user.id:
+        logger.warning(f"Payment fetch failed: User {current_user.id} is not involved in payment {payment_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
     
+    logger.info(f"Payment {payment_id} retrieved successfully for user ID: {current_user.id}")
     return payment

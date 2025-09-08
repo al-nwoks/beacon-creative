@@ -1,6 +1,5 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
-import { serverFetch } from '@/lib/api'
 import type { Payment } from '@/types/api'
 import { DollarSign } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -14,10 +13,31 @@ export default async function PaymentsPage() {
     let payments: Payment[] = []
 
     try {
-        // Fetch user's payments
-        const paymentsResp = await serverFetch('/payments/me')
-        if (Array.isArray(paymentsResp)) {
-            payments = paymentsResp as Payment[]
+        // Fetch user's payments directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const paymentsResp = await fetch(`${apiBase}/payments/me`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (paymentsResp.ok) {
+                const data = await paymentsResp.json()
+                if (Array.isArray(data)) {
+                    payments = data as Payment[]
+                }
+            }
         }
     } catch (err) {
         console.error('Failed to fetch payments', err)
@@ -56,8 +76,8 @@ export default async function PaymentsPage() {
                                             <div className="text-right">
                                                 <p className="text-lg font-semibold text-neutral-900">${payment.amount?.toFixed(2)}</p>
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${payment.status === 'released' ? 'bg-green-100 text-green-800' :
-                                                        payment.status === 'held_in_escrow' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-blue-100 text-blue-800'
+                                                    payment.status === 'held_in_escrow' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-blue-100 text-blue-800'
                                                     }`}>
                                                     {payment.status || 'pending'}
                                                 </span>

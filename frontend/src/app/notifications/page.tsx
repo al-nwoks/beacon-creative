@@ -7,14 +7,37 @@ export const metadata: Metadata = {
     description: 'Your notifications and alerts.',
 }
 
-import { serverFetch } from '@/lib/api'
 import type { Notification } from '@/types/api'
 
 export default async function NotificationsPage() {
     let notifications: Notification[] = []
     try {
-        const resp = await serverFetch('/notifications?limit=50')
-        if (Array.isArray(resp)) notifications = resp as Notification[]
+        // Fetch notifications directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const resp = await fetch(`${apiBase}/notifications/?limit=50`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (resp.ok) {
+                const data = await resp.json()
+                if (Array.isArray(data)) {
+                    notifications = data as Notification[]
+                }
+            }
+        }
     } catch (e) {
         notifications = []
     }

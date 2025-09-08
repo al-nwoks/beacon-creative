@@ -1,3 +1,4 @@
+import logging
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.project import Project
@@ -9,15 +10,19 @@ from app.auth.password import get_password_hash
 import uuid
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
+
 def seed_admin_user(db: Session):
     """Seed the database with just the admin user"""
     
+    logger.info("Checking for existing admin user")
     # Check if admin user already exists
     admin_user = db.query(User).filter(User.email == "admin@beacon-connect.com").first()
     if admin_user:
-        print("Admin user already exists, skipping...")
+        logger.info("Admin user already exists, skipping...")
         return
     
+    logger.info("Creating admin user")
     # Create admin user
     admin_data = {
         "email": "admin@beacon-connect.com",
@@ -34,11 +39,12 @@ def seed_admin_user(db: Session):
     db.commit()
     db.refresh(admin_user)
     
-    print("Admin user seeded successfully!")
+    logger.info("Admin user seeded successfully!")
 
 def seed_mock_data(db: Session):
     """Seed the database with mock data for development and testing"""
     
+    logger.info("Clearing existing data")
     # Clear existing data
     db.query(Payment).delete()
     db.query(ProjectFile).delete()
@@ -48,6 +54,7 @@ def seed_mock_data(db: Session):
     db.query(User).delete()
     db.commit()
     
+    logger.info("Creating mock users")
     # Create mock users
     users_data = [
         # Creatives
@@ -62,6 +69,19 @@ def seed_mock_data(db: Session):
             "location": "New York, NY",
             "skills": ["Photography", "Fashion", "Portrait", "Studio", "Retouching"],
             "portfolio_links": ["https://sarahjohnson.com", "https://instagram.com/sarahj_photo"],
+            "portfolio_images": [
+                "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=400&fit=crop"
+            ],
+            "profile_image_url": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 182,
+            "followers_count": 1200,
+            "reviews_count": 15,
+            "rating": 4.9,
             "is_verified": True,
             "is_active": True,
             "creative_type": "Photographer"
@@ -77,6 +97,17 @@ def seed_mock_data(db: Session):
             "location": "San Francisco, CA",
             "skills": ["Graphic Design", "Branding", "Web Design", "UI/UX", "Adobe Creative Suite"],
             "portfolio_links": ["https://mikechen.design", "https://behance.net/mikechen"],
+            "portfolio_images": [
+                "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop"
+            ],
+            "profile_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 95,
+            "followers_count": 850,
+            "reviews_count": 12,
+            "rating": 4.7,
             "is_verified": True,
             "is_active": True,
             "creative_type": "Designer"
@@ -92,6 +123,17 @@ def seed_mock_data(db: Session):
             "location": "Los Angeles, CA",
             "skills": ["Modeling", "Fashion", "Commercial", "Lifestyle", "Content Creation"],
             "portfolio_links": ["https://emmadavis.model", "https://instagram.com/emma_davis_model"],
+            "portfolio_images": [
+                "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=400&fit=crop"
+            ],
+            "profile_image_url": "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 67,
+            "followers_count": 2100,
+            "reviews_count": 8,
+            "rating": 4.8,
             "is_verified": True,
             "is_active": True,
             "creative_type": "Model"
@@ -107,6 +149,16 @@ def seed_mock_data(db: Session):
             "location": "Miami, FL",
             "skills": ["DJ", "Music Production", "Events", "Electronic Music", "Sound Design"],
             "portfolio_links": ["https://alexrodriguezdj.com", "https://soundcloud.com/alexrodriguez"],
+            "portfolio_images": [
+                "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&h=400&fit=crop"
+            ],
+            "profile_image_url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 134,
+            "followers_count": 3200,
+            "reviews_count": 22,
+            "rating": 4.9,
             "is_verified": True,
             "is_active": True,
             "creative_type": "DJ"
@@ -122,6 +174,16 @@ def seed_mock_data(db: Session):
             "location": "Austin, TX",
             "skills": ["Videography", "Filmmaking", "Editing", "Storytelling", "Corporate Video"],
             "portfolio_links": ["https://lisawangfilms.com", "https://vimeo.com/lisawang"],
+            "portfolio_images": [
+                "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400&h=400&fit=crop",
+                "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=400&fit=crop"
+            ],
+            "profile_image_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 78,
+            "followers_count": 920,
+            "reviews_count": 11,
+            "rating": 4.6,
             "is_verified": True,
             "is_active": True,
             "creative_type": "Videographer"
@@ -136,6 +198,11 @@ def seed_mock_data(db: Session):
             "role": "client",
             "bio": "Creative Director at Style Magazine. Always looking for talented photographers and models for our fashion shoots and editorial content.",
             "location": "New York, NY",
+            "profile_image_url": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 12,
+            "followers_count": 45,
+            "reviews_count": 3,
+            "rating": 4.5,
             "is_verified": True,
             "is_active": True
         },
@@ -147,6 +214,11 @@ def seed_mock_data(db: Session):
             "role": "client",
             "bio": "Marketing Manager at Beach Vibes. We create lifestyle content and need creative professionals for our summer campaigns and brand collaborations.",
             "location": "Los Angeles, CA",
+            "profile_image_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 8,
+            "followers_count": 32,
+            "reviews_count": 2,
+            "rating": 4.3,
             "is_verified": True,
             "is_active": True
         },
@@ -158,6 +230,11 @@ def seed_mock_data(db: Session):
             "role": "client",
             "bio": "Event Producer at Runway Productions. We organize high-end fashion shows and events, always seeking talented DJs, photographers, and creative professionals.",
             "location": "Miami, FL",
+            "profile_image_url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 15,
+            "followers_count": 67,
+            "reviews_count": 5,
+            "rating": 4.7,
             "is_verified": True,
             "is_active": True
         },
@@ -169,6 +246,11 @@ def seed_mock_data(db: Session):
             "role": "client",
             "bio": "Head of Marketing at TechStartup Inc. We need creative professionals for our product launches, brand campaigns, and corporate content creation.",
             "location": "San Francisco, CA",
+            "profile_image_url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
+            "projects_count": 6,
+            "followers_count": 28,
+            "reviews_count": 1,
+            "rating": 4.0,
             "is_verified": True,
             "is_active": True
         }
@@ -182,6 +264,7 @@ def seed_mock_data(db: Session):
         created_users.append(user)
     
     db.commit()
+    logger.info(f"Created {len(created_users)} users")
     
     # Refresh users to get IDs
     for user in created_users:
@@ -193,6 +276,7 @@ def seed_mock_data(db: Session):
     runway_productions = next(u for u in created_users if u.email == "david.kim@runwayproductions.com")
     tech_startup = next(u for u in created_users if u.email == "jennifer.brown@techstartup.com")
     
+    logger.info("Creating mock projects")
     # Create mock projects
     projects_data = [
         {
@@ -277,6 +361,7 @@ def seed_mock_data(db: Session):
         created_projects.append(project)
     
     db.commit()
+    logger.info(f"Created {len(created_projects)} projects")
     
     # Refresh projects to get IDs
     for project in created_projects:
@@ -289,6 +374,7 @@ def seed_mock_data(db: Session):
     alex = next(u for u in created_users if u.email == "alex.rodriguez@example.com")
     lisa = next(u for u in created_users if u.email == "lisa.wang@example.com")
     
+    logger.info("Creating mock applications")
     # Create mock applications
     applications_data = [
         {
@@ -344,7 +430,9 @@ def seed_mock_data(db: Session):
         db.add(application)
     
     db.commit()
+    logger.info(f"Created {len(applications_data)} applications")
     
+    logger.info("Creating mock messages")
     # Create mock messages
     messages_data = [
         # Conversation between Sarah (creative) and Style Magazine (client) about Fashion Photographer project
@@ -468,7 +556,9 @@ def seed_mock_data(db: Session):
         db.add(message)
     
     db.commit()
+    logger.info(f"Created {len(messages_data)} messages")
     
+    logger.info("Creating mock payments")
     # Create mock payments
     payments_data = [
         # Payment for DJ services (accepted application)
@@ -513,7 +603,9 @@ def seed_mock_data(db: Session):
         db.add(payment)
     
     db.commit()
+    logger.info(f"Created {len(payments_data)} payments")
     
+    logger.info("Creating mock project files")
     # Create mock project files
     project_files_data = [
         # Files for Fashion Photographer project
@@ -605,11 +697,12 @@ def seed_mock_data(db: Session):
         db.add(project_file)
     
     db.commit()
+    logger.info(f"Created {len(project_files_data)} project files")
     
-    print("Mock data seeded successfully!")
-    print(f"Created {len(created_users)} users")
-    print(f"Created {len(created_projects)} projects")
-    print(f"Created {len(applications_data)} applications")
-    print(f"Created {len(messages_data)} messages")
-    print(f"Created {len(payments_data)} payments")
-    print(f"Created {len(project_files_data)} project files")
+    logger.info("Mock data seeded successfully!")
+    logger.info(f"Created {len(created_users)} users")
+    logger.info(f"Created {len(created_projects)} projects")
+    logger.info(f"Created {len(applications_data)} applications")
+    logger.info(f"Created {len(messages_data)} messages")
+    logger.info(f"Created {len(payments_data)} payments")
+    logger.info(f"Created {len(project_files_data)} project files")

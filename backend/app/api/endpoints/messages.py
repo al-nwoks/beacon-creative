@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 import uuid
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from sqlalchemy import or_, and_, desc, func
 from app.db.database import get_db
 from app.models.user import User
 from app.models.message import Message
+from app.models.notification import Notification
 from app.models.project import Project
 from app.models.application import Application
 from app.schemas.message import (
@@ -20,6 +22,8 @@ from app.schemas.message import (
     Conversation
 )
 from app.auth.dependencies import get_current_active_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -37,7 +41,15 @@ def create_message(
     logger.debug(f"Message data: content_length={len(message_in.content)}, project_id={message_in.project_id}, application_id={message_in.application_id}")
     
     # Convert recipient_id to integer (user IDs are integers, not UUIDs)
-    recipient_id_int = int(message_in.recipient_id)
+    try:
+        recipient_id_int = int(message_in.recipient_id)
+    except ValueError:
+        logger.warning(f"Invalid recipient ID format: {message_in.recipient_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid recipient ID format",
+        )
+    
     recipient = db.query(User).filter(User.id == recipient_id_int).first()
     if not recipient:
         logger.warning(f"Message creation failed: Recipient {recipient_id_int} not found for sender {current_user.id}")
@@ -47,8 +59,17 @@ def create_message(
         )
     
     # If project_id is provided, check if it exists and if both users are involved
+    project_id_uuid = None
     if message_in.project_id:
-        project_id_uuid = uuid.UUID(message_in.project_id)
+        try:
+            project_id_uuid = uuid.UUID(message_in.project_id)
+        except ValueError:
+            logger.warning(f"Invalid project ID format: {message_in.project_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid project ID format",
+            )
+        
         project = db.query(Project).filter(Project.id == project_id_uuid).first()
         if not project:
             logger.warning(f"Message creation failed: Project {message_in.project_id} not found")
@@ -67,8 +88,17 @@ def create_message(
             )
     
     # If application_id is provided, check if it exists and if both users are involved
+    application_id_uuid = None
     if message_in.application_id:
-        application_id_uuid = uuid.UUID(message_in.application_id)
+        try:
+            application_id_uuid = uuid.UUID(message_in.application_id)
+        except ValueError:
+            logger.warning(f"Invalid application ID format: {message_in.application_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid application ID format",
+            )
+        
         application = db.query(Application).filter(Application.id == application_id_uuid).first()
         if not application:
             logger.warning(f"Message creation failed: Application {message_in.application_id} not found")
@@ -94,8 +124,8 @@ def create_message(
         sender_id=current_user.id,
         recipient_id=recipient_id_int,
         content=message_in.content,
-        project_id=project_id_uuid if 'project_id_uuid' in locals() else None,
-        application_id=application_id_uuid if 'application_id_uuid' in locals() else None,
+        project_id=project_id_uuid,
+        application_id=application_id_uuid,
         is_read=False
     )
     db.add(db_message)
@@ -103,6 +133,26 @@ def create_message(
     db.refresh(db_message)
     
     logger.info(f"Message created successfully with ID: {db_message.id} from user {current_user.id} to {recipient_id_int}")
+    
+    # Create a notification for the recipient
+    try:
+        notification_title = f"New message from {current_user.first_name} {current_user.last_name}"
+        notification_body = db_message.content[:100] + "..." if len(db_message.content) > 100 else db_message.content
+        
+        db_notification = Notification(
+            user_id=recipient_id_int,
+            title=notification_title,
+            body=notification_body,
+            read=False
+        )
+        db.add(db_notification)
+        db.commit()
+        logger.info(f"Notification created for recipient {recipient_id_int} about new message {db_message.id}")
+    except Exception as e:
+        logger.error(f"Failed to create notification for recipient {recipient_id_int}: {str(e)}")
+        # Don't fail the message creation if notification creation fails
+        db.rollback()
+    
     return db_message
 
 @router.get("/", response_model=List[MessageWithSender])
@@ -119,6 +169,9 @@ def get_messages(
     """
     Get messages with filters.
     """
+    logger.info(f"Fetching messages for user ID: {current_user.id}")
+    logger.debug(f"Filter parameters: other_user_id={other_user_id}, project_id={project_id}, application_id={application_id}, skip={skip}, limit={limit}")
+    
     # Base query - messages where current user is sender or recipient
     query = db.query(Message).filter(
         or_(
@@ -129,7 +182,15 @@ def get_messages(
     
     # Apply filters
     if other_user_id:
-        other_user_id_int = int(other_user_id)
+        try:
+            other_user_id_int = int(other_user_id)
+        except ValueError:
+            logger.warning(f"Invalid other_user_id format: {other_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format",
+            )
+        
         query = query.filter(
             or_(
                 and_(
@@ -144,24 +205,45 @@ def get_messages(
         )
     
     if project_id:
-        project_id_uuid = uuid.UUID(project_id)
+        try:
+            project_id_uuid = uuid.UUID(project_id)
+        except ValueError:
+            logger.warning(f"Invalid project_id format: {project_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid project ID format",
+            )
+        
         query = query.filter(Message.project_id == project_id_uuid)
     
     if application_id:
-        application_id_uuid = uuid.UUID(application_id)
+        try:
+            application_id_uuid = uuid.UUID(application_id)
+        except ValueError:
+            logger.warning(f"Invalid application_id format: {application_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid application ID format",
+            )
+        
         query = query.filter(Message.application_id == application_id_uuid)
     
     # Order by creation time (newest first) and apply pagination
     messages = query.order_by(desc(Message.created_at)).offset(skip).limit(limit).all()
     
     # Mark messages as read if current user is recipient
+    read_count = 0
     for message in messages:
         if message.recipient_id == current_user.id and not message.is_read:
             message.is_read = True
             db.add(message)
+            read_count += 1
     
-    db.commit()
+    if read_count > 0:
+        db.commit()
+        logger.info(f"Marked {read_count} messages as read for user ID: {current_user.id}")
     
+    logger.info(f"Found {len(messages)} messages for user ID: {current_user.id}")
     return messages
 
 @router.get("/conversations", response_model=List[Conversation])
@@ -173,6 +255,8 @@ def get_conversations(
     """
     Get all conversations for the current user.
     """
+    logger.info(f"Fetching conversations for user ID: {current_user.id}")
+    
     # This is a more complex query that would typically use raw SQL or complex ORM operations
     # For simplicity, we'll use a less efficient but functional approach
     
@@ -183,10 +267,14 @@ def get_conversations(
     # Flatten and deduplicate the list
     user_ids = list(set([user_id[0] for user_id in user_ids if user_id[0] != current_user.id]))
     
+    logger.debug(f"Found {len(user_ids)} conversation partners for user ID: {current_user.id}")
+    
     conversations = []
     for user_id in user_ids:
         # Get the other user
         other_user = db.query(User).filter(User.id == user_id).first()
+        if not other_user:
+            continue
         
         # Get the latest message between the two users
         latest_message = db.query(Message).filter(
@@ -214,15 +302,69 @@ def get_conversations(
             "user": other_user,
             "last_message": latest_message,
             "unread_count": unread_count,
-            "updated_at": latest_message.created_at
+            "updated_at": latest_message.created_at if latest_message else None
         }
         
         conversations.append(conversation)
     
-    # Sort by latest message time
-    conversations.sort(key=lambda x: x["updated_at"], reverse=True)
+    # Sort by latest message time (handle None values)
+    conversations.sort(key=lambda x: x["updated_at"] or datetime.min, reverse=True)
     
+    logger.info(f"Returning {len(conversations)} conversations for user ID: {current_user.id}")
     return conversations
+
+@router.get("/between/{other_user_id}", response_model=List[MessageWithUsers])
+def get_messages_between_users(
+    *,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    other_user_id: int,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    """
+    Get messages between the current user and another specific user.
+    """
+    logger.info(f"Fetching messages between user ID: {current_user.id} and user ID: {other_user_id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    # Verify the other user exists
+    other_user = db.query(User).filter(User.id == other_user_id).first()
+    if not other_user:
+        logger.warning(f"User {other_user_id} not found when fetching messages for user {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    # Get messages between the two users
+    messages = db.query(Message).filter(
+        or_(
+            and_(
+                Message.sender_id == current_user.id,
+                Message.recipient_id == other_user_id
+            ),
+            and_(
+                Message.sender_id == other_user_id,
+                Message.recipient_id == current_user.id
+            )
+        )
+    ).order_by(desc(Message.created_at)).offset(skip).limit(limit).all()
+    
+    # Mark messages as read if current user is recipient
+    read_count = 0
+    for message in messages:
+        if message.recipient_id == current_user.id and not message.is_read:
+            message.is_read = True
+            db.add(message)
+            read_count += 1
+    
+    if read_count > 0:
+        db.commit()
+        logger.info(f"Marked {read_count} messages as read for user ID: {current_user.id}")
+    
+    logger.info(f"Found {len(messages)} messages between user ID: {current_user.id} and user ID: {other_user_id}")
+    return messages
 
 @router.put("/{message_id}/read", response_model=MessageSchema)
 def mark_message_as_read(
@@ -234,9 +376,12 @@ def mark_message_as_read(
     """
     Mark a message as read.
     """
+    logger.info(f"Marking message {message_id} as read for user ID: {current_user.id}")
+    
     message_id_uuid = uuid.UUID(message_id)
     message = db.query(Message).filter(Message.id == message_id_uuid).first()
     if not message:
+        logger.warning(f"Message {message_id} not found for user ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
@@ -244,6 +389,7 @@ def mark_message_as_read(
     
     # Check if user is the recipient
     if message.recipient_id != current_user.id:
+        logger.warning(f"User {current_user.id} attempted to mark message {message_id} as read (not recipient)")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -254,4 +400,41 @@ def mark_message_as_read(
     db.add(message)
     db.commit()
     db.refresh(message)
+    
+    logger.info(f"Message {message_id} marked as read for user ID: {current_user.id}")
     return message
+
+@router.get("/search", response_model=List[MessageWithSender])
+def search_messages(
+    *,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    query: str,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    """
+    Search messages for the current user by content.
+    """
+    logger.info(f"Searching messages for user ID: {current_user.id} with query: {query}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    if not query or len(query.strip()) < 2:
+        logger.warning(f"Search query too short for user ID: {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query must be at least 2 characters long",
+        )
+    
+    # Search messages where current user is sender or recipient and content contains the query
+    messages = db.query(Message).filter(
+        or_(
+            Message.sender_id == current_user.id,
+            Message.recipient_id == current_user.id
+        )
+    ).filter(
+        Message.content.ilike(f"%{query}%")
+    ).order_by(desc(Message.created_at)).offset(skip).limit(limit).all()
+    
+    logger.info(f"Found {len(messages)} messages matching query for user ID: {current_user.id}")
+    return messages

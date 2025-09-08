@@ -1,5 +1,6 @@
 from typing import Any, List
 import logging
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate, Project as ProjectSchema
 from app.auth.dependencies import get_current_active_user_dependency, get_current_client_user_dependency
 from app.models.user import User
+from app.utils.performance import log_performance_metrics, log_query_performance
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,22 @@ def get_projects(
     """
     Retrieve projects.
     """
+    start_time = time.time()
     logger.info(f"Fetching projects for user {current_user.id}")
+    
+    query_start = time.time()
     projects = db.query(Project).offset(skip).limit(limit).all()
+    query_end = time.time()
+    log_query_performance("SELECT", "simple", query_end - query_start, len(projects))
+    
     logger.debug(f"Found {len(projects)} projects")
+    
+    end_time = time.time()
+    log_performance_metrics("get_projects", start_time, end_time, {
+        "project_count": len(projects),
+        "skip": skip,
+        "limit": limit
+    })
     return projects
 
 
@@ -41,6 +56,7 @@ def create_project(
     Create new project.
     Only clients can create projects.
     """
+    start_time = time.time()
     logger.info(f"Creating project for client user {current_user.id}")
     logger.debug(f"Project data: {project_in.dict()}")
     
@@ -58,6 +74,8 @@ def create_project(
     db.commit()
     db.refresh(db_project)
     
+    end_time = time.time()
+    log_performance_metrics("create_project", start_time, end_time)
     logger.info(f"Project created successfully with ID: {db_project.id}")
     return db_project
 

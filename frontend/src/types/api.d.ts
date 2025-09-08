@@ -22,6 +22,14 @@ export interface User {
   hourly_rate?: number | null
   skills?: string[]
   portfolio_links?: string[]
+  portfolio_images?: string[]
+  // Profile stats
+  projects_count?: number
+  followers_count?: number
+  reviews_count?: number
+  rating?: number
+  creative_type?: string | null
+  notification_settings?: NotificationSetting | null
 }
 
 /* Project */
@@ -68,14 +76,23 @@ export interface MessageSummary {
   unread?: boolean
 }
 
+/* Message with sender */
+export interface MessageWithSender extends Message {
+  sender: User
+}
+
 /* Full Message */
 export interface Message {
   id: number | string
-  conversation_id?: number | string
-  sender_id?: number | string
-  body: string
-  created_at?: string
-  // attachments, read status etc.
+  content: string
+  sender_id: number | string
+  recipient_id: number | string
+  is_read: boolean
+  created_at: string
+  project_id?: string
+  application_id?: string
+  sender?: User
+  recipient?: User
 }
 
 /* Payment */
@@ -110,6 +127,27 @@ export interface Notification {
   read?: boolean
   created_at?: string
   // target, data payload etc.
+}
+
+/* Notification Settings */
+export interface NotificationSetting {
+  id: string
+  user_id: number
+  email_project_updates?: boolean
+  email_messages?: boolean
+  email_application_status?: boolean
+  email_payment_updates?: boolean
+  email_newsletter?: boolean
+  in_app_project_updates?: boolean
+  in_app_messages?: boolean
+  in_app_application_status?: boolean
+  in_app_payment_updates?: boolean
+  push_project_updates?: boolean
+  push_messages?: boolean
+  push_application_status?: boolean
+  push_payment_updates?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 /* Generic paginated response */

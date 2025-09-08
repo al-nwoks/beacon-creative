@@ -119,3 +119,22 @@ async def get_current_client_user(
     
     logger.debug(f"User {current_user.id} authorized as client")
     return current_user
+
+
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Get the current admin user
+    """
+    logger.debug(f"Checking if user {current_user.id} is an admin user")
+    
+    if current_user.role != "admin":
+        logger.warning(f"Access denied: User {current_user.id} is not an admin user (role: {current_user.role})")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not an admin user"
+        )
+    
+    logger.debug(f"User {current_user.id} authorized as admin")
+    return current_user

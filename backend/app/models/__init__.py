@@ -4,3 +4,5 @@ from app.models.application import Application
 from app.models.message import Message
 from app.models.project_file import ProjectFile
 from app.models.payment import Payment
+from app.models.notification import Notification
+from app.models.notification_setting import NotificationSetting

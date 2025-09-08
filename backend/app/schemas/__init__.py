@@ -1,5 +1,5 @@
 from app.schemas.user import (
-    User, UserCreate, UserUpdate, UserInDB, 
+    User, UserCreate, UserUpdate, UserInDB,
     Token, TokenPayload
 )
 from app.schemas.project import (
@@ -23,4 +23,11 @@ from app.schemas.payment import (
     Payment, PaymentCreate, PaymentUpdate, PaymentInDB,
     PaymentWithClient, PaymentWithCreative, PaymentWithProject, PaymentWithDetails,
     PaymentIntentResponse
+)
+from app.schemas.notification import (
+    Notification, NotificationCreate, NotificationUpdate,
+    NotificationList
+)
+from app.schemas.notification_setting import (
+    NotificationSetting, NotificationSettingCreate, NotificationSettingUpdate
 )

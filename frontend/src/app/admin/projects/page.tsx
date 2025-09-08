@@ -8,54 +8,40 @@ export const metadata: Metadata = {
     description: 'View and manage platform projects.',
 }
 
-export default function AdminProjectsPage() {
-    // Mock data for projects
-    const projects: Project[] = [
-        {
-            id: 1,
-            title: 'Website Redesign',
-            description: 'Redesign company website to improve user experience',
-            budget_min: 3000,
-            budget_max: 5000,
-            timeline_weeks: 4,
-            required_skills: ['UI/UX', 'React'],
-            created_at: '2023-06-15T10:30:00Z',
-            status: 'active',
-        },
-        {
-            id: 2,
-            title: 'Mobile App Development',
-            description: 'Develop cross-platform mobile app for fitness tracking',
-            budget_min: 8000,
-            budget_max: 12000,
-            timeline_weeks: 12,
-            required_skills: ['React Native', 'Firebase'],
-            created_at: '2023-06-20T14:45:00Z',
-            status: 'hired',
-        },
-        {
-            id: 3,
-            title: 'Brand Identity',
-            description: 'Create complete brand identity package',
-            budget_min: 2000,
-            budget_max: 3500,
-            timeline_weeks: 3,
-            required_skills: ['Logo Design', 'Illustration'],
-            created_at: '2023-06-25T09:15:00Z',
-            status: 'completed',
-        },
-        {
-            id: 4,
-            title: 'Content Marketing',
-            description: 'Develop content marketing strategy',
-            budget_min: 1500,
-            budget_max: 2500,
-            timeline_weeks: 6,
-            required_skills: ['SEO', 'Copywriting'],
-            created_at: '2023-07-01T16:20:00Z',
-            status: 'active',
-        },
-    ]
+export default async function AdminProjectsPage() {
+    // Fetch real data from the API
+    let projects: Project[] = []
+
+    try {
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const projectsResp = await fetch(`${apiBase}/admin/projects`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (projectsResp.ok) {
+                const projectsData = await projectsResp.json()
+                if (Array.isArray(projectsData)) {
+                    projects = projectsData as Project[]
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch projects', err)
+    }
 
     return (
         <ProtectedRoute requiredRole="admin">
@@ -84,8 +70,8 @@ export default function AdminProjectsPage() {
                                                     : 'Budget not specified'}
                                             </div>
                                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                    project.status === 'hired' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-yellow-100 text-yellow-800'
+                                                project.status === 'hired' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-yellow-100 text-yellow-800'
                                                 }`}>
                                                 {project.status || 'active'}
                                             </span>

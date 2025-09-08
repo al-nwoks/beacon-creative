@@ -21,7 +21,7 @@
 
 import { fetcher } from '@/hooks/useSWRFetcher'
 import { clientFetcher } from '@/lib/api'
-import type { Application, DashboardSummary, MessageSummary, Notification, Payment, Project, User } from '@/types/api'
+import type { Application, DashboardSummary, MessageSummary, MessageWithSender, Notification, Payment, Project, User } from '@/types/api'
 import useSWR, { mutate } from 'swr'
 
 export function useProjects(query = '/projects?limit=24') {
@@ -52,6 +52,17 @@ export function useMessages(query = '/messages/conversations?limit=50') {
     error,
     isLoading: !error && !data,
     mutate: () => mutate(query),
+  }
+}
+
+export function useMessagesBetweenUsers(userId?: string | number, query = '/messages/between/') {
+  const key = userId ? `${query}${userId}` : null
+  const { data, error } = useSWR<MessageSummary[]>(key, fetcher, { refreshInterval: 5000 })
+  return {
+    data,
+    error,
+    isLoading: !error && !data,
+    mutate: () => key && mutate(key),
   }
 }
 
@@ -124,4 +135,25 @@ export async function markNotificationRead(notificationId: string) {
   const res = await clientFetcher(`/notifications/${notificationId}/read`, { method: 'POST' })
   mutate('/notifications?limit=50')
   return res
+}
+
+export async function sendMessage(recipientId: string | number, content: string) {
+  const res = await clientFetcher('/messages', {
+    method: 'POST',
+    body: JSON.stringify({ recipient_id: recipientId, content }),
+  })
+  // Refresh conversations list
+  mutate('/messages/conversations?limit=50')
+  return res
+}
+
+export function useSearchMessages(query: string, skip: number = 0, limit: number = 50) {
+  const key = query ? `/messages/search?query=${encodeURIComponent(query)}&skip=${skip}&limit=${limit}` : null
+  const { data, error } = useSWR<MessageWithSender[]>(key, fetcher, { refreshInterval: 0 })
+  return {
+    data,
+    error,
+    isLoading: !error && !data,
+    mutate: () => key && mutate(key),
+  }
 }
