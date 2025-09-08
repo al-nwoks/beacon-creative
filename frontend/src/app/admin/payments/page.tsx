@@ -8,56 +8,40 @@ export const metadata: Metadata = {
     description: 'View platform payments.',
 }
 
-export default function AdminPaymentsPage() {
-    // Mock data for payments
-    const payments: Payment[] = [
-        {
-            id: 1,
-            amount: 3000,
-            currency: 'USD',
-            status: 'released',
-            created_at: '2023-06-15T10:30:00Z',
-            project_id: 1,
-            client_id: 1,
-            creative_id: 2,
-            milestone_description: 'Website redesign milestone 1',
-            released_at: '2023-06-20T14:45:00Z',
-        },
-        {
-            id: 2,
-            amount: 5000,
-            currency: 'USD',
-            status: 'held_in_escrow',
-            created_at: '2023-06-20T14:45:00Z',
-            project_id: 2,
-            client_id: 4,
-            creative_id: 5,
-            milestone_description: 'Mobile app development milestone 1',
-        },
-        {
-            id: 3,
-            amount: 2000,
-            currency: 'USD',
-            status: 'released',
-            created_at: '2023-06-25T09:15:00Z',
-            project_id: 3,
-            client_id: 1,
-            creative_id: 3,
-            milestone_description: 'Brand identity package',
-            released_at: '2023-06-30T11:20:00Z',
-        },
-        {
-            id: 4,
-            amount: 1500,
-            currency: 'USD',
-            status: 'pending',
-            created_at: '2023-07-01T16:20:00Z',
-            project_id: 4,
-            client_id: 4,
-            creative_id: 5,
-            milestone_description: 'Content marketing strategy',
-        },
-    ]
+export default async function AdminPaymentsPage() {
+    // Fetch real data from the API
+    let payments: Payment[] = []
+
+    try {
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const paymentsResp = await fetch(`${apiBase}/admin/payments`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (paymentsResp.ok) {
+                const paymentsData = await paymentsResp.json()
+                if (Array.isArray(paymentsData)) {
+                    payments = paymentsData as Payment[]
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch payments', err)
+    }
 
     // Calculate total amount
     const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0)
@@ -102,8 +86,8 @@ export default function AdminPaymentsPage() {
                                             <div className="text-right">
                                                 <p className="text-lg font-semibold text-neutral-900">${payment.amount?.toFixed(2)}</p>
                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${payment.status === 'released' ? 'bg-green-100 text-green-800' :
-                                                        payment.status === 'held_in_escrow' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-blue-100 text-blue-800'
+                                                    payment.status === 'held_in_escrow' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-blue-100 text-blue-800'
                                                     }`}>
                                                     {payment.status || 'pending'}
                                                 </span>

@@ -9,6 +9,8 @@ A platform connecting creative professionals with clients for project collaborat
 - Talent marketplace
 - Messaging system
 - Payment processing
+- Real-time notifications
+- Admin dashboard
 
 ## Authentication System
 

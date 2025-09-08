@@ -8,45 +8,40 @@ export const metadata: Metadata = {
     description: 'View and manage platform users.',
 }
 
-export default function AdminUsersPage() {
-    // Mock data for users
-    const users: User[] = [
-        {
-            id: 1,
-            email: 'client@example.com',
-            name: 'John Client',
-            role: 'client',
-            created_at: '2023-01-15T10:30:00Z',
-        },
-        {
-            id: 2,
-            email: 'creative@example.com',
-            name: 'Jane Creative',
-            role: 'creative',
-            created_at: '2023-02-20T14:45:00Z',
-        },
-        {
-            id: 3,
-            email: 'admin@example.com',
-            name: 'Admin User',
-            role: 'admin',
-            created_at: '2023-03-10T09:15:00Z',
-        },
-        {
-            id: 4,
-            email: 'another.client@example.com',
-            name: 'Another Client',
-            role: 'client',
-            created_at: '2023-04-05T16:20:00Z',
-        },
-        {
-            id: 5,
-            email: 'another.creative@example.com',
-            name: 'Another Creative',
-            role: 'creative',
-            created_at: '2023-05-12T11:30:00Z',
-        },
-    ]
+export default async function AdminUsersPage() {
+    // Fetch real data from the API
+    let users: User[] = []
+
+    try {
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            const usersResp = await fetch(`${apiBase}/admin/users`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                },
+                cache: 'no-store',
+            })
+
+            if (usersResp.ok) {
+                const usersData = await usersResp.json()
+                if (Array.isArray(usersData)) {
+                    users = usersData as User[]
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch users', err)
+    }
 
     return (
         <ProtectedRoute requiredRole="admin">

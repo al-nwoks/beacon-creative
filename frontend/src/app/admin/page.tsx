@@ -34,9 +34,9 @@ export default async function AdminPage() {
             const base = rawBase.replace(/\/+$/, '')
             const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-            // Fetch all data in parallel
-            const [usersResp, projectsResp] = await Promise.allSettled([
-                fetch(`${apiBase}/users?limit=6`, {
+            // Fetch all data in parallel using admin endpoints
+            const [statsResp, usersResp, projectsResp] = await Promise.allSettled([
+                fetch(`${apiBase}/admin/stats`, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -44,7 +44,15 @@ export default async function AdminPage() {
                     },
                     cache: 'no-store',
                 }),
-                fetch(`${apiBase}/projects?limit=6`, {
+                fetch(`${apiBase}/admin/users?limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                }),
+                fetch(`${apiBase}/admin/projects?limit=6`, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -54,12 +62,20 @@ export default async function AdminPage() {
                 }),
             ])
 
+            // Update stats with real data
+            if (statsResp.status === 'fulfilled' && statsResp.value.ok) {
+                const statsData = await statsResp.value.json()
+                if (statsData) {
+                    if (stats[0]) stats[0].value = String(statsData.total_users || 0)
+                    // For projects count, we'll use the count from the projects response
+                    // We'll update payments count later
+                }
+            }
+
             if (usersResp.status === 'fulfilled' && usersResp.value.ok) {
                 const usersData = await usersResp.value.json()
                 if (Array.isArray(usersData)) {
                     recentUsers = usersData as User[]
-                    // Update stats with real data
-                    if (stats[0]) stats[0].value = String(recentUsers.length)
                 }
             }
 
@@ -67,9 +83,31 @@ export default async function AdminPage() {
                 const projectsData = await projectsResp.value.json()
                 if (Array.isArray(projectsData)) {
                     recentProjects = projectsData as Project[]
-                    // Update stats with real data
-                    if (stats[1]) stats[1].value = String(recentProjects.length)
+                    // Update stats with projects count
+                    if (stats[1]) stats[1].value = String(projectsData.length)
                 }
+            }
+
+            // Try to fetch payments count
+            try {
+                const paymentsResp = await fetch(`${apiBase}/admin/payments?limit=1`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (paymentsResp.ok) {
+                    // Get total count from headers or by parsing the response
+                    const paymentsData = await paymentsResp.json()
+                    if (Array.isArray(paymentsData) && stats[2]) {
+                        stats[2].value = String(paymentsData.length)
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch payments count', err)
             }
         }
     } catch (err) {

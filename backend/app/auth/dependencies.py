@@ -8,7 +8,8 @@ from app.auth.middleware import (
     get_current_user,
     get_current_active_user,
     get_current_creative_user,
-    get_current_client_user
+    get_current_client_user,
+    get_current_admin_user
 )
 
 logger = logging.getLogger(__name__)
@@ -48,5 +49,14 @@ def get_current_client_user_dependency(
 ) -> User:
     """
     Get the current client user
+    """
+    return user
+
+
+def get_current_admin_user_dependency(
+    user: User = Depends(get_current_admin_user)
+) -> User:
+    """
+    Get the current admin user
     """
     return user
