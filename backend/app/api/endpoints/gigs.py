@@ -195,18 +195,22 @@ def get_my_gigs(
     *,
     db: Session = Depends(get_db),
     status: str = None,
+    skip: int = 0,
+    limit: int = 100,
     current_user: User = Depends(get_current_client_user_dependency)
 ) -> Any:
     """
-    Get current user's gigs.
+    Get current user's gigs with pagination.
     Only clients can view their own gigs.
     """
     logger.info(f"Fetching gigs for client user {current_user.id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}, status={status}")
     
     query = db.query(Gig).filter(Gig.client_id == current_user.id)
     if status:
         query = query.filter(Gig.status == status)
     
-    gigs = query.all()
+    # Apply pagination
+    gigs = query.offset(skip).limit(limit).all()
     logger.debug(f"Found {len(gigs)} gigs for client user {current_user.id}")
     return gigs

@@ -7,84 +7,104 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
     title: 'Creative Dashboard | B3ACON Creative Connect',
-    description: 'Find gigs and manage your creative work.',
+    description: 'Find gigs and manage your creative portfolio.',
 }
 
 export default async function CreativeDashboardPage() {
-    // Mock data for dashboard
-    const stats = [
-        { label: 'Active Applications', value: '5', change: '+2 from last week' },
-        { label: 'Total Earned', value: '$8,250', change: '+12% from last month' },
-        { label: 'Completed Gigs', value: '12', change: '+3 from last month' },
-        { label: 'Success Rate', value: '85%', change: '+5% from last month' },
+    let stats = [
+        { label: 'Active Applications', value: '0', change: '' },
+        { label: 'Total Earned', value: '$0', change: '' },
+        { label: 'Completed Gigs', value: '0', change: '' },
+        { label: 'Success Rate', value: '0%', change: '' },
     ]
 
-    const recentApplications: Application[] = [
-        {
-            id: '1',
-            gig: {
-                id: '101',
-                title: 'Brand Photography for Fashion Startup',
-                description: 'High-quality product photography for fashion line',
-                budget_min: 1500,
-                budget_max: 2500,
-                timeline_weeks: 4,
-                required_skills: ['Photography', 'Fashion', 'Lighting'],
-                created_at: '2023-06-15T10:30:00Z',
-                status: 'active'
-            },
-            status: 'pending',
-            applied_at: '2023-06-20T14:30:00Z',
-            cover_letter: 'I have extensive experience in fashion photography and would love to work on this gig.',
-            proposed_budget: 2000,
-            proposed_timeline_weeks: 3
-        },
-        {
-            id: '2',
-            gig: {
-                id: '102',
-                title: 'UI/UX Design for Mobile App',
-                description: 'Design a complete user interface for fitness tracking app',
-                budget_min: 3000,
-                budget_max: 5000,
-                timeline_weeks: 6,
-                required_skills: ['UI/UX Design', 'Figma', 'Mobile Design'],
-                created_at: '2023-06-10T09:15:00Z',
-                status: 'active'
-            },
-            status: 'accepted',
-            applied_at: '2023-06-12T11:45:00Z',
-            cover_letter: 'My portfolio includes several successful mobile app designs. I\'m confident I can deliver exceptional results for your gig.',
-            proposed_budget: 4500,
-            proposed_timeline_weeks: 5
-        },
-        {
-            id: '3',
-            gig: {
-                id: '103',
-                title: 'Content Writing for Tech Blog',
-                description: 'Technical writing for technology blog',
-                budget_min: 500,
-                budget_max: 1000,
-                timeline_weeks: 2,
-                required_skills: ['Technical Writing', 'SEO', 'Tech'],
-                created_at: '2023-06-05T16:20:00Z',
-                status: 'completed'
-            },
-            status: 'rejected',
-            applied_at: '2023-06-07T09:30:00Z',
-            cover_letter: 'I specialize in technical content and have written for several tech publications.',
-            proposed_budget: 750,
-            proposed_timeline_weeks: 2
+    let recentApplications: Application[] = []
+    let recentActivity: any[] = []
+    let error: string | null = null
+
+    try {
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            // Fetch dashboard stats
+            try {
+                const statsResp = await fetch(`${apiBase}/dashboard/creative/stats`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (statsResp.ok) {
+                    const statsData = await statsResp.json()
+                    if (statsData) {
+                        stats = [
+                            { label: 'Active Applications', value: String(statsData.active_applications || 0), change: '' },
+                            { label: 'Total Earned', value: `$${statsData.total_earned?.toLocaleString() || 0}`, change: '' },
+                            { label: 'Completed Gigs', value: String(statsData.completed_gigs || 0), change: '' },
+                            { label: 'Success Rate', value: `${statsData.success_rate || 0}%`, change: '' },
+                        ]
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch creative stats', err)
+            }
+
+            // Fetch recent applications
+            try {
+                const applicationsResp = await fetch(`${apiBase}/dashboard/creative/recent-applications`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (applicationsResp.ok) {
+                    const applicationsData = await applicationsResp.json()
+                    if (Array.isArray(applicationsData)) {
+                        recentApplications = applicationsData as Application[]
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch recent applications', err)
+            }
+
+            // Fetch recent activity
+            try {
+                const activityResp = await fetch(`${apiBase}/dashboard/creative/recent-activity`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (activityResp.ok) {
+                    const activityData = await activityResp.json()
+                    if (Array.isArray(activityData)) {
+                        recentActivity = activityData
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch recent activity', err)
+            }
         }
-    ]
-
-    const recentActivity = [
-        { action: 'Application accepted', gig: 'UI/UX Design', time: '1 day ago' },
-        { action: 'New message received', gig: 'Brand Photography', time: '2 days ago' },
-        { action: 'Payment received', gig: 'Content Writing', time: '3 days ago' },
-        { action: 'Application submitted', gig: 'Brand Photography', time: '1 week ago' },
-    ]
+    } catch (err) {
+        console.error('Failed to fetch dashboard data', err)
+        error = 'Failed to load dashboard data'
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -106,6 +126,13 @@ export default async function CreativeDashboardPage() {
                         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Welcome back!</h1>
                         <p className="text-neutral-600">Find gigs and manage your creative work from this dashboard.</p>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                            <p className="text-red-800">{error}</p>
+                        </div>
+                    )}
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

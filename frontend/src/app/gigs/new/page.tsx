@@ -115,7 +115,7 @@ export default function NewGigPage() {
             // })
 
             showNotification('Gig created successfully!', 'success')
-            router.push('/dashboard')
+            router.push('/client')
         } catch (err) {
             console.error('Error creating gig:', err)
             showNotification('Failed to create gig. Please try again.', 'error')
@@ -346,7 +346,7 @@ export default function NewGigPage() {
                                     <div className="flex justify-end space-x-4 pt-6 border-t border-neutral-200">
                                         <Button
                                             variant="outline"
-                                            onClick={() => router.push('/dashboard')}
+                                            onClick={() => router.push('/client')}
                                             type="button"
                                         >
                                             Cancel

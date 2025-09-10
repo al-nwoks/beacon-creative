@@ -9,3 +9,4 @@ from .gig_file import router as gig_file
 from .notifications import router as notifications
 from .notification_settings import router as notification_settings
 from .admin import router as admin
+from .dashboard import router as dashboard

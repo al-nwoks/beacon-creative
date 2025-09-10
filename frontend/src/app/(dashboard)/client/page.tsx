@@ -11,56 +11,100 @@ export const metadata: Metadata = {
 }
 
 export default async function ClientDashboardPage() {
-    // Mock data for dashboard
-    const stats = [
-        { label: 'Active Gigs', value: '3', change: '+2 from last month' },
-        { label: 'Total Spent', value: '$12,450', change: '+15% from last month' },
-        { label: 'Applications', value: '24', change: '+8 from last week' },
-        { label: 'Active Creatives', value: '7', change: '+2 from last month' },
+    let stats = [
+        { label: 'Active Gigs', value: '0', change: '' },
+        { label: 'Total Spent', value: '$0', change: '' },
+        { label: 'Applications', value: '0', change: '' },
+        { label: 'Active Creatives', value: '0', change: '' },
     ]
 
-    const recentGigs: Gig[] = [
-        {
-            id: '1',
-            title: 'Brand Photography for Fashion Startup',
-            description: 'High-quality product photography for fashion line',
-            budget_min: 1500,
-            budget_max: 2500,
-            timeline_weeks: 4,
-            required_skills: ['Photography', 'Fashion', 'Lighting'],
-            created_at: '2023-06-15T10:30:00Z',
-            status: 'active'
-        },
-        {
-            id: '2',
-            title: 'UI/UX Design for Mobile App',
-            description: 'Design a complete user interface for fitness tracking app',
-            budget_min: 3000,
-            budget_max: 5000,
-            timeline_weeks: 6,
-            required_skills: ['UI/UX Design', 'Figma', 'Mobile Design'],
-            created_at: '2023-06-10T09:15:00Z',
-            status: 'active'
-        },
-        {
-            id: '3',
-            title: 'Content Writing for Tech Blog',
-            description: 'Technical writing for technology blog',
-            budget_min: 500,
-            budget_max: 1000,
-            timeline_weeks: 2,
-            required_skills: ['Technical Writing', 'SEO', 'Tech'],
-            created_at: '2023-06-05T16:20:00Z',
-            status: 'completed'
+    let recentGigs: Gig[] = []
+    let recentActivity: any[] = []
+    let error: string | null = null
+
+    try {
+        // Fetch data directly from backend API
+        const { cookies } = await import('next/headers')
+        const cookieStore = await cookies()
+        const token = cookieStore.get('access_token')?.value
+
+        if (token) {
+            const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
+            const base = rawBase.replace(/\/+$/, '')
+            const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+
+            // Fetch dashboard stats
+            try {
+                const statsResp = await fetch(`${apiBase}/dashboard/client/stats`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (statsResp.ok) {
+                    const statsData = await statsResp.json()
+                    if (statsData) {
+                        stats = [
+                            { label: 'Active Gigs', value: String(statsData.active_gigs || 0), change: '' },
+                            { label: 'Total Spent', value: `$${statsData.total_spent?.toLocaleString() || 0}`, change: '' },
+                            { label: 'Applications', value: String(statsData.applications || 0), change: '' },
+                            { label: 'Active Creatives', value: String(statsData.active_creatives || 0), change: '' },
+                        ]
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch client stats', err)
+            }
+
+            // Fetch recent gigs
+            try {
+                const gigsResp = await fetch(`${apiBase}/dashboard/client/recent-gigs`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (gigsResp.ok) {
+                    const gigsData = await gigsResp.json()
+                    if (Array.isArray(gigsData)) {
+                        recentGigs = gigsData as Gig[]
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch recent gigs', err)
+            }
+
+            // Fetch recent activity
+            try {
+                const activityResp = await fetch(`${apiBase}/dashboard/client/recent-activity`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (activityResp.ok) {
+                    const activityData = await activityResp.json()
+                    if (Array.isArray(activityData)) {
+                        recentActivity = activityData
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch recent activity', err)
+            }
         }
-    ]
-
-    const recentActivity = [
-        { action: 'New application received', gig: 'Brand Photography', time: '2 hours ago' },
-        { action: 'Payment released', gig: 'UI/UX Design', time: '1 day ago' },
-        { action: 'Gig completed', gig: 'Content Writing', time: '2 days ago' },
-        { action: 'New application received', gig: 'Brand Photography', time: '3 days ago' },
-    ]
+    } catch (err) {
+        console.error('Failed to fetch dashboard data', err)
+        error = 'Failed to load dashboard data'
+    }
 
     return (
         <ProtectedRoute requiredRole="client">
@@ -71,6 +115,13 @@ export default async function ClientDashboardPage() {
                         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Welcome back!</h1>
                         <p className="text-neutral-600">Manage your gigs and creative projects from this dashboard.</p>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                            <p className="text-red-800">{error}</p>
+                        </div>
+                    )}
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
