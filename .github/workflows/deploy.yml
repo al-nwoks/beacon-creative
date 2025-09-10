@@ -118,20 +118,17 @@ jobs:
           printf '%s\n' 'if [ "$CLEAN_ROLLOUT" = "true" ]; then' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Performing clean rollout..."' >> ./remote-deploy.sh
           printf '%s\n' '  cd "${REMOTE_PATH}"' >> ./remote-deploy.sh
-          printf '%s\n' '  # Stop and remove all containers, networks, and volumes' >> ./remote-deploy.sh
-          printf '%s\n' '  if [ -f "$COMPOSE_FILE" ]; then' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" down -v --remove-orphans 2>/dev/null || true' >> ./remote-deploy.sh
-          printf '%s\n' '    # Remove all images associated with services' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" down --rmi all --remove-orphans 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Stopping services and removing containers, networks, volumes, and local images..."' >> ./remote-deploy.sh
+          printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" down -v --rmi local 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Pruning Docker system..."' >> ./remote-deploy.sh
+          printf '%s\n' '  docker system prune -f 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Removing all files..."' >> ./remote-deploy.sh
+          printf '%s\n' '  # Safety check to ensure we are in the correct directory before removing files' >> ./remote-deploy.sh
+          printf '%s\n' '  if [ "$(pwd)" = "${REMOTE_PATH}" ] && [ -n "${REMOTE_PATH}" ] && [ "${REMOTE_PATH}" != "/" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '    rm -fr * 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  else' >> ./remote-deploy.sh
+          printf '%s\n' '    echo "Safety check failed: Not in expected directory or REMOTE_PATH is invalid"' >> ./remote-deploy.sh
           printf '%s\n' '  fi' >> ./remote-deploy.sh
-          printf '%s\n' '  # Docker system prune (remove unused data)' >> ./remote-deploy.sh
-          printf '%s\n' '  docker system prune -af 2>/dev/null || true' >> ./remote-deploy.sh
-          printf '%s\n' '  # Docker volume prune (remove unused volumes)' >> ./remote-deploy.sh
-          printf '%s\n' '  docker volume prune -f 2>/dev/null || true' >> ./remote-deploy.sh
-          printf '%s\n' '  # Docker image prune (remove unused images)' >> ./remote-deploy.sh
-          printf '%s\n' '  docker image prune -af 2>/dev/null || true' >> ./remote-deploy.sh
-          printf '%s\n' '  # Docker builder prune (remove build cache)' >> ./remote-deploy.sh
-          printf '%s\n' '  docker builder prune -af 2>/dev/null || true' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Clean rollout completed."' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' '# Ensure docker is present' >> ./remote-deploy.sh
