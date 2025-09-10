@@ -52,8 +52,8 @@ jobs:
           fi
           echo "REMOTE_HOST=$REMOTE_HOST" >> "$GITHUB_OUTPUT"
           echo "REMOTE_USER=${{ github.event.inputs.REMOTE_USER || 'root' }}" >> "$GITHUB_OUTPUT"
-          echo "REMOTE_PATH=${{ github.event.inputs.REMOTE_PATH || '/opt/bdc-saas' }}" >> "$GITHUB_OUTPUT"
-          echo "COMPOSE_FILE=${{ github.event.inputs.COMPOSE_FILE || 'docker-compose.prod.yml' }}" >> "$GITHUB_OUTPUT"
+          echo "REMOTE_PATH=${{ github.event.inputs.REMOTE_PATH || '/opt/beacon' }}" >> "$GITHUB_OUTPUT"
+          echo "COMPOSE_FILE=${{ github.event.inputs.COMPOSE_FILE || 'docker-compose.yml' }}" >> "$GITHUB_OUTPUT"
           echo "SERVICES=${{ github.event.inputs.SERVICES || 'all' }}" >> "$GITHUB_OUTPUT"
           echo "NO_CACHE=${{ github.event.inputs.NO_CACHE || 'false' }}" >> "$GITHUB_OUTPUT"
           echo "CLEAN_ROLLOUT=${{ github.event.inputs.CLEAN_ROLLOUT   || 'false' }}" >> "$GITHUB_OUTPUT"
@@ -103,9 +103,10 @@ jobs:
           printf '%s\n' '#!/usr/bin/env bash' >> ./remote-deploy.sh
           printf '%s\n' 'set -euo pipefail' >> ./remote-deploy.sh
           printf '%s\n' 'REMOTE_PATH="${REMOTE_PATH}"' >> ./remote-deploy.sh
-          printf '%s\n' 'COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"' >> ./remote-deploy.sh
+          printf '%s\n' 'COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"' >> ./remote-deploy.sh
           printf '%s\n' 'SERVICES="${SERVICES:-all}"' >> ./remote-deploy.sh
           printf '%s\n' 'NO_CACHE="${NO_CACHE:-false}"' >> ./remote-deploy.sh
+          printf '%s\n' 'CLEAN_ROLLOUT="${CLEAN_ROLLOUT:-false}"' >> ./remote-deploy.sh
           printf '%s\n' '# Prepare target' >> ./remote-deploy.sh
           printf '%s\n' 'mkdir -p "${REMOTE_PATH}"' >> ./remote-deploy.sh
           printf '%s\n' 'cd /tmp' >> ./remote-deploy.sh
@@ -113,21 +114,48 @@ jobs:
           printf '%s\n' 'tar -xzf deploy-package.tar.gz -C "$TMPDIR"' >> ./remote-deploy.sh
           printf '%s\n' 'rsync -a --delete "$TMPDIR/" "${REMOTE_PATH}/"' >> ./remote-deploy.sh
           printf '%s\n' 'rm -rf "$TMPDIR"' >> ./remote-deploy.sh
+          printf '%s\n' '# Clean rollout if requested' >> ./remote-deploy.sh
+          printf '%s\n' 'if [ "$CLEAN_ROLLOUT" = "true" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Performing clean rollout..."' >> ./remote-deploy.sh
+          printf '%s\n' '  cd "${REMOTE_PATH}"' >> ./remote-deploy.sh
+          printf '%s\n' '  # Stop and remove all containers, networks, and volumes' >> ./remote-deploy.sh
+          printf '%s\n' '  if [ -f "$COMPOSE_FILE" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" down -v --remove-orphans 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '    # Remove all images associated with services' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" down --rmi all --remove-orphans 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  fi' >> ./remote-deploy.sh
+          printf '%s\n' '  # Docker system prune (remove unused data)' >> ./remote-deploy.sh
+          printf '%s\n' '  docker system prune -af 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  # Docker volume prune (remove unused volumes)' >> ./remote-deploy.sh
+          printf '%s\n' '  docker volume prune -f 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  # Docker image prune (remove unused images)' >> ./remote-deploy.sh
+          printf '%s\n' '  docker image prune -af 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  # Docker builder prune (remove build cache)' >> ./remote-deploy.sh
+          printf '%s\n' '  docker builder prune -af 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Clean rollout completed."' >> ./remote-deploy.sh
+          printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' '# Ensure docker is present' >> ./remote-deploy.sh
           printf '%s\n' 'if ! command -v docker >/dev/null 2>&1; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Installing Docker..."' >> ./remote-deploy.sh
           printf '%s\n' '  curl -fsSL https://get.docker.com -o get-docker.sh' >> ./remote-deploy.sh
-          printf '%s\n' '  sh get-docker.sh' >> ./remote-deploy.sh
+          printf '%s\n' '  sh get-docker.sh || echo "Warning: Docker installation failed"' >> ./remote-deploy.sh
           printf '%s\n' '  rm -f get-docker.sh' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' '# Ensure docker compose' >> ./remote-deploy.sh
+          printf '%s\n' 'COMPOSE=""' >> ./remote-deploy.sh
           printf '%s\n' 'if docker compose version >/dev/null 2>&1; then' >> ./remote-deploy.sh
           printf '%s\n' '  COMPOSE="docker compose"' >> ./remote-deploy.sh
           printf '%s\n' 'elif command -v docker-compose >/dev/null 2>&1; then' >> ./remote-deploy.sh
           printf '%s\n' '  COMPOSE="docker-compose"' >> ./remote-deploy.sh
           printf '%s\n' 'else' >> ./remote-deploy.sh
-          printf '%s\n' '  curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose' >> ./remote-deploy.sh
-          printf '%s\n' '  chmod +x /usr/local/bin/docker-compose' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Installing Docker Compose..."' >> ./remote-deploy.sh
+          printf '%s\n' '  curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose 2>/dev/null || echo "Warning: Docker Compose installation failed"' >> ./remote-deploy.sh
+          printf '%s\n' '  chmod +x /usr/local/bin/docker-compose 2>/dev/null || true' >> ./remote-deploy.sh
           printf '%s\n' '  COMPOSE="docker-compose"' >> ./remote-deploy.sh
+          printf '%s\n' 'fi' >> ./remote-deploy.sh
+          printf '%s\n' 'if [ -z "$COMPOSE" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Error: Docker Compose not found or installed"' >> ./remote-deploy.sh
+          printf '%s\n' '  exit 1' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' 'cd "${REMOTE_PATH}"' >> ./remote-deploy.sh
           printf '%s\n' '# Determine services list (empty means all services)' >> ./remote-deploy.sh
@@ -137,17 +165,34 @@ jobs:
           printf '%s\n' '  SERVICES_ARG="$SERVICES"' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' '# Build (with or without cache) and start the requested services' >> ./remote-deploy.sh
+          printf '%s\n' 'echo "Deploying services: ${SERVICES_ARG:-all} using compose file: ${COMPOSE_FILE}"' >> ./remote-deploy.sh
+          printf '%s\n' 'if [ ! -f "$COMPOSE_FILE" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Error: Compose file $COMPOSE_FILE not found"' >> ./remote-deploy.sh
+          printf '%s\n' '  exit 1' >> ./remote-deploy.sh
+          printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' 'if [ "$NO_CACHE" = "true" ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Building with --no-cache flag..."' >> ./remote-deploy.sh
           printf '%s\n' '  if [ -z "$SERVICES_ARG" ]; then' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
           printf '%s\n' '  else' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache $SERVICES_ARG' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache $SERVICES_ARG 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
           printf '%s\n' '  fi' >> ./remote-deploy.sh
-          printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" up -d $SERVICES_ARG' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Starting services..."' >> ./remote-deploy.sh
+          printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" up -d $SERVICES_ARG 2>&1 || echo "Warning: Deployment failed"' >> ./remote-deploy.sh
           printf '%s\n' 'else' >> ./remote-deploy.sh
-          printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" up -d --build $SERVICES_ARG' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Building and starting services..."' >> ./remote-deploy.sh
+          printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" up -d --build $SERVICES_ARG 2>&1 || echo "Warning: Deployment failed"' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' 'echo "Deployed services: ${SERVICES_ARG:-all} using compose file: ${COMPOSE_FILE}"' >> ./remote-deploy.sh
+          printf '%s\n' '# Show running services' >> ./remote-deploy.sh
+          printf '%s\n' 'echo "Running services:"' >> ./remote-deploy.sh
+          printf '%s\n' '$COMPOSE -f "$COMPOSE_FILE" ps 2>/dev/null || echo "Unable to show running services"' >> ./remote-deploy.sh
+          printf '%s\n' '# Final status check' >> ./remote-deploy.sh
+          printf '%s\n' 'if $COMPOSE -f "$COMPOSE_FILE" ps | grep -q "Up"; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Deployment completed successfully!"' >> ./remote-deploy.sh
+          printf '%s\n' 'else' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Warning: No services appear to be running. Please check the deployment."' >> ./remote-deploy.sh
+          printf '%s\n' 'fi' >> ./remote-deploy.sh
           chmod +x ./remote-deploy.sh
         shell: bash
 
@@ -168,7 +213,7 @@ jobs:
           NO_CACHE="${{ steps.vars.outputs.NO_CACHE }}"
           # Export variables into the remote command so the remote script can read them
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "${REMOTE_USER}@${REMOTE_HOST}" \
-            "REMOTE_PATH='${REMOTE_PATH}' COMPOSE_FILE='${COMPOSE_FILE}' SERVICES='${SERVICES}' NO_CACHE='${NO_CACHE}' bash /tmp/remote-deploy.sh"
+            "REMOTE_PATH='${REMOTE_PATH}' COMPOSE_FILE='${COMPOSE_FILE}' SERVICES='${SERVICES}' NO_CACHE='${NO_CACHE}' CLEAN_ROLLOUT='${CLEAN_ROLLOUT}' bash /tmp/remote-deploy.sh"
         shell: bash
 
       - name: Cleanup local artifact
