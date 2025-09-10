@@ -1,361 +1,287 @@
-'use client'
-
 import Button from '@/components/ui/Button'
-import { Award, Filter, MapPin, Star } from 'lucide-react'
+import { MapPin, Search, Star } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
 
-export default function TalentMarketplace() {
-    const [searchQuery, setSearchQuery] = useState('')
-    const [selectedCategory, setSelectedCategory] = useState('all')
-    const [selectedLocation, setSelectedLocation] = useState('all')
+export const metadata = {
+    title: 'Talent Marketplace | B3ACON Creative Connect',
+    description: 'Browse our curated marketplace of creative professionals ready for your gigs.',
+}
 
-    const categories = [
-        'All Categories',
-        'Design',
-        'Photography',
-        'Writing',
-        'Video',
-        'Marketing',
-        'Development',
-        'Music'
-    ]
-
-    const locations = [
-        'All Locations',
-        'United States',
-        'United Kingdom',
-        'Canada',
-        'Australia',
-        'Remote'
-    ]
-
-    // Mock talent data
-    const talent = [
+export default function TalentMarketplacePage() {
+    // Mock data for creatives
+    const creatives = [
         {
             id: '1',
             name: 'Sarah Johnson',
-            title: 'Senior Graphic Designer',
+            title: 'Professional Photographer',
             rating: 4.9,
             reviews: 124,
             hourlyRate: 75,
             location: 'New York, NY',
-            skills: ['Branding', 'Logo Design', 'UI/UX', 'Illustration'],
-            verified: true,
-            featured: true
+            skills: ['Photography', 'Portrait', 'Fashion', 'Lighting'],
+            image: '/placeholder-creative-1.jpg',
+            verified: true
         },
         {
             id: '2',
             name: 'Michael Chen',
-            title: 'Photography & Videography',
+            title: 'UI/UX Designer',
             rating: 4.8,
             reviews: 89,
-            hourlyRate: 120,
-            location: 'Los Angeles, CA',
-            skills: ['Portrait', 'Event', 'Commercial', 'Drone'],
-            verified: true,
-            featured: false
+            hourlyRate: 65,
+            location: 'San Francisco, CA',
+            skills: ['UI Design', 'UX Research', 'Figma', 'Prototyping'],
+            image: '/placeholder-creative-2.jpg',
+            verified: true
         },
         {
             id: '3',
-            name: 'Emma Rodriguez',
-            title: 'Content Writer & Copywriter',
+            name: 'Emma Davis',
+            title: 'Content Writer & Strategist',
             rating: 4.9,
             reviews: 156,
-            hourlyRate: 65,
-            location: 'Austin, TX',
-            skills: ['SEO', 'Blog Posts', 'Marketing Copy', 'Script Writing'],
-            verified: true,
-            featured: true
-        },
-        {
-            id: '4',
-            name: 'David Kim',
-            title: 'Full Stack Developer',
-            rating: 4.7,
-            reviews: 78,
-            hourlyRate: 95,
-            location: 'San Francisco, CA',
-            skills: ['React', 'Node.js', 'Python', 'AWS'],
-            verified: false,
-            featured: false
-        },
-        {
-            id: '5',
-            name: 'Olivia Parker',
-            title: 'Motion Graphics Artist',
-            rating: 4.9,
-            reviews: 92,
-            hourlyRate: 85,
-            location: 'Remote',
-            skills: ['After Effects', 'Cinema 4D', 'Animation', '3D Modeling'],
-            verified: true,
-            featured: false
-        },
-        {
-            id: '6',
-            name: 'James Wilson',
-            title: 'Digital Marketing Specialist',
-            rating: 4.6,
-            reviews: 67,
-            hourlyRate: 70,
-            location: 'Chicago, IL',
-            skills: ['SEO', 'PPC', 'Social Media', 'Analytics'],
-            verified: true,
-            featured: false
+            hourlyRate: 45,
+            location: 'London, UK',
+            skills: ['Content Writing', 'SEO', 'Copywriting', 'Strategy'],
+            image: '/placeholder-creative-3.jpg',
+            verified: false
         }
     ]
 
-    const featuredTalent = talent.filter(person => person.featured)
-    const regularTalent = talent.filter(person => !person.featured)
+    const categories = [
+        'All Categories',
+        'Design',
+        'Writing',
+        'Photography',
+        'Development',
+        'Marketing',
+        'Video'
+    ]
 
     return (
         <div className="min-h-screen bg-neutral-50">
-
             {/* Hero Section */}
-            <section className="py-16 md:py-24 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Talent Marketplace</h1>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Discover and connect with top creative talent from around the world
-                    </p>
+            <div className="bg-white border-b border-neutral-200">
+                <div className="container mx-auto px-4 py-16">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h1 className="text-4xl font-bold text-neutral-900 mb-4">
+                            Find Top Creative Talent
+                        </h1>
+                        <p className="text-xl text-neutral-600 mb-8">
+                            Browse our curated marketplace of professionals ready to work on your gigs.
+                        </p>
 
-                    {/* Search Bar */}
-                    <div className="max-w-2xl mx-auto mt-12">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search for talent by skills, name, or expertise..."
-                                className="w-full px-6 py-4 rounded-full text-neutral-900 text-lg focus:outline-none focus:ring-2 focus:ring-beacon-purple"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            <button className="absolute right-2 top-2 bottom-2 bg-beacon-purple text-white px-6 rounded-full hover:bg-beacon-purple-dark transition-colors">
-                                Search
-                            </button>
+                        {/* Search Bar */}
+                        <div className="max-w-2xl mx-auto">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="h-5 w-5 text-neutral-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-10 pr-3 py-4 border border-neutral-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple text-lg"
+                                    placeholder="Search for creative talent..."
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            {/* Filters Section */}
-            <section className="py-6 bg-white border-b border-neutral-200">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex flex-wrap gap-3">
-                            <div className="flex items-center">
-                                <Filter className="h-5 w-5 text-neutral-500 mr-2" />
-                                <span className="text-neutral-700 font-medium">Filters:</span>
+            {/* Main Content */}
+            <div className="container mx-auto px-4 py-12">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Filters Sidebar */}
+                    <div className="lg:w-1/4">
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 sticky top-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-semibold text-neutral-900">Filters</h2>
+                                <button className="text-sm text-beacon-purple hover:text-beacon-purple-dark">
+                                    Clear all
+                                </button>
                             </div>
 
-                            <select
-                                className="border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-beacon-purple"
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                            >
-                                {categories.map((category, index) => (
-                                    <option key={index} value={index === 0 ? 'all' : category.toLowerCase()}>
-                                        {category}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <select
-                                className="border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-beacon-purple"
-                                value={selectedLocation}
-                                onChange={(e) => setSelectedLocation(e.target.value)}
-                            >
-                                {locations.map((location, index) => (
-                                    <option key={index} value={index === 0 ? 'all' : location}>
-                                        {location}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="text-neutral-600">
-                            <span className="font-medium">{talent.length}</span> creative professionals found
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Featured Talent */}
-            <section className="py-16 bg-neutral-50">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-3xl font-bold text-neutral-900">Featured Talent</h2>
-                        <Link href="/creatives" className="text-beacon-purple hover:text-beacon-purple-dark font-medium">
-                            View All Talent
-                        </Link>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {featuredTalent.map((person) => (
-                            <div key={person.id} className="bg-white rounded-xl border border-neutral-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                                <div className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center">
-                                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                                            <div className="ml-4">
-                                                <h3 className="text-lg font-semibold text-neutral-900">{person.name}</h3>
-                                                <p className="text-neutral-600 text-sm">{person.title}</p>
-                                            </div>
+                            {/* Categories */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Category</h3>
+                                <div className="space-y-2">
+                                    {categories.map((category, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`category-${index}`}
+                                                name="category"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`category-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {category}
+                                            </label>
                                         </div>
-                                        {person.verified && (
-                                            <Award className="h-5 w-5 text-beacon-purple" />
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center mb-4">
-                                        <div className="flex text-yellow-400">
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                        </div>
-                                        <span className="text-neutral-600 text-sm ml-2">
-                                            {person.rating} ({person.reviews} reviews)
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="text-neutral-900 font-semibold">
-                                            ${person.hourlyRate}/hr
-                                        </div>
-                                        <div className="flex items-center text-neutral-600 text-sm">
-                                            <MapPin className="h-4 w-4 mr-1" />
-                                            {person.location}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                        {person.skills.slice(0, 3).map((skill, index) => (
-                                            <span key={index} className="px-3 py-1 bg-beacon-purple-light/20 text-beacon-purple text-xs rounded-full">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                        {person.skills.length > 3 && (
-                                            <span className="px-3 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-full">
-                                                +{person.skills.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex space-x-3">
-                                        <Link href={`/creatives/${person.id}`} className="flex-1">
-                                            <Button variant="primary" size="sm" className="w-full">
-                                                View Profile
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" size="sm">
-                                            Message
-                                        </Button>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* All Talent */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl font-bold text-neutral-900 mb-8">All Talent</h2>
-
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {regularTalent.map((person) => (
-                            <div key={person.id} className="bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                                <div className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center">
-                                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                                            <div className="ml-4">
-                                                <h3 className="text-lg font-semibold text-neutral-900">{person.name}</h3>
-                                                <p className="text-neutral-600 text-sm">{person.title}</p>
-                                            </div>
+                            {/* Rating */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Minimum Rating</h3>
+                                <div className="space-y-2">
+                                    {['Any rating', '4.5+ stars', '4.0+ stars', '3.5+ stars'].map((rating, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`rating-${index}`}
+                                                name="rating"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`rating-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {rating}
+                                            </label>
                                         </div>
-                                        {person.verified && (
-                                            <Award className="h-5 w-5 text-beacon-purple" />
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center mb-4">
-                                        <div className="flex text-yellow-400">
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                        </div>
-                                        <span className="text-neutral-600 text-sm ml-2">
-                                            {person.rating} ({person.reviews} reviews)
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="text-neutral-900 font-semibold">
-                                            ${person.hourlyRate}/hr
-                                        </div>
-                                        <div className="flex items-center text-neutral-600 text-sm">
-                                            <MapPin className="h-4 w-4 mr-1" />
-                                            {person.location}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                        {person.skills.slice(0, 3).map((skill, index) => (
-                                            <span key={index} className="px-3 py-1 bg-beacon-purple-light/20 text-beacon-purple text-xs rounded-full">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                        {person.skills.length > 3 && (
-                                            <span className="px-3 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-full">
-                                                +{person.skills.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex space-x-3">
-                                        <Link href={`/creatives/${person.id}`} className="flex-1">
-                                            <Button variant="primary" size="sm" className="w-full">
-                                                View Profile
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" size="sm">
-                                            Message
-                                        </Button>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* CTA Section */}
-            <section className="py-16 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Looking for specific talent?</h2>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Post a project and let our creative professionals come to you.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link href="/register?type=client">
-                            <Button variant="primary" size="lg">
-                                Post a Project
+                            {/* Hourly Rate */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Hourly Rate</h3>
+                                <div className="space-y-2">
+                                    {['Any rate', '$0 - $50', '$50 - $100', '$100+'].map((rate, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`rate-${index}`}
+                                                name="rate"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`rate-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {rate}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <Button variant="primary" fullWidth>
+                                Apply Filters
                             </Button>
-                        </Link>
-                        <Link href="/how-to-hire">
-                            <Button variant="secondary" size="lg" className="bg-white text-beacon-purple hover:bg-neutral-100">
-                                Learn How It Works
-                            </Button>
-                        </Link>
+                        </div>
+                    </div>
+
+                    {/* Creatives List */}
+                    <div className="lg:w-3/4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-semibold text-neutral-900">
+                                {creatives.length} creatives found
+                            </h2>
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm text-neutral-600">Sort by:</span>
+                                <select className="border border-neutral-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple">
+                                    <option>Highest rated</option>
+                                    <option>Most reviewed</option>
+                                    <option>Lowest hourly rate</option>
+                                    <option>Most experienced</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {creatives.map((creative) => (
+                                <div key={creative.id} className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0">
+                                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                                        </div>
+                                        <div className="ml-4 flex-1">
+                                            <div className="flex justify-between">
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-neutral-900">{creative.name}</h3>
+                                                    <p className="text-neutral-600">{creative.title}</p>
+                                                </div>
+                                                {creative.verified && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        Verified
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center mt-2">
+                                                <div className="flex items-center">
+                                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                                    <span className="ml-1 text-sm font-medium text-neutral-900">{creative.rating}</span>
+                                                    <span className="mx-1 text-neutral-400">•</span>
+                                                    <span className="text-sm text-neutral-600">{creative.reviews} reviews</span>
+                                                </div>
+                                                <span className="mx-2 text-neutral-400">•</span>
+                                                <div className="flex items-center text-sm text-neutral-600">
+                                                    <MapPin className="h-4 w-4 mr-1" />
+                                                    {creative.location}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {creative.skills.slice(0, 4).map((skill, index) => (
+                                                    <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                                {creative.skills.length > 4 && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                                        +{creative.skills.length - 4} more
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-4 flex justify-between items-center">
+                                                <div className="text-lg font-semibold text-neutral-900">
+                                                    ${creative.hourlyRate}/hr
+                                                </div>
+                                                <div className="space-x-2">
+                                                    <Link href={`/creatives/${creative.id}`}>
+                                                        <Button variant="outline" size="sm">View Profile</Button>
+                                                    </Link>
+                                                    <Link href={`/messages/new?to=${creative.id}`}>
+                                                        <Button variant="primary" size="sm">Message</Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="mt-12 flex justify-center">
+                            <nav className="flex items-center space-x-2">
+                                <button className="px-3 py-1 rounded-md bg-neutral-100 text-neutral-600 hover:bg-neutral-200">
+                                    Previous
+                                </button>
+                                <button className="px-3 py-1 rounded-md bg-beacon-purple text-white">
+                                    1
+                                </button>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    2
+                                </button>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    3
+                                </button>
+                                <span className="px-3 py-1 text-neutral-400">
+                                    ...
+                                </span>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    10
+                                </button>
+                                <button className="px-3 py-1 rounded-md bg-neutral-100 text-neutral-600 hover:bg-neutral-200">
+                                    Next
+                                </button>
+                            </nav>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
     )
 }

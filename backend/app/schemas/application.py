@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, UUID4, validator
 
 from app.schemas.user import User
-from app.schemas.project import Project
+from app.schemas.gig import Gig
 
 # Shared properties
 class ApplicationBase(BaseModel):
@@ -13,7 +13,7 @@ class ApplicationBase(BaseModel):
 
 # Properties to receive via API on creation
 class ApplicationCreate(ApplicationBase):
-    project_id: str
+    gig_id: str
 
 # Properties to receive via API on update
 class ApplicationUpdate(BaseModel):
@@ -31,7 +31,7 @@ class ApplicationUpdate(BaseModel):
 # Properties shared by models stored in DB
 class ApplicationInDBBase(ApplicationBase):
     id: UUID4
-    project_id: UUID4
+    gig_id: UUID4
     creative_id: int
     status: str
     created_at: datetime
@@ -47,14 +47,14 @@ class Application(ApplicationInDBBase):
 class ApplicationWithCreative(Application):
     creative: User
 
-# Properties to return via API with project info
-class ApplicationWithProject(Application):
-    project: Project
+# Properties to return via API with gig info
+class ApplicationWithGig(Application):
+    gig: Gig
 
-# Properties to return via API with both creative and project info
+# Properties to return via API with both creative and gig info
 class ApplicationWithDetails(Application):
     creative: User
-    project: Project
+    gig: Gig
 
 # Properties stored in DB
 class ApplicationInDB(ApplicationInDBBase):

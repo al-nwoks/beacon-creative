@@ -111,7 +111,7 @@ export default function ProfileClientWrapper({ initialUser }: ProfileClientWrapp
                 rating={user.rating || 0}
                 profileImage={user.profile_image_url || undefined}
                 stats={{
-                    projects: user.projects_count || 0,
+                    gigs: user.gigs_count || 0,
                     followers: formatFollowersCount(user.followers_count || 0),
                     reviews: user.reviews_count || 0
                 }}

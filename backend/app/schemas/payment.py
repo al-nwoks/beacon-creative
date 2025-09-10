@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, UUID4, validator
 
 from app.schemas.user import User
-from app.schemas.project import Project
+from app.schemas.gig import Gig
 
 # Shared properties
 class PaymentBase(BaseModel):
@@ -12,7 +12,7 @@ class PaymentBase(BaseModel):
 
 # Properties to receive via API on creation
 class PaymentCreate(PaymentBase):
-    project_id: str
+    gig_id: str
     creative_id: str
 
 # Properties to receive via API on update
@@ -28,7 +28,7 @@ class PaymentUpdate(BaseModel):
 # Properties shared by models stored in DB
 class PaymentInDBBase(PaymentBase):
     id: UUID4
-    project_id: UUID4
+    gig_id: UUID4
     client_id: int
     creative_id: int
     stripe_payment_intent_id: Optional[str] = None
@@ -51,15 +51,15 @@ class PaymentWithClient(Payment):
 class PaymentWithCreative(Payment):
     creative: User
 
-# Properties to return via API with project info
-class PaymentWithProject(Payment):
-    project: Project
+# Properties to return via API with gig info
+class PaymentWithGig(Payment):
+    gig: Gig
 
 # Properties to return via API with all related info
 class PaymentWithDetails(Payment):
     client: User
     creative: User
-    project: Project
+    gig: Gig
 
 # Properties stored in DB
 class PaymentInDB(PaymentInDBBase):

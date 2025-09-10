@@ -55,7 +55,7 @@ export function middleware(request: NextRequest) {
   const protectedPrefixes = [
     '/dashboard',
     '/messages',
-    '/projects',
+    '/gigs',
     '/payments',
     '/notifications',
     '/profile',

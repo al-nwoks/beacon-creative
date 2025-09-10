@@ -4,8 +4,8 @@ import Button from '@/components/ui/Button'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Project Categories | B3ACON Admin',
-    description: 'Manage project categories.',
+    title: 'Gig Categories | B3ACON Admin',
+    description: 'Manage gig categories.',
 }
 
 export default async function AdminCategoriesPage() {
@@ -24,7 +24,7 @@ export default async function AdminCategoriesPage() {
             <SimplifiedLayout userType="admin" showSearch={true} searchPlaceholder="Search categories...">
                 <main className="container mx-auto px-4 py-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-neutral-900">Project Categories</h1>
+                        <h1 className="text-3xl font-bold text-neutral-900">Gig Categories</h1>
                         <Button variant="primary" data-modal-target="add-category-modal" data-modal-toggle="add-category-modal">
                             Add New Category
                         </Button>

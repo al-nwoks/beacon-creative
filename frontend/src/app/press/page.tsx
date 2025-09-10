@@ -9,7 +9,7 @@ export default function Press() {
         { title: 'B3ACON Announces $15M Series A Funding to Expand Global Creative Marketplace', date: 'May 15, 2023', summary: 'Platform plans to double its creative talent base and expand into new international markets.' },
         { title: 'B3ACON Partners with Leading Design Schools to Launch Student Talent Program', date: 'April 3, 2023', summary: 'New initiative connects emerging creative talent with businesses seeking fresh perspectives.' },
         { title: 'B3ACON Reports 300% Growth in Creative Professionals Year-Over-Year', date: 'March 1, 2023', summary: 'Platform reaches milestone of 50,000+ registered creative professionals across 75 countries.' },
-        { title: 'B3ACON Launches New AI-Powered Project Matching Technology', date: 'February 14, 2023', summary: 'Innovative system connects businesses with the most suitable creative talent for their projects.' }
+        { title: 'B3ACON Launches New AI-Powered Gig Matching Technology', date: 'February 14, 2023', summary: 'Innovative system connects businesses with the most suitable creative talent for their gigs.' }
     ]
 
     const mediaAssets = [
@@ -21,7 +21,7 @@ export default function Press() {
 
     const stats = [
         { value: '50K+', label: 'Creative Professionals' },
-        { value: '25K+', label: 'Active Projects' },
+        { value: '25K+', label: 'Active Gigs' },
         { value: '75', label: 'Countries Represented' },
         { value: '98%', label: 'Client Satisfaction Rate' }
     ]

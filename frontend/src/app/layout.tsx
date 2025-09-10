@@ -1,6 +1,6 @@
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
-import Shell from '@/components/layout/Shell'
+import { Shell } from '@/components/layout/Shell'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
@@ -21,8 +21,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'B3ACON Creative Connect',
-  description: 'Connect with top creative talent and clients through a seamless platform for project management, collaboration, and discovery.',
-  keywords: ['creative', 'freelance', 'project management', 'collaboration', 'talent'],
+  description: 'Connect with top creative talent and clients through a seamless platform for gig management, collaboration, and discovery.',
+  keywords: ['creative', 'freelance', 'gig management', 'collaboration', 'talent'],
   authors: [{ name: 'B3ACON Team' }],
 }
 

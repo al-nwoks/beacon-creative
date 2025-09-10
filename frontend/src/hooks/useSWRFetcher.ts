@@ -5,7 +5,7 @@
  * Intended usage:
  *   import useSWR from 'swr'
  *   import { fetcher } from '@/hooks/useSWRFetcher'
- *   const { data, error } = useSWR('/projects?limit=10', fetcher)
+ *   const { data, error } = useSWR('/gigs?limit=10', fetcher)
  *
  * Note: Ensure `swr` is added to package.json dependencies and installed in the environment.
  */

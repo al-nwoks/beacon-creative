@@ -5,8 +5,8 @@
  * Uses the centralized clientFetcher from '@/lib/api' (via fetcher wrapper).
  *
  * Hooks provided:
- * - useProjects
- * - useProject (client-side details / for optimistic updates)
+ * - useGigs
+ * - useGig (client-side details / for optimistic updates)
  * - useMessages
  * - useApplications
  * - usePayments
@@ -21,11 +21,11 @@
 
 import { fetcher } from '@/hooks/useSWRFetcher'
 import { clientFetcher } from '@/lib/api'
-import type { Application, DashboardSummary, MessageSummary, MessageWithSender, Notification, Payment, Project, User } from '@/types/api'
+import type { Application, DashboardSummary, Gig, MessageSummary, MessageWithSender, Notification, Payment, User } from '@/types/api'
 import useSWR, { mutate } from 'swr'
 
-export function useProjects(query = '/projects?limit=24') {
-  const { data, error } = useSWR<Project[]>(query, fetcher)
+export function useGigs(query = '/gigs?limit=24') {
+  const { data, error } = useSWR<Gig[]>(query, fetcher)
   return {
     data,
     error,
@@ -34,9 +34,9 @@ export function useProjects(query = '/projects?limit=24') {
   }
 }
 
-export function useProject(id?: string) {
-  const key = id ? `/projects/${id}` : null
-  const { data, error } = useSWR<Project | null>(key, fetcher)
+export function useGig(id?: string) {
+  const key = id ? `/gigs/${id}` : null
+  const { data, error } = useSWR<Gig | null>(key, fetcher)
   return {
     data,
     error,
@@ -119,14 +119,14 @@ export function useDashboardSummary(query = '/dashboard/summary') {
 /**
  * Helper mutation functions for common actions
  */
-export async function applyToProject(projectId: string, payload: { coverLetter: string }) {
-  const res = await clientFetcher(`/projects/${projectId}/apply`, {
+export async function applyToGig(gigId: string, payload: { coverLetter: string }) {
+  const res = await clientFetcher(`/gigs/${gigId}/apply`, {
     method: 'POST',
     body: JSON.stringify(payload),
   })
   // After applying, refresh relevant caches
   mutate('/applications/me')
-  mutate('/projects')
+  mutate('/gigs')
   mutate('/dashboard/summary')
   return res
 }

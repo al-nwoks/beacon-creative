@@ -29,7 +29,7 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
         firstName: 'Sarah',
         lastName: 'Johnson',
         email: 'sarah.johnson@example.com',
-        bio: 'Passionate fashion photographer with 8+ years of experience. Specializing in editorial and commercial photography with a focus on storytelling through visuals. I believe in capturing the essence of each project and creating images that resonate with the audience. My approach combines technical expertise with creative vision to deliver exceptional results.',
+        bio: 'Passionate fashion photographer with 8+ years of experience. Specializing in editorial and commercial photography with a focus on storytelling through visuals. I believe in capturing the essence of each gig and creating images that resonate with the audience. My approach combines technical expertise with creative vision to deliver exceptional results.',
         location: 'New York, NY',
         hourlyRate: 75,
         skills: ['Fashion Photography', 'Portrait', 'Lighting', 'Photoshop', 'Lightroom', 'Commercial Photography', 'Editorial Photography'],
@@ -38,7 +38,7 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
         isVerified: true,
         rating: 4.9,
         reviewCount: 42,
-        totalProjects: 28,
+        totalGigs: 28,
         joinDate: '2020-03-15T00:00:00Z',
         languages: ['English', 'French']
     }
@@ -51,8 +51,8 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
             clientAvatar: '',
             rating: 5,
             comment: 'Sarah did an amazing job on our fashion editorial shoot. Her attention to detail and ability to capture the perfect moments was impressive. The images exceeded our expectations and helped us achieve our marketing goals.',
-            projectId: '201',
-            projectName: 'Summer Collection Editorial',
+            gigId: '201',
+            gigName: 'Summer Collection Editorial',
             date: '2023-05-20T00:00:00Z'
         },
         {
@@ -62,8 +62,8 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
             clientAvatar: '',
             rating: 5,
             comment: 'Working with Sarah was a pleasure. She understood our vision perfectly and delivered stunning results. Her professionalism and creativity made the entire process smooth and enjoyable.',
-            projectId: '202',
-            projectName: 'Brand Campaign Photography',
+            gigId: '202',
+            gigName: 'Brand Campaign Photography',
             date: '2023-04-15T00:00:00Z'
         },
         {
@@ -72,9 +72,9 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
             clientName: 'David Kim',
             clientAvatar: '',
             rating: 4,
-            comment: 'Great photographer with a keen eye for detail. The images were of high quality and captured exactly what we needed. Communication was clear throughout the project.',
-            projectId: '203',
-            projectName: 'Product Catalog Shoot',
+            comment: 'Great photographer with a keen eye for detail. The images were of high quality and captured exactly what we needed. Communication was clear throughout the gig.',
+            gigId: '203',
+            gigName: 'Product Catalog Shoot',
             date: '2023-03-10T00:00:00Z'
         }
     ]
@@ -177,7 +177,7 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
                                                 Send Message
                                             </Button>
                                             <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                                                Hire for Project
+                                                Hire for Gig
                                             </Button>
                                         </div>
                                     </div>
@@ -282,7 +282,7 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
                                                                     {review.comment}
                                                                 </p>
                                                                 <p className="mt-2 text-sm text-neutral-500">
-                                                                    Project: {review.projectName}
+                                                                    Gig: {review.gigName}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -308,8 +308,8 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
                                         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Stats</h2>
                                         <div className="space-y-4">
                                             <div className="flex justify-between">
-                                                <span className="text-neutral-600">Projects Completed</span>
-                                                <span className="font-medium text-neutral-900">{creative.totalProjects}</span>
+                                                <span className="text-neutral-600">Gigs Completed</span>
+                                                <span className="font-medium text-neutral-900">{creative.totalGigs}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-neutral-600">Rating</span>
@@ -371,7 +371,7 @@ export function CreativeProfile({ id }: CreativeProfileProps) {
                                                 Send Message
                                             </Button>
                                             <Button variant="outline" className="w-full">
-                                                Hire for a Project
+                                                Hire for a Gig
                                             </Button>
                                         </div>
                                     </div>

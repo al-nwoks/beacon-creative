@@ -1,7 +1,7 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import type { Project, User } from '@/types/api'
+import type { Gig, User } from '@/types/api'
 import { BarChart3, Briefcase, Users, Wallet } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -15,13 +15,13 @@ export default async function AdminPage() {
     // Server-side initial data fetch (hybrid approach)
     let stats = [
         { label: 'Total Users', value: '0', icon: Users, color: 'text-beacon-blue' },
-        { label: 'Active Projects', value: '0', icon: Briefcase, color: 'text-beacon-green' },
+        { label: 'Active Gigs', value: '0', icon: Briefcase, color: 'text-beacon-green' },
         { label: 'Total Payments', value: '0', icon: Wallet, color: 'text-beacon-purple' },
         { label: 'Platform Analytics', value: '0', icon: BarChart3, color: 'text-beacon-orange' },
     ]
 
     let recentUsers: User[] = []
-    let recentProjects: Project[] = []
+    let recentGigs: Gig[] = []
 
     try {
         // Fetch data directly from backend API
@@ -35,7 +35,7 @@ export default async function AdminPage() {
             const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
             // Fetch all data in parallel using admin endpoints
-            const [statsResp, usersResp, projectsResp] = await Promise.allSettled([
+            const [statsResp, usersResp, gigsResp] = await Promise.allSettled([
                 fetch(`${apiBase}/admin/stats`, {
                     method: 'GET',
                     headers: {
@@ -52,7 +52,7 @@ export default async function AdminPage() {
                     },
                     cache: 'no-store',
                 }),
-                fetch(`${apiBase}/admin/projects?limit=6`, {
+                fetch(`${apiBase}/admin/gigs?limit=6`, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ export default async function AdminPage() {
                 const statsData = await statsResp.value.json()
                 if (statsData) {
                     if (stats[0]) stats[0].value = String(statsData.total_users || 0)
-                    // For projects count, we'll use the count from the projects response
+                    // For gigs count, we'll use the count from the gigs response
                     // We'll update payments count later
                 }
             }
@@ -79,12 +79,12 @@ export default async function AdminPage() {
                 }
             }
 
-            if (projectsResp.status === 'fulfilled' && projectsResp.value.ok) {
-                const projectsData = await projectsResp.value.json()
-                if (Array.isArray(projectsData)) {
-                    recentProjects = projectsData as Project[]
-                    // Update stats with projects count
-                    if (stats[1]) stats[1].value = String(projectsData.length)
+            if (gigsResp.status === 'fulfilled' && gigsResp.value.ok) {
+                const gigsData = await gigsResp.value.json()
+                if (Array.isArray(gigsData)) {
+                    recentGigs = gigsData as Gig[]
+                    // Update stats with gigs count
+                    if (stats[1]) stats[1].value = String(gigsData.length)
                 }
             }
 
@@ -202,10 +202,10 @@ export default async function AdminPage() {
                                             Manage Users
                                         </Button>
                                     </Link>
-                                    <Link href="/admin/projects" className="block">
+                                    <Link href="/admin/gigs" className="block">
                                         <Button variant="outline" fullWidth className="justify-start gap-3">
                                             <Briefcase className="h-4 w-4" />
-                                            Manage Projects
+                                            Manage Gigs
                                         </Button>
                                     </Link>
                                     <Link href="/admin/payments" className="block">
@@ -223,40 +223,40 @@ export default async function AdminPage() {
                                 </div>
                             </div>
 
-                            {/* Recent Projects */}
+                            {/* Recent Gigs */}
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Projects</h3>
+                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Gigs</h3>
                                 <div className="space-y-4">
-                                    {recentProjects.length > 0 ? (
-                                        recentProjects.map((project) => (
-                                            <div key={project.id} className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                                <h3 className="text-lg font-semibold text-neutral-900 mb-2">{project.title ?? 'Untitled project'}</h3>
-                                                <p className="text-neutral-600 text-sm mb-3 line-clamp-2">{project.description ?? ''}</p>
+                                    {recentGigs.length > 0 ? (
+                                        recentGigs.map((gig) => (
+                                            <div key={gig.id} className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                <h3 className="text-lg font-semibold text-neutral-900 mb-2">{gig.title ?? 'Untitled gig'}</h3>
+                                                <p className="text-neutral-600 text-sm mb-3 line-clamp-2">{gig.description ?? ''}</p>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-sm text-neutral-500">
-                                                        {project.budget_min && project.budget_max
-                                                            ? `$${project.budget_min} - $${project.budget_max}`
+                                                        {gig.budget_min && gig.budget_max
+                                                            ? `$${gig.budget_min} - $${gig.budget_max}`
                                                             : 'Budget not specified'}
                                                     </span>
-                                                    <Link href={`/admin/projects/${project.id}`} className="text-beacon-purple hover:underline text-sm font-medium">
+                                                    <Link href={`/admin/gigs/${gig.id}`} className="text-beacon-purple hover:underline text-sm font-medium">
                                                         View Details
                                                     </Link>
                                                 </div>
-                                                {project.status && (
+                                                {gig.status && (
                                                     <div className="mt-2">
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                            {project.status}
+                                                            {gig.status}
                                                         </span>
                                                     </div>
                                                 )}
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-neutral-600">No recent projects found.</p>
+                                        <p className="text-neutral-600">No recent gigs found.</p>
                                     )}
                                 </div>
-                                <Link href="/admin/projects" className="block mt-4">
-                                    <Button variant="outline" size="sm" fullWidth>View All Projects</Button>
+                                <Link href="/admin/gigs" className="block mt-4">
+                                    <Button variant="outline" size="sm" fullWidth>View All Gigs</Button>
                                 </Link>
                             </div>
 
@@ -271,7 +271,7 @@ export default async function AdminPage() {
                                     </Link>
                                     <Link href="/admin/categories" className="block">
                                         <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <span className="text-sm font-medium">Project Categories</span>
+                                            <span className="text-sm font-medium">Gig Categories</span>
                                         </Button>
                                     </Link>
                                 </div>

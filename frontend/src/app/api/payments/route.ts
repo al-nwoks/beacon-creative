@@ -12,7 +12,7 @@ async function getToken() {
   return cookieStore.get('access_token')?.value || null
 }
 
-// GET /api/payments?project_id=
+// GET /api/payments?gig_id=
 export async function GET(request: Request) {
   const token = await getToken()
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })

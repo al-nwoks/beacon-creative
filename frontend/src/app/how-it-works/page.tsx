@@ -1,175 +1,182 @@
-'use client'
-
 import Button from '@/components/ui/Button'
-import { CheckCircle, UserCheck, Zap } from 'lucide-react'
+import { CheckCircle, DollarSign, MessageCircle, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default function HowItWorks() {
-    const steps = [
+export const metadata = {
+    title: 'How It Works | B3ACON Creative Connect',
+    description: 'Learn how our platform connects creatives with clients through gigs.',
+}
+
+export default function HowItWorksPage() {
+    const stepsForCreatives = [
         {
-            icon: <UserCheck className="h-8 w-8" />,
-            title: 'Create Your Profile',
-            description: 'Sign up and build a compelling profile showcasing your skills, experience, and portfolio.'
+            icon: <Search className="h-8 w-8 text-beacon-purple" />,
+            title: 'Browse Gigs',
+            description: 'Search through thousands of gigs posted by clients. Filter by category, budget, timeline, and skills to find opportunities that match your expertise.'
         },
         {
-            icon: <Zap className="h-8 w-8" />,
-            title: 'Find Opportunities',
-            description: 'Browse through projects posted by clients or get matched with opportunities that fit your expertise.'
+            icon: <MessageCircle className="h-8 w-8 text-beacon-purple" />,
+            title: 'Apply & Connect',
+            description: 'Submit your application with a personalized cover letter. Connect directly with clients through our secure messaging system to discuss gig details.'
         },
         {
-            icon: <CheckCircle className="h-8 w-8" />,
-            title: 'Get Hired & Collaborate',
-            description: 'Submit proposals, communicate with clients, and work together in our secure platform.'
+            icon: <CheckCircle className="h-8 w-8 text-beacon-purple" />,
+            title: 'Get Hired',
+            description: 'Once selected for a gig, you\'ll receive a contract outlining the scope of work, timeline, and payment terms. Accept the gig to get started.'
+        },
+        {
+            icon: <DollarSign className="h-8 w-8 text-beacon-purple" />,
+            title: 'Work & Get Paid',
+            description: 'Complete the gig according to the agreed terms. Our secure payment system ensures you get paid when milestones are completed and approved.'
         }
     ]
 
-    const benefits = [
-        'Access to a global marketplace of creative opportunities',
-        'Secure payment protection for all transactions',
-        'Built-in project management and communication tools',
-        'Portfolio showcasing and professional development resources',
-        '24/7 customer support and dispute resolution'
+    const stepsForClients = [
+        {
+            icon: <Search className="h-8 w-8 text-beacon-purple" />,
+            title: 'Post a Gig',
+            description: 'Create a detailed gig posting with your project requirements, budget, timeline, and required skills. Our platform helps you craft compelling gig descriptions.'
+        },
+        {
+            icon: <MessageCircle className="h-8 w-8 text-beacon-purple" />,
+            title: 'Review Applications',
+            description: 'Browse applications from qualified creatives. Review portfolios, ratings, and previous work to find the perfect match for your gig.'
+        },
+        {
+            icon: <CheckCircle className="h-8 w-8 text-beacon-purple" />,
+            title: 'Hire & Collaborate',
+            description: 'Select the creative that best fits your needs. Collaborate through our gig management tools and secure messaging system.'
+        },
+        {
+            icon: <DollarSign className="h-8 w-8 text-beacon-purple" />,
+            title: 'Pay Securely',
+            description: 'Our escrow system holds payments until work is completed and approved. Release payments at agreed milestones for peace of mind.'
+        }
     ]
 
     return (
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen">
             {/* Hero Section */}
-            <section className="py-16 md:py-24 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">How B3ACON Works</h1>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Connecting creative talent with opportunities has never been easier
-                    </p>
+            <div className="bg-gradient-to-br from-beacon-purple to-beacon-blue text-white">
+                <div className="container mx-auto px-4 py-20 md:py-28">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                            How B3ACON Creative Connect Works
+                        </h1>
+                        <p className="text-xl md:text-2xl mb-10 text-purple-100">
+                            Connecting creative talent with exciting gigs has never been easier.
+                        </p>
+                    </div>
                 </div>
-            </section>
+            </div>
 
-            {/* Steps Section */}
-            <section className="py-16 bg-white">
+            {/* For Creatives Section */}
+            <div className="py-20 bg-white">
                 <div className="container mx-auto px-4">
-                    <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Simple Steps to Success</h2>
-                        <p className="text-xl text-neutral-700">
-                            Our platform streamlines the creative hiring process, making it easy for clients to find talent and for creatives to showcase their skills.
+                    <div className="max-w-3xl mx-auto text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                            For Creatives
+                        </h2>
+                        <p className="text-xl text-neutral-600">
+                            Find and apply to gigs that match your skills and interests.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {steps.map((step, index) => (
-                            <div key={index} className="bg-neutral-50 rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {stepsForCreatives.map((step, index) => (
+                            <div key={index} className="text-center">
+                                <div className="flex justify-center mb-6">
                                     {step.icon}
                                 </div>
-                                <h3 className="text-xl font-semibold mb-4 text-neutral-900">{step.title}</h3>
-                                <p className="text-neutral-700">
+                                <div className="text-5xl font-bold text-neutral-200 mb-4">
+                                    0{index + 1}
+                                </div>
+                                <h3 className="text-xl font-semibold text-neutral-900 mb-3">
+                                    {step.title}
+                                </h3>
+                                <p className="text-neutral-600">
                                     {step.description}
                                 </p>
                             </div>
                         ))}
                     </div>
-                </div>
-            </section>
 
-            {/* For Creatives */}
-            <section className="py-16 bg-neutral-50">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col lg:flex-row items-center gap-12">
-                        <div className="flex-1">
-                            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">For Creative Professionals</h2>
-                            <p className="text-xl text-neutral-700 mb-8">
-                                Find great projects, showcase your talents, and grow your creative career.
-                            </p>
-
-                            <ul className="space-y-4 mb-8">
-                                {benefits.map((benefit, index) => (
-                                    <li key={index} className="flex items-start">
-                                        <CheckCircle className="h-6 w-6 text-beacon-purple mr-3 mt-0.5 flex-shrink-0" />
-                                        <span className="text-neutral-700">{benefit}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Link href="/register?type=creative">
-                                    <Button variant="primary" size="lg">
-                                        Get Started as a Creative
-                                    </Button>
-                                </Link>
-                                <Link href="/creatives">
-                                    <Button variant="secondary" size="lg">
-                                        Browse Creative Profiles
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className="flex-1">
-                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-full h-96" />
-                        </div>
+                    <div className="mt-16 text-center">
+                        <Link href="/register?role=creative">
+                            <Button variant="primary" size="lg">
+                                Get Started as a Creative
+                            </Button>
+                        </Link>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            {/* For Clients */}
-            <section className="py-16 bg-white">
+            {/* For Clients Section */}
+            <div className="py-20 bg-neutral-50">
                 <div className="container mx-auto px-4">
-                    <div className="flex flex-col lg:flex-row-reverse items-center gap-12">
-                        <div className="flex-1">
-                            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">For Clients & Businesses</h2>
-                            <p className="text-xl text-neutral-700 mb-8">
-                                Discover top creative talent and manage projects seamlessly from start to finish.
-                            </p>
+                    <div className="max-w-3xl mx-auto text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                            For Clients
+                        </h2>
+                        <p className="text-xl text-neutral-600">
+                            Post gigs and find the perfect creative talent for your gigs.
+                        </p>
+                    </div>
 
-                            <ul className="space-y-4 mb-8">
-                                {benefits.map((benefit, index) => (
-                                    <li key={`client-${index}`} className="flex items-start">
-                                        <CheckCircle className="h-6 w-6 text-beacon-purple mr-3 mt-0.5 flex-shrink-0" />
-                                        <span className="text-neutral-700">{benefit}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Link href="/register?type=client">
-                                    <Button variant="primary" size="lg">
-                                        Get Started as a Client
-                                    </Button>
-                                </Link>
-                                <Link href="/projects">
-                                    <Button variant="secondary" size="lg">
-                                        Browse Projects
-                                    </Button>
-                                </Link>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {stepsForClients.map((step, index) => (
+                            <div key={index} className="text-center">
+                                <div className="flex justify-center mb-6">
+                                    {step.icon}
+                                </div>
+                                <div className="text-5xl font-bold text-neutral-200 mb-4">
+                                    0{index + 1}
+                                </div>
+                                <h3 className="text-xl font-semibold text-neutral-900 mb-3">
+                                    {step.title}
+                                </h3>
+                                <p className="text-neutral-600">
+                                    {step.description}
+                                </p>
                             </div>
-                        </div>
+                        ))}
+                    </div>
 
-                        <div className="flex-1">
-                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-full h-96" />
-                        </div>
+                    <div className="mt-16 text-center">
+                        <Link href="/register?role=client">
+                            <Button variant="primary" size="lg">
+                                Get Started as a Client
+                            </Button>
+                        </Link>
                     </div>
                 </div>
-            </section>
+            </div>
 
             {/* CTA Section */}
-            <section className="py-20 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to get started?</h2>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Join thousands of creative professionals and clients already using B3ACON to connect, collaborate, and create amazing work.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link href="/register?type=client">
-                            <Button variant="primary" size="lg">
-                                Hire Creatives
-                            </Button>
-                        </Link>
-                        <Link href="/register?type=creative">
-                            <Button variant="secondary" size="lg" className="bg-white text-beacon-purple hover:bg-neutral-100">
-                                Find Work
-                            </Button>
-                        </Link>
+            <div className="py-20 bg-neutral-900 text-white">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                            Ready to Get Started?
+                        </h2>
+                        <p className="text-xl text-neutral-300 mb-10">
+                            Join thousands of creatives and clients who are already finding success through gigs on our platform.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Link href="/register?role=creative">
+                                <Button variant="primary" size="lg" className="bg-beacon-purple hover:bg-beacon-purple-dark">
+                                    I'm a Creative
+                                </Button>
+                            </Link>
+                            <Link href="/register?role=client">
+                                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+                                    I'm a Client
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
     )
 }

@@ -8,7 +8,7 @@
  * - clientFetcher: a fetcher suitable for SWR and client-side requests
  * - buildQuery: query string helper
  * - default export `api` with simple get/post helpers (client-side)
- * - named feature APIs: usersAPI, projectsAPI, authAPI
+ * - named feature APIs: usersAPI, gigsAPI, authAPI
  *
  * This file keeps implementations minimal and dependency-free so it's easy to test
  * and run in either server or client contexts.
@@ -227,19 +227,19 @@ export const usersAPI = {
   // add more user-related helpers here
 }
 
-export const projectsAPI = {
-  async getProjects(params?: Record<string, any>) {
-    logger.info('Fetching projects', params)
+export const gigsAPI = {
+  async getGigs(params?: Record<string, any>) {
+    logger.info('Fetching gigs', params)
     const qs = buildQuery(params)
-    return clientFetcher(`/api/projects${qs}`, { method: 'GET' })
+    return clientFetcher(`/api/gigs${qs}`, { method: 'GET' })
   },
-  async getProject(id: string) {
-    logger.info(`Fetching project by ID: ${id}`)
-    return clientFetcher(`/api/projects/${id}`, { method: 'GET' })
+  async getGig(id: string) {
+    logger.info(`Fetching gig by ID: ${id}`)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'GET' })
   },
-  async createProject(payload: any) {
-    logger.info('Creating new project', payload)
-    return clientFetcher('/api/projects', { method: 'POST', body: JSON.stringify(payload) })
+  async createGig(payload: any) {
+    logger.info('Creating new gig', payload)
+    return clientFetcher('/api/gigs', { method: 'POST', body: JSON.stringify(payload) })
   },
   // add update/delete as needed
 }

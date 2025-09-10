@@ -71,7 +71,7 @@ export function useRealTimeMessages(conversationId?: string) {
       recipient_id: recipientId,
       sender_id: 0, // This will be set by the server
       is_read: false, // This will be set by the server
-      // Add project_id or application_id if needed
+      // Add gig_id or application_id if needed
     }
     
     sendMessage(message)

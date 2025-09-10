@@ -1,11 +1,11 @@
 import logging
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.models.project import Project
+from app.models.gig import Gig
 from app.models.application import Application
 from app.models.message import Message
 from app.models.payment import Payment
-from app.models.project_file import ProjectFile
+from app.models.gig_file import GigFile
 from app.auth.password import get_password_hash
 import uuid
 from datetime import datetime, timedelta
@@ -47,10 +47,10 @@ def seed_mock_data(db: Session):
     logger.info("Clearing existing data")
     # Clear existing data
     db.query(Payment).delete()
-    db.query(ProjectFile).delete()
+    db.query(GigFile).delete()
     db.query(Message).delete()
     db.query(Application).delete()
-    db.query(Project).delete()
+    db.query(Gig).delete()
     db.query(User).delete()
     db.commit()
     
@@ -78,7 +78,7 @@ def seed_mock_data(db: Session):
                 "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=400&fit=crop"
             ],
             "profile_image_url": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 182,
+            "gigs_count": 182,
             "followers_count": 1200,
             "reviews_count": 15,
             "rating": 4.9,
@@ -104,7 +104,7 @@ def seed_mock_data(db: Session):
                 "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop"
             ],
             "profile_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 95,
+            "gigs_count": 95,
             "followers_count": 850,
             "reviews_count": 12,
             "rating": 4.7,
@@ -130,7 +130,7 @@ def seed_mock_data(db: Session):
                 "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=400&fit=crop"
             ],
             "profile_image_url": "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 67,
+            "gigs_count": 67,
             "followers_count": 2100,
             "reviews_count": 8,
             "rating": 4.8,
@@ -155,7 +155,7 @@ def seed_mock_data(db: Session):
                 "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&h=400&fit=crop"
             ],
             "profile_image_url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 134,
+            "gigs_count": 134,
             "followers_count": 3200,
             "reviews_count": 22,
             "rating": 4.9,
@@ -180,7 +180,7 @@ def seed_mock_data(db: Session):
                 "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=400&fit=crop"
             ],
             "profile_image_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 78,
+            "gigs_count": 78,
             "followers_count": 920,
             "reviews_count": 11,
             "rating": 4.6,
@@ -199,7 +199,7 @@ def seed_mock_data(db: Session):
             "bio": "Creative Director at Style Magazine. Always looking for talented photographers and models for our fashion shoots and editorial content.",
             "location": "New York, NY",
             "profile_image_url": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 12,
+            "gigs_count": 12,
             "followers_count": 45,
             "reviews_count": 3,
             "rating": 4.5,
@@ -215,7 +215,7 @@ def seed_mock_data(db: Session):
             "bio": "Marketing Manager at Beach Vibes. We create lifestyle content and need creative professionals for our summer campaigns and brand collaborations.",
             "location": "Los Angeles, CA",
             "profile_image_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 8,
+            "gigs_count": 8,
             "followers_count": 32,
             "reviews_count": 2,
             "rating": 4.3,
@@ -231,7 +231,7 @@ def seed_mock_data(db: Session):
             "bio": "Event Producer at Runway Productions. We organize high-end fashion shows and events, always seeking talented DJs, photographers, and creative professionals.",
             "location": "Miami, FL",
             "profile_image_url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 15,
+            "gigs_count": 15,
             "followers_count": 67,
             "reviews_count": 5,
             "rating": 4.7,
@@ -247,7 +247,7 @@ def seed_mock_data(db: Session):
             "bio": "Head of Marketing at TechStartup Inc. We need creative professionals for our product launches, brand campaigns, and corporate content creation.",
             "location": "San Francisco, CA",
             "profile_image_url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
-            "projects_count": 6,
+            "gigs_count": 6,
             "followers_count": 28,
             "reviews_count": 1,
             "rating": 4.0,
@@ -270,19 +270,19 @@ def seed_mock_data(db: Session):
     for user in created_users:
         db.refresh(user)
     
-    # Get specific users for projects
+    # Get specific users for gigs
     style_magazine = next(u for u in created_users if u.email == "john.smith@stylemagzine.com")
     beach_vibes = next(u for u in created_users if u.email == "maria.gonzalez@beachvibes.com")
     runway_productions = next(u for u in created_users if u.email == "david.kim@runwayproductions.com")
     tech_startup = next(u for u in created_users if u.email == "jennifer.brown@techstartup.com")
     
-    logger.info("Creating mock projects")
-    # Create mock projects
-    projects_data = [
+    logger.info("Creating mock gigs")
+    # Create mock gigs
+    gigs_data = [
         {
             "client_id": style_magazine.id,
             "title": "Fashion Photographer Needed",
-            "description": "We're looking for a talented fashion photographer for our upcoming spring collection shoot. The project involves studio photography with professional models, focusing on high-end fashion pieces. Experience with fashion photography and studio lighting is essential.",
+            "description": "We're looking for a talented fashion photographer for our upcoming spring collection shoot. The gig involves studio photography with professional models, focusing on high-end fashion pieces. Experience with fashion photography and studio lighting is essential.",
             "category": "Photography",
             "budget_min": 500.0,
             "budget_max": 750.0,
@@ -353,19 +353,19 @@ def seed_mock_data(db: Session):
         }
     ]
     
-    # Create projects
-    created_projects = []
-    for project_data in projects_data:
-        project = Project(**project_data)
-        db.add(project)
-        created_projects.append(project)
+    # Create gigs
+    created_gigs = []
+    for gig_data in gigs_data:
+        gig = Gig(**gig_data)
+        db.add(gig)
+        created_gigs.append(gig)
     
     db.commit()
-    logger.info(f"Created {len(created_projects)} projects")
+    logger.info(f"Created {len(created_gigs)} gigs")
     
-    # Refresh projects to get IDs
-    for project in created_projects:
-        db.refresh(project)
+    # Refresh gigs to get IDs
+    for gig in created_gigs:
+        db.refresh(gig)
     
     # Get creative users for applications
     sarah = next(u for u in created_users if u.email == "sarah.johnson@example.com")
@@ -378,16 +378,16 @@ def seed_mock_data(db: Session):
     # Create mock applications
     applications_data = [
         {
-            "project_id": created_projects[0].id,  # Fashion Photographer
+            "gig_id": created_gigs[0].id,  # Fashion Photographer
             "creative_id": sarah.id,
-            "cover_letter": "I'm excited to apply for this fashion photography project. With over 8 years of experience in fashion photography, I have worked with numerous brands and magazines. My portfolio showcases my ability to capture the essence of fashion pieces while maintaining the highest quality standards. I'm confident I can deliver exceptional results for your spring collection shoot.",
+            "cover_letter": "I'm excited to apply for this fashion photography gig. With over 8 years of experience in fashion photography, I have worked with numerous brands and magazines. My portfolio showcases my ability to capture the essence of fashion pieces while maintaining the highest quality standards. I'm confident I can deliver exceptional results for your spring collection shoot.",
             "proposed_budget": 650.0,
             "proposed_timeline_weeks": 1,
             "status": "pending",
             "created_at": datetime.utcnow() - timedelta(hours=12)
         },
         {
-            "project_id": created_projects[1].id,  # Model for Summer Campaign
+            "gig_id": created_gigs[1].id,  # Model for Summer Campaign
             "creative_id": emma.id,
             "cover_letter": "I would love to be part of Beach Vibes' summer campaign! As a professional model with extensive experience in lifestyle and outdoor shoots, I understand how to embody a brand's spirit and connect with the target audience. My portfolio includes similar beach and lifestyle campaigns that align perfectly with your brand aesthetic.",
             "proposed_budget": 1200.0,
@@ -396,7 +396,7 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=8)
         },
         {
-            "project_id": created_projects[2].id,  # DJ for Fashion Show
+            "gig_id": created_gigs[2].id,  # DJ for Fashion Show
             "creative_id": alex.id,
             "cover_letter": "I'm thrilled about the opportunity to DJ your fashion show after-party! With 10+ years of experience in high-end events and a deep understanding of electronic music, I know how to create the perfect atmosphere for VIP guests. I've performed at similar fashion events in Miami and always deliver an unforgettable experience.",
             "proposed_budget": 1000.0,
@@ -405,16 +405,16 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=24)
         },
         {
-            "project_id": created_projects[3].id,  # Brand Identity Designer
+            "gig_id": created_gigs[3].id,  # Brand Identity Designer
             "creative_id": mike.id,
-            "cover_letter": "I'm excited to help TechStartup Inc. develop a compelling brand identity. My experience in tech industry branding and understanding of modern design trends makes me the perfect fit for this project. I'll create a comprehensive brand system that reflects your company's innovation and professionalism while standing out in the competitive tech market.",
+            "cover_letter": "I'm excited to help TechStartup Inc. develop a compelling brand identity. My experience in tech industry branding and understanding of modern design trends makes me the perfect fit for this gig. I'll create a comprehensive brand system that reflects your company's innovation and professionalism while standing out in the competitive tech market.",
             "proposed_budget": 2800.0,
             "proposed_timeline_weeks": 4,
             "status": "pending",
             "created_at": datetime.utcnow() - timedelta(hours=6)
         },
         {
-            "project_id": created_projects[4].id,  # Video Content Creator
+            "gig_id": created_gigs[4].id,  # Video Content Creator
             "creative_id": lisa.id,
             "cover_letter": "I'm passionate about creating engaging video content for fashion brands. My experience in storytelling and understanding of social media trends will help Style Magazine create compelling video content that resonates with your audience. I'm excited to bring your brand stories to life through creative videography.",
             "proposed_budget": 2000.0,
@@ -435,19 +435,19 @@ def seed_mock_data(db: Session):
     logger.info("Creating mock messages")
     # Create mock messages
     messages_data = [
-        # Conversation between Sarah (creative) and Style Magazine (client) about Fashion Photographer project
+        # Conversation between Sarah (creative) and Style Magazine (client) about Fashion Photographer gig
         {
             "sender_id": style_magazine.id,
             "recipient_id": sarah.id,
-            "project_id": created_projects[0].id,
-            "content": "Hi Sarah, I'm interested in your application for our fashion photography project. Could you tell me more about your experience with studio lighting?",
+            "gig_id": created_gigs[0].id,
+            "content": "Hi Sarah, I'm interested in your application for our fashion photography gig. Could you tell me more about your experience with studio lighting?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=11)
         },
         {
             "sender_id": sarah.id,
             "recipient_id": style_magazine.id,
-            "project_id": created_projects[0].id,
+            "gig_id": created_gigs[0].id,
             "content": "Hi John, I'd be happy to discuss my experience! I've been working with studio lighting for over 6 years, specializing in fashion photography. I have a full setup with Profoto lights and modifiers. Would you like to see some examples from my portfolio?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=10)
@@ -455,7 +455,7 @@ def seed_mock_data(db: Session):
         {
             "sender_id": style_magazine.id,
             "recipient_id": sarah.id,
-            "project_id": created_projects[0].id,
+            "gig_id": created_gigs[0].id,
             "content": "Yes, that would be great! Please share some portfolio examples that are similar to what we're looking for.",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=9)
@@ -465,7 +465,7 @@ def seed_mock_data(db: Session):
         {
             "sender_id": beach_vibes.id,
             "recipient_id": emma.id,
-            "project_id": created_projects[1].id,
+            "gig_id": created_gigs[1].id,
             "content": "Hi Emma, I saw your application for our summer campaign. You look perfect for what we're looking for! Are you available for a test shoot next week?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=7)
@@ -473,7 +473,7 @@ def seed_mock_data(db: Session):
         {
             "sender_id": emma.id,
             "recipient_id": beach_vibes.id,
-            "project_id": created_projects[1].id,
+            "gig_id": created_gigs[1].id,
             "content": "Hi Maria! I'm excited about this opportunity. Yes, I'm available for a test shoot next week. What should I prepare?",
             "is_read": False,
             "created_at": datetime.utcnow() - timedelta(hours=6)
@@ -483,7 +483,7 @@ def seed_mock_data(db: Session):
         {
             "sender_id": runway_productions.id,
             "recipient_id": alex.id,
-            "project_id": created_projects[2].id,
+            "gig_id": created_gigs[2].id,
             "content": "Hey Alex, just wanted to confirm the details for our fashion show after-party. The event is on June 15th from 9 PM to 2 AM. Can you send me your setlist preferences?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=23)
@@ -491,7 +491,7 @@ def seed_mock_data(db: Session):
         {
             "sender_id": alex.id,
             "recipient_id": runway_productions.id,
-            "project_id": created_projects[2].id,
+            "gig_id": created_gigs[2].id,
             "content": "Hi David, I'm looking forward to the event! I'll send you my setlist preferences by tomorrow. Do you have any specific requests for the music genre?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=22)
@@ -501,15 +501,15 @@ def seed_mock_data(db: Session):
         {
             "sender_id": tech_startup.id,
             "recipient_id": mike.id,
-            "project_id": created_projects[3].id,
-            "content": "Hi Mike, we're excited to work with you on our brand identity project. Can we schedule a kickoff meeting for next Monday to discuss our requirements in detail?",
+            "gig_id": created_gigs[3].id,
+            "content": "Hi Mike, we're excited to work with you on our brand identity gig. Can we schedule a kickoff meeting for next Monday to discuss our requirements in detail?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=5)
         },
         {
             "sender_id": mike.id,
             "recipient_id": tech_startup.id,
-            "project_id": created_projects[3].id,
+            "gig_id": created_gigs[3].id,
             "content": "Hi Jennifer, I'm looking forward to working with TechStartup Inc. Next Monday works great for me. What time would you prefer for the meeting?",
             "is_read": False,
             "created_at": datetime.utcnow() - timedelta(hours=4)
@@ -519,25 +519,25 @@ def seed_mock_data(db: Session):
         {
             "sender_id": style_magazine.id,
             "recipient_id": lisa.id,
-            "project_id": created_projects[4].id,
-            "content": "Hi Lisa, I reviewed your application for our video content project. We'd like to move forward with you. Can you provide a timeline for the deliverables?",
+            "gig_id": created_gigs[4].id,
+            "content": "Hi Lisa, I reviewed your application for our video content gig. We'd like to move forward with you. Can you provide a timeline for the deliverables?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(hours=3)
         },
         {
             "sender_id": lisa.id,
             "recipient_id": style_magazine.id,
-            "project_id": created_projects[4].id,
+            "gig_id": created_gigs[4].id,
             "content": "Hi John, I'm excited to work with Style Magazine! I can deliver the first set of behind-the-scenes content within 2 weeks, and the promotional videos within 4 weeks. Does that work for you?",
             "is_read": False,
             "created_at": datetime.utcnow() - timedelta(hours=2)
         },
         
-        # General messages not tied to specific projects
+        # General messages not tied to specific gigs
         {
             "sender_id": sarah.id,
             "recipient_id": mike.id,
-            "content": "Hey Mike, are you available for a collaboration on a fashion project next month?",
+            "content": "Hey Mike, are you available for a collaboration on a fashion gig next month?",
             "is_read": True,
             "created_at": datetime.utcnow() - timedelta(days=1, hours=5)
         },
@@ -561,65 +561,31 @@ def seed_mock_data(db: Session):
     logger.info("Creating mock payments")
     # Create mock payments
     payments_data = [
-        # Payment for DJ services (accepted application)
         {
-            "project_id": created_projects[2].id,
+            "gig_id": created_gigs[2].id,  # DJ for Fashion Show (accepted application)
             "client_id": runway_productions.id,
             "creative_id": alex.id,
             "amount": 1000.0,
             "milestone_description": "Payment for DJ services at fashion show after-party",
-            "stripe_payment_intent_id": "pi_dj_payment_001",
-            "status": "released",
-            "created_at": datetime.utcnow() - timedelta(days=2),
-            "released_at": datetime.utcnow() - timedelta(days=1)
-        },
-        # Payment for brand identity project (pending)
-        {
-            "project_id": created_projects[3].id,
-            "client_id": tech_startup.id,
-            "creative_id": mike.id,
-            "amount": 2800.0,
-            "milestone_description": "50% deposit for brand identity design",
-            "stripe_payment_intent_id": "pi_brand_payment_001",
             "status": "held_in_escrow",
-            "created_at": datetime.utcnow() - timedelta(hours=5)
-        },
-        # Payment for video content (pending)
-        {
-            "project_id": created_projects[4].id,
-            "client_id": style_magazine.id,
-            "creative_id": lisa.id,
-            "amount": 1000.0,
-            "milestone_description": "Initial payment for video content creation",
-            "stripe_payment_intent_id": "pi_video_payment_001",
-            "status": "held_in_escrow",
-            "created_at": datetime.utcnow() - timedelta(hours=3)
+            "created_at": datetime.utcnow() - timedelta(hours=20)
         }
     ]
     
     # Create payments
-    for payment_data in payments_data:
-        payment = Payment(**payment_data)
+    for pay_data in payments_data:
+        payment = Payment(**pay_data)
         db.add(payment)
     
     db.commit()
     logger.info(f"Created {len(payments_data)} payments")
     
-    logger.info("Creating mock project files")
-    # Create mock project files
-    project_files_data = [
-        # Files for Fashion Photographer project
+    logger.info("Creating mock gig files")
+    # Create mock gig files
+    gig_files_data = [
+        # Files for Fashion Photographer gig
         {
-            "project_id": created_projects[0].id,
-            "uploader_id": sarah.id,
-            "filename": "fashion_portfolio_samples.zip",
-            "file_url": "https://example.com/files/fashion_portfolio_samples.zip",
-            "file_size": 15728640,  # 15MB
-            "file_type": "application/zip",
-            "created_at": datetime.utcnow() - timedelta(hours=9)
-        },
-        {
-            "project_id": created_projects[0].id,
+            "gig_id": created_gigs[0].id,
             "uploader_id": style_magazine.id,
             "filename": "brand_guidelines.pdf",
             "file_url": "https://example.com/files/brand_guidelines.pdf",
@@ -628,9 +594,9 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=8)
         },
         
-        # Files for Model for Summer Campaign project
+        # Files for Model for Summer Campaign gig
         {
-            "project_id": created_projects[1].id,
+            "gig_id": created_gigs[1].id,
             "uploader_id": emma.id,
             "filename": "model_comp_card.pdf",
             "file_url": "https://example.com/files/model_comp_card.pdf",
@@ -639,9 +605,9 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=6)
         },
         
-        # Files for DJ for Fashion Show project
+        # Files for DJ for Fashion Show gig
         {
-            "project_id": created_projects[2].id,
+            "gig_id": created_gigs[2].id,
             "uploader_id": alex.id,
             "filename": "dj_setlist.pdf",
             "file_url": "https://example.com/files/dj_setlist.pdf",
@@ -650,7 +616,7 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=22)
         },
         {
-            "project_id": created_projects[2].id,
+            "gig_id": created_gigs[2].id,
             "uploader_id": runway_productions.id,
             "filename": "event_details.pdf",
             "file_url": "https://example.com/files/event_details.pdf",
@@ -659,9 +625,9 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=21)
         },
         
-        # Files for Brand Identity Designer project
+        # Files for Brand Identity Designer gig
         {
-            "project_id": created_projects[3].id,
+            "gig_id": created_gigs[3].id,
             "uploader_id": mike.id,
             "filename": "logo_concepts_v1.pdf",
             "file_url": "https://example.com/files/logo_concepts_v1.pdf",
@@ -670,7 +636,7 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=4)
         },
         {
-            "project_id": created_projects[3].id,
+            "gig_id": created_gigs[3].id,
             "uploader_id": tech_startup.id,
             "filename": "company_brief.pdf",
             "file_url": "https://example.com/files/company_brief.pdf",
@@ -679,9 +645,9 @@ def seed_mock_data(db: Session):
             "created_at": datetime.utcnow() - timedelta(hours=5)
         },
         
-        # Files for Video Content Creator project
+        # Files for Video Content Creator gig
         {
-            "project_id": created_projects[4].id,
+            "gig_id": created_gigs[4].id,
             "uploader_id": lisa.id,
             "filename": "video_treatment.pdf",
             "file_url": "https://example.com/files/video_treatment.pdf",
@@ -691,18 +657,18 @@ def seed_mock_data(db: Session):
         }
     ]
     
-    # Create project files
-    for file_data in project_files_data:
-        project_file = ProjectFile(**file_data)
-        db.add(project_file)
+    # Create gig files
+    for file_data in gig_files_data:
+        gig_file = GigFile(**file_data)
+        db.add(gig_file)
     
     db.commit()
-    logger.info(f"Created {len(project_files_data)} project files")
+    logger.info(f"Created {len(gig_files_data)} gig files")
     
     logger.info("Mock data seeded successfully!")
     logger.info(f"Created {len(created_users)} users")
-    logger.info(f"Created {len(created_projects)} projects")
+    logger.info(f"Created {len(created_gigs)} gigs")
     logger.info(f"Created {len(applications_data)} applications")
     logger.info(f"Created {len(messages_data)} messages")
     logger.info(f"Created {len(payments_data)} payments")
-    logger.info(f"Created {len(project_files_data)} project files")
+    logger.info(f"Created {len(gig_files_data)} gig files")

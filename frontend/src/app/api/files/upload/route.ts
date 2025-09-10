@@ -16,7 +16,7 @@ async function getToken() {
  * POST /api/files/upload
  * Accepts multipart/form-data with fields:
  * - file: Blob
- * - project_id: string
+ * - gig_id: string
  * Proxies as-is to backend /files/upload with Authorization.
  */
 export async function POST(request: Request) {

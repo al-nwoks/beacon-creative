@@ -7,7 +7,7 @@ from app.schemas.user import User
 # Shared properties
 class MessageBase(BaseModel):
     content: str
-    project_id: Optional[UUID4] = None
+    gig_id: Optional[UUID4] = None
     application_id: Optional[UUID4] = None
 
 # Properties to receive via API on creation

@@ -1,11 +1,11 @@
 # B3ACON Creative Connect
 
-A platform connecting creative professionals with clients for project collaboration.
+A platform connecting creative professionals with clients for gig collaboration.
 
 ## Features
 
 - User authentication and authorization
-- Project management
+- Gig management
 - Talent marketplace
 - Messaging system
 - Payment processing

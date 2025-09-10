@@ -9,7 +9,7 @@ class Application(Base):
     __tablename__ = "applications"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    gig_id = Column(UUID(as_uuid=True), ForeignKey("gigs.id", ondelete="CASCADE"), nullable=False)
     creative_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     cover_letter = Column(String, nullable=False)
     proposed_budget = Column(Float, nullable=True)
@@ -22,12 +22,12 @@ class Application(Base):
     created_at = Column(DateTime, default=func.now())
     
     # Relationships
-    project = relationship("Project", backref="applications")
+    gig = relationship("Gig", backref="applications")
     creative = relationship("User", backref="applications")
     
     # Constraints
     __table_args__ = (
-        UniqueConstraint('project_id', 'creative_id', name='unique_project_creative'),
+        UniqueConstraint('gig_id', 'creative_id', name='unique_gig_creative'),
     )
     
     def __repr__(self):

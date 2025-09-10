@@ -24,7 +24,7 @@ export default async function AdminAnalyticsPage() {
     }
 
     let userGrowthData: { date: string; count: number }[] = []
-    let projectGrowthData: { date: string; count: number }[] = []
+    let gigGrowthData: { date: string; count: number }[] = []
     let paymentData: { date: string; amount: number }[] = []
 
     try {
@@ -68,7 +68,7 @@ export default async function AdminAnalyticsPage() {
                 }
             })
 
-            projectGrowthData = Array.from({ length: 30 }, (_, i) => {
+            gigGrowthData = Array.from({ length: 30 }, (_, i) => {
                 const date = new Date(today)
                 date.setDate(date.getDate() - (29 - i))
                 const dateStr = date.toISOString().split('T')[0]
@@ -169,11 +169,11 @@ export default async function AdminAnalyticsPage() {
                             </div>
                         </div>
 
-                        {/* Project Growth Chart */}
+                        {/* Gig Growth Chart */}
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">Project Growth</h2>
+                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">Gig Growth</h2>
                             <div className="h-64 flex items-center justify-center bg-neutral-50 rounded-lg">
-                                <p className="text-neutral-500">Project growth chart visualization would go here</p>
+                                <p className="text-neutral-500">Gig growth chart visualization would go here</p>
                             </div>
                         </div>
                     </div>
@@ -203,8 +203,8 @@ export default async function AdminAnalyticsPage() {
                             <div className="border border-neutral-200 rounded-lg p-4">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h3 className="font-medium text-neutral-900">Project posted</h3>
-                                        <p className="text-sm text-neutral-600">Client Company XYZ posted a new project</p>
+                                        <h3 className="font-medium text-neutral-900">Gig posted</h3>
+                                        <p className="text-sm text-neutral-600">Client Company XYZ posted a new gig</p>
                                     </div>
                                     <span className="text-sm text-neutral-500">5 hours ago</span>
                                 </div>

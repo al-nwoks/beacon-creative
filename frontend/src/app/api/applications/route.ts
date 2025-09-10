@@ -13,7 +13,7 @@ async function getToken() {
 }
 
 // GET /api/applications
-// supports query params: status, project_id, skip, limit, etc.
+// supports query params: status, gig_id, skip, limit, etc.
 // For "my applications" we will expose /api/applications/me below (separate route file), but keep generic passthrough here.
 export async function GET(request: Request) {
   const url = new URL(request.url)

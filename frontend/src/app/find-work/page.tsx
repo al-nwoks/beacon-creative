@@ -1,230 +1,265 @@
-'use client'
-
 import Button from '@/components/ui/Button'
-import { Award, Briefcase, CheckCircle, TrendingUp, UserCheck, Zap } from 'lucide-react'
+import { Clock, DollarSign, MapPin, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default function FindWork() {
-    const steps = [
+export const metadata = {
+    title: 'Find Gigs | B3ACON Creative Connect',
+    description: 'Browse and apply to gigs that match your skills and interests.',
+}
+
+export default function FindWorkPage() {
+    // Mock data for gigs
+    const gigs = [
         {
-            icon: <UserCheck className="h-8 w-8" />,
-            title: 'Create Your Profile',
-            description: 'Build a compelling profile showcasing your skills, experience, and portfolio to attract clients.'
+            id: '1',
+            title: 'Brand Photography for Fashion Startup',
+            description: 'We need high-quality product photography for our new fashion line. Looking for someone with experience in fashion photography and lighting.',
+            budget: '$1,500 - $2,500',
+            timeline: '4-6 weeks',
+            posted: '2 days ago',
+            skills: ['Photography', 'Fashion', 'Lighting', 'Photoshop'],
+            category: 'Photography',
+            location: 'Remote'
         },
         {
-            icon: <Briefcase className="h-8 w-8" />,
-            title: 'Browse Projects',
-            description: 'Explore opportunities that match your expertise and interests in our project marketplace.'
+            id: '2',
+            title: 'UI/UX Design for Mobile App',
+            description: 'Design a complete user interface for our new fitness tracking mobile application. Experience with health and fitness apps preferred.',
+            budget: '$3,000 - $5,000',
+            timeline: '6-8 weeks',
+            posted: '1 week ago',
+            skills: ['UI/UX Design', 'Figma', 'Mobile Design', 'Prototyping'],
+            category: 'Design',
+            location: 'New York, NY'
         },
         {
-            icon: <Zap className="h-8 w-8" />,
-            title: 'Submit Proposals',
-            description: 'Craft personalized proposals to demonstrate your value and win projects.'
-        },
-        {
-            icon: <TrendingUp className="h-8 w-8" />,
-            title: 'Grow Your Career',
-            description: 'Deliver exceptional work, build your reputation, and access even more opportunities.'
+            id: '3',
+            title: 'Content Writing for Tech Blog',
+            description: 'Looking for a technical writer to create engaging content for our technology blog. Must have experience with AI, cloud computing, and software development.',
+            budget: '$500 - $1,000',
+            timeline: '2-3 weeks',
+            posted: '3 days ago',
+            skills: ['Technical Writing', 'SEO', 'Content Strategy', 'Tech'],
+            category: 'Writing',
+            location: 'Remote'
         }
     ]
 
-    const benefits = [
-        'Access to a global marketplace of creative opportunities',
-        'Secure payment protection for all transactions',
-        'Built-in project management and communication tools',
-        'Portfolio showcasing and professional development resources',
-        '24/7 customer support and dispute resolution',
-        'Opportunity to build long-term client relationships'
+    const categories = [
+        'All Categories',
+        'Design',
+        'Writing',
+        'Photography',
+        'Development',
+        'Marketing',
+        'Video'
     ]
 
     return (
         <div className="min-h-screen bg-neutral-50">
-
             {/* Hero Section */}
-            <section className="py-16 md:py-24 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Find Creative Work</h1>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Connect with clients and grow your creative career through meaningful projects
-                    </p>
-                </div>
-            </section>
-
-            {/* Steps Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4">
-                    <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Your Path to Success</h2>
-                        <p className="text-xl text-neutral-700">
-                            Our platform streamlines the process of finding and securing creative projects.
+            <div className="bg-white border-b border-neutral-200">
+                <div className="container mx-auto px-4 py-16">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h1 className="text-4xl font-bold text-neutral-900 mb-4">
+                            Find Your Next Gig
+                        </h1>
+                        <p className="text-xl text-neutral-600 mb-8">
+                            Browse thousands of gigs from top clients and find opportunities that match your skills.
                         </p>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {steps.map((step, index) => (
-                            <div key={index} className="bg-neutral-50 rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
-                                    {step.icon}
+                        {/* Search Bar */}
+                        <div className="max-w-2xl mx-auto">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="h-5 w-5 text-neutral-400" />
                                 </div>
-                                <h3 className="text-xl font-semibold mb-4 text-neutral-900">{step.title}</h3>
-                                <p className="text-neutral-700">
-                                    {step.description}
-                                </p>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-10 pr-3 py-4 border border-neutral-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple text-lg"
+                                    placeholder="Search for gigs..."
+                                />
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Benefits Section */}
-            <section className="py-16 bg-neutral-50">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col lg:flex-row-reverse items-center gap-12">
-                        <div className="flex-1">
-                            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Why Creative Professionals Love B3ACON</h2>
-                            <p className="text-xl text-neutral-700 mb-8">
-                                Our platform is designed to help you succeed in your creative career.
-                            </p>
-
-                            <ul className="space-y-4 mb-8">
-                                {benefits.map((benefit, index) => (
-                                    <li key={index} className="flex items-start">
-                                        <CheckCircle className="h-6 w-6 text-beacon-purple mr-3 mt-0.5 flex-shrink-0" />
-                                        <span className="text-neutral-700">{benefit}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Link href="/register?type=creative">
-                                    <Button variant="primary" size="lg">
-                                        Start Finding Work
-                                    </Button>
-                                </Link>
-                                <Link href="/creatives">
-                                    <Button variant="secondary" size="lg">
-                                        Browse Creative Profiles
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className="flex-1">
-                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-full h-96" />
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            {/* Success Stories Preview */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4">
-                    <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Success Stories</h2>
-                        <p className="text-xl text-neutral-700">
-                            Creative professionals like you are building successful careers through B3ACON.
-                        </p>
-                    </div>
+            {/* Main Content */}
+            <div className="container mx-auto px-4 py-12">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Filters Sidebar */}
+                    <div className="lg:w-1/4">
+                        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 sticky top-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-semibold text-neutral-900">Filters</h2>
+                                <button className="text-sm text-beacon-purple hover:text-beacon-purple-dark">
+                                    Clear all
+                                </button>
+                            </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-                            <div className="flex items-center mb-4">
-                                <div className="flex text-yellow-400">
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
+                            {/* Categories */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Category</h3>
+                                <div className="space-y-2">
+                                    {categories.map((category, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`category-${index}`}
+                                                name="category"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`category-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {category}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <p className="text-neutral-700 mb-6">
-                                &ldquo;B3ACON helped me transition from a hobbyist to a full-time freelance designer. I've earned over $50,000 in my first year!&rdquo;
-                            </p>
-                            <div className="flex items-center">
-                                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                                <div className="ml-4">
-                                    <h4 className="font-semibold text-neutral-900">Alex Morgan</h4>
-                                    <p className="text-neutral-600">Graphic Designer</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-                            <div className="flex items-center mb-4">
-                                <div className="flex text-yellow-400">
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
+                            {/* Budget Range */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Budget Range</h3>
+                                <div className="space-y-2">
+                                    {['Any budget', '$0 - $1,000', '$1,000 - $5,000', '$5,000+'].map((range, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`budget-${index}`}
+                                                name="budget"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`budget-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {range}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <p className="text-neutral-700 mb-6">
-                                &ldquo;The quality of projects on B3ACON is exceptional. I've worked with amazing clients on projects I'm truly proud of.&rdquo;
-                            </p>
-                            <div className="flex items-center">
-                                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                                <div className="ml-4">
-                                    <h4 className="font-semibold text-neutral-900">Jamie Chen</h4>
-                                    <p className="text-neutral-600">Photographer</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-                            <div className="flex items-center mb-4">
-                                <div className="flex text-yellow-400">
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
-                                    <Award className="h-5 w-5 fill-current" />
+                            {/* Experience Level */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-neutral-900 mb-3">Experience Level</h3>
+                                <div className="space-y-2">
+                                    {['Any experience', 'Entry level', 'Intermediate', 'Expert'].map((level, index) => (
+                                        <div key={index} className="flex items-center">
+                                            <input
+                                                id={`experience-${index}`}
+                                                name="experience"
+                                                type="radio"
+                                                className="h-4 w-4 text-beacon-purple focus:ring-beacon-purple border-neutral-300"
+                                                defaultChecked={index === 0}
+                                            />
+                                            <label htmlFor={`experience-${index}`} className="ml-3 block text-sm text-neutral-700">
+                                                {level}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <p className="text-neutral-700 mb-6">
-                                &ldquo;B3ACON's payment protection gives me peace of mind. I get paid on time, every time, and can focus on creating.&rdquo;
-                            </p>
-                            <div className="flex items-center">
-                                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                                <div className="ml-4">
-                                    <h4 className="font-semibold text-neutral-900">Taylor Williams</h4>
-                                    <p className="text-neutral-600">Content Creator</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="text-center mt-12">
-                        <Link href="/success-stories">
-                            <Button variant="outline">
-                                View All Success Stories
+                            <Button variant="primary" fullWidth>
+                                Apply Filters
                             </Button>
-                        </Link>
+                        </div>
                     </div>
-                </div>
-            </section>
 
-            {/* CTA Section */}
-            <section className="py-20 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to advance your creative career?</h2>
-                    <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Join thousands of creative professionals who have found success through B3ACON.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link href="/register?type=creative">
-                            <Button variant="primary" size="lg">
-                                Create Your Profile
-                            </Button>
-                        </Link>
-                        <Link href="/find-work">
-                            <Button variant="secondary" size="lg" className="bg-white text-beacon-purple hover:bg-neutral-100">
-                                Learn More
-                            </Button>
-                        </Link>
+                    {/* Gigs List */}
+                    <div className="lg:w-3/4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-semibold text-neutral-900">
+                                {gigs.length} gigs found
+                            </h2>
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm text-neutral-600">Sort by:</span>
+                                <select className="border border-neutral-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple">
+                                    <option>Most recent</option>
+                                    <option>Highest budget</option>
+                                    <option>Closest deadline</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {gigs.map((gig) => (
+                                <div key={gig.id} className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 hover:shadow-md transition-shadow">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 className="text-xl font-semibold text-neutral-900 mb-2">{gig.title}</h3>
+                                            <p className="text-neutral-600 mb-4 line-clamp-2">{gig.description}</p>
+
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                {gig.skills.slice(0, 3).map((skill, index) => (
+                                                    <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                                {gig.skills.length > 3 && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                                        +{gig.skills.length - 3} more
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600 mb-4">
+                                        <div className="flex items-center">
+                                            <DollarSign className="h-4 w-4 mr-1" />
+                                            {gig.budget}
+                                        </div>
+                                        <div className="flex items-center">
+                                            <Clock className="h-4 w-4 mr-1" />
+                                            {gig.timeline}
+                                        </div>
+                                        <div className="flex items-center">
+                                            <MapPin className="h-4 w-4 mr-1" />
+                                            {gig.location}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-neutral-500">Posted {gig.posted}</span>
+                                        <Link href={`/gigs/${gig.id}`}>
+                                            <Button variant="outline" size="sm">View Details</Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="mt-12 flex justify-center">
+                            <nav className="flex items-center space-x-2">
+                                <button className="px-3 py-1 rounded-md bg-neutral-100 text-neutral-600 hover:bg-neutral-200">
+                                    Previous
+                                </button>
+                                <button className="px-3 py-1 rounded-md bg-beacon-purple text-white">
+                                    1
+                                </button>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    2
+                                </button>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    3
+                                </button>
+                                <span className="px-3 py-1 text-neutral-400">
+                                    ...
+                                </span>
+                                <button className="px-3 py-1 rounded-md text-neutral-600 hover:bg-neutral-100">
+                                    10
+                                </button>
+                                <button className="px-3 py-1 rounded-md bg-neutral-100 text-neutral-600 hover:bg-neutral-200">
+                                    Next
+                                </button>
+                            </nav>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
     )
 }

@@ -24,7 +24,7 @@ export interface User {
   portfolio_links?: string[]
   portfolio_images?: string[]
   // Profile stats
-  projects_count?: number
+  gigs_count?: number
   followers_count?: number
   reviews_count?: number
   rating?: number
@@ -32,8 +32,8 @@ export interface User {
   notification_settings?: NotificationSetting | null
 }
 
-/* Project */
-export interface Project {
+/* Gig */
+export interface Gig {
   id: number | string
   title: string
   company?: string
@@ -48,14 +48,23 @@ export interface Project {
   status?: string
   client_id?: number | string
   hired_creative_id?: number | string
+  // Additional properties that may be included in responses
+  applications_count?: number
+  deadline?: string
+  client?: {
+    id: number | string
+    name: string
+    email: string
+    location?: string
+  }
   // add other fields returned by backend as needed
 }
 
 /* Application */
 export interface Application {
   id: number | string
-  project: Project | string | number
-  project_id?: number | string
+  gig: Gig | string | number
+  gig_id?: number | string
   applicant_id?: number | string
   creative_id?: number | string
   status?: string
@@ -89,7 +98,7 @@ export interface Message {
   recipient_id: number | string
   is_read: boolean
   created_at: string
-  project_id?: string
+  gig_id?: string
   application_id?: string
   sender?: User
   recipient?: User
@@ -102,7 +111,7 @@ export interface Payment {
   currency?: string
   status?: string
   created_at?: string
-  project_id?: number | string
+  gig_id?: number | string
   client_id?: number | string
   creative_id?: number | string
   milestone_description?: string
@@ -113,9 +122,9 @@ export interface Payment {
 
 /* Dashboard summary used by /dashboard/summary or similar endpoints */
 export interface DashboardSummary {
-  activeProjects?: number
+  activeGigs?: number
   totalSpent?: number
-  recentActivity?: { action: string; project?: string; time?: string }[]
+  recentActivity?: { action: string; gig?: string; time?: string }[]
   // other aggregate fields
 }
 
@@ -133,16 +142,16 @@ export interface Notification {
 export interface NotificationSetting {
   id: string
   user_id: number
-  email_project_updates?: boolean
+  email_gig_updates?: boolean
   email_messages?: boolean
   email_application_status?: boolean
   email_payment_updates?: boolean
   email_newsletter?: boolean
-  in_app_project_updates?: boolean
+  in_app_gig_updates?: boolean
   in_app_messages?: boolean
   in_app_application_status?: boolean
   in_app_payment_updates?: boolean
-  push_project_updates?: boolean
+  push_gig_updates?: boolean
   push_messages?: boolean
   push_application_status?: boolean
   push_payment_updates?: boolean

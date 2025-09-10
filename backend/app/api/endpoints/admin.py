@@ -202,139 +202,139 @@ def get_platform_stats(
     return stats
 
 
-# Import Project model and schemas
-from app.models.project import Project
-from app.schemas.project import Project as ProjectSchema, ProjectUpdate
+# Import Gig model and schemas
+from app.models.gig import Gig
+from app.schemas.gig import Gig as GigSchema, GigUpdate
 
-@router.get("/projects", response_model=List[ProjectSchema])
-def get_all_projects(
+@router.get("/gigs", response_model=List[GigSchema])
+def get_all_gigs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user_dependency),
     skip: int = 0,
     limit: int = 100,
-    status: str = Query(None, description="Filter projects by status"),
-    search: str = Query(None, description="Search projects by title or description")
+    status: str = Query(None, description="Filter gigs by status"),
+    search: str = Query(None, description="Search gigs by title or description")
 ) -> Any:
     """
-    Get all projects (admin only).
+    Get all gigs (admin only).
     """
     start_time = time.time()
-    logger.info(f"Admin {current_user.id} fetching all projects")
+    logger.info(f"Admin {current_user.id} fetching all gigs")
     logger.debug(f"Query parameters: skip={skip}, limit={limit}, status={status}, search={search}")
     
-    query = db.query(Project)
+    query = db.query(Gig)
     
     # Apply status filter if provided
     if status:
-        query = query.filter(Project.status == status)
+        query = query.filter(Gig.status == status)
     
     # Apply search filter if provided
     if search:
         search_term = f"%{search}%"
         query = query.filter(
-            Project.title.ilike(search_term) |
-            Project.description.ilike(search_term)
+            Gig.title.ilike(search_term) |
+            Gig.description.ilike(search_term)
         )
     
     # Apply pagination
     query = query.offset(skip).limit(limit)
     
     query_start = time.time()
-    projects = query.all()
+    gigs = query.all()
     query_end = time.time()
-    log_query_performance("SELECT", "complex", query_end - query_start, len(projects))
+    log_query_performance("SELECT", "complex", query_end - query_start, len(gigs))
     
-    logger.info(f"Found {len(projects)} projects for admin {current_user.id}")
+    logger.info(f"Found {len(gigs)} gigs for admin {current_user.id}")
     
     end_time = time.time()
-    log_performance_metrics("get_all_projects", start_time, end_time, {
-        "project_count": len(projects),
+    log_performance_metrics("get_all_gigs", start_time, end_time, {
+        "gig_count": len(gigs),
         "skip": skip,
         "limit": limit
     })
-    return projects
+    return gigs
 
 
-@router.get("/projects/{project_id}", response_model=ProjectSchema)
-def get_project_by_id(
-    project_id: int,
+@router.get("/gigs/{gig_id}", response_model=GigSchema)
+def get_gig_by_id(
+    gig_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user_dependency)
 ) -> Any:
     """
-    Get a specific project by ID (admin only).
+    Get a specific gig by ID (admin only).
     """
-    logger.info(f"Admin {current_user.id} fetching project {project_id}")
+    logger.info(f"Admin {current_user.id} fetching gig {gig_id}")
     
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        logger.warning(f"Project {project_id} not found for admin {current_user.id}")
+    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    if not gig:
+        logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+            detail="Gig not found"
         )
     
-    logger.info(f"Project {project_id} found for admin {current_user.id}")
-    return project
+    logger.info(f"Gig {gig_id} found for admin {current_user.id}")
+    return gig
 
 
-@router.put("/projects/{project_id}", response_model=ProjectSchema)
-def update_project(
-    project_id: int,
-    project_in: ProjectUpdate,
+@router.put("/gigs/{gig_id}", response_model=GigSchema)
+def update_gig(
+    gig_id: int,
+    gig_in: GigUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user_dependency)
 ) -> Any:
     """
-    Update a project (admin only).
+    Update a gig (admin only).
     """
-    logger.info(f"Admin {current_user.id} updating project {project_id}")
-    logger.debug(f"Update data: {project_in.dict(exclude_unset=True)}")
+    logger.info(f"Admin {current_user.id} updating gig {gig_id}")
+    logger.debug(f"Update data: {gig_in.dict(exclude_unset=True)}")
     
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        logger.warning(f"Project {project_id} not found for admin {current_user.id}")
+    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    if not gig:
+        logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+            detail="Gig not found"
         )
     
-    # Update project attributes
-    for field, value in project_in.dict(exclude_unset=True).items():
-        setattr(project, field, value)
+    # Update gig attributes
+    for field, value in gig_in.dict(exclude_unset=True).items():
+        setattr(gig, field, value)
     
-    db.add(project)
+    db.add(gig)
     db.commit()
-    db.refresh(project)
+    db.refresh(gig)
     
-    logger.info(f"Project {project_id} updated successfully by admin {current_user.id}")
-    return project
+    logger.info(f"Gig {gig_id} updated successfully by admin {current_user.id}")
+    return gig
 
 
-@router.delete("/projects/{project_id}", response_model=ProjectSchema)
-def delete_project(
-    project_id: int,
+@router.delete("/gigs/{gig_id}", response_model=GigSchema)
+def delete_gig(
+    gig_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user_dependency)
 ) -> Any:
     """
-    Delete a project (admin only).
+    Delete a gig (admin only).
     """
-    logger.info(f"Admin {current_user.id} deleting project {project_id}")
+    logger.info(f"Admin {current_user.id} deleting gig {gig_id}")
     
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        logger.warning(f"Project {project_id} not found for admin {current_user.id}")
+    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    if not gig:
+        logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+            detail="Gig not found"
         )
     
-    db.delete(project)
+    db.delete(gig)
     db.commit()
     
-    logger.info(f"Project {project_id} deleted successfully by admin {current_user.id}")
-    return project
+    logger.info(f"Gig {gig_id} deleted successfully by admin {current_user.id}")
+    return gig
 
 
 # Import Payment model and schemas
@@ -348,7 +348,7 @@ def get_all_payments(
     skip: int = 0,
     limit: int = 100,
     status: str = Query(None, description="Filter payments by status"),
-    search: str = Query(None, description="Search payments by project ID or creative ID")
+    search: str = Query(None, description="Search payments by gig ID or creative ID")
 ) -> Any:
     """
     Get all payments (admin only).
@@ -367,7 +367,7 @@ def get_all_payments(
     if search:
         search_term = f"%{search}%"
         query = query.filter(
-            Payment.project_id.cast(String).ilike(search_term) |
+            Payment.gig_id.cast(String).ilike(search_term) |
             Payment.creative_id.cast(String).ilike(search_term)
         )
     
