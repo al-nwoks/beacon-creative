@@ -18,14 +18,18 @@ export function MessageSearch({ currentUser }: MessageSearchProps) {
     // Debounce search query
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedQuery(searchQuery)
+            setDebouncedQuery(searchQuery.trim())
         }, 300)
 
         return () => clearTimeout(timer)
     }, [searchQuery])
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value)
+        const value = e.target.value
+        // Only update search query if it's not empty or if it's empty but we had a previous query
+        if (value.trim() !== '' || searchQuery !== '') {
+            setSearchQuery(value)
+        }
     }
 
     const handleClearSearch = () => {

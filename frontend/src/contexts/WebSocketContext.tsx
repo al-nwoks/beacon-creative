@@ -1,14 +1,12 @@
 'use client'
 
 import { useNotification } from '@/components/ui/NotificationProvider'
-import type { Message } from '@/types/api'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { io, Socket } from 'socket.io-client'
 
 interface WebSocketContextType {
-    socket: Socket | null
+    socket: WebSocket | null
     isConnected: boolean
-    sendMessage: (message: Omit<Message, 'id' | 'created_at' | 'sender' | 'recipient'>) => void
+    sendMessage: (message: any) => void
     joinConversation: (conversationId: string) => void
     leaveConversation: (conversationId: string) => void
 }
@@ -16,99 +14,160 @@ interface WebSocketContextType {
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined)
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
-    const [socket, setSocket] = useState<Socket | null>(null)
+    const [socket, setSocket] = useState<WebSocket | null>(null)
     const [isConnected, setIsConnected] = useState(false)
     const { showNotification } = useNotification()
     const reconnectAttempts = useRef(0)
     const maxReconnectAttempts = 5
+    const messageQueue = useRef<any[]>([])
+    const isConnecting = useRef(false)
+
+    // Get authentication token
+    const getAuthToken = () => {
+        if (typeof window !== 'undefined') {
+            // Try to get from localStorage first
+            const token = localStorage.getItem('access_token')
+            if (token) return token
+
+            // Try to get from cookies
+            const cookies = document.cookie.split(';')
+            for (const cookie of cookies) {
+                const [name, value] = cookie.trim().split('=')
+                if (name === 'access_token') {
+                    return value
+                }
+            }
+        }
+        return null
+    }
+
+    const connectWebSocket = () => {
+        if (isConnecting.current) return
+
+        isConnecting.current = true
+        const token = getAuthToken()
+        if (!token) {
+            console.warn('No authentication token available')
+            isConnecting.current = false
+            return
+        }
+
+        // Create WebSocket URL with token as query parameter
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const wsUrl = baseUrl.replace('http', 'ws') + `/api/v1/ws/messages?token=${token}`
+
+        try {
+            const newSocket = new WebSocket(wsUrl)
+
+            newSocket.onopen = () => {
+                console.log('WebSocket connected')
+                setIsConnected(true)
+                isConnecting.current = false
+                reconnectAttempts.current = 0
+
+                // Send any queued messages
+                while (messageQueue.current.length > 0) {
+                    const message = messageQueue.current.shift()
+                    newSocket.send(JSON.stringify(message))
+                }
+            }
+
+            newSocket.onclose = (event) => {
+                console.log('WebSocket disconnected:', event.reason)
+                setIsConnected(false)
+                isConnecting.current = false
+                setSocket(null)
+
+                // Attempt to reconnect
+                if (reconnectAttempts.current < maxReconnectAttempts) {
+                    reconnectAttempts.current++
+                    console.log(`Attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts})`)
+                    setTimeout(connectWebSocket, 1000 * reconnectAttempts.current)
+                }
+            }
+
+            newSocket.onerror = (error) => {
+                console.error('WebSocket error:', error)
+                showNotification('Connection error. Please check your network.', 'error')
+            }
+
+            newSocket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data)
+                    console.log('WebSocket message received:', data)
+
+                    switch (data.type) {
+                        case 'new_message':
+                            window.dispatchEvent(new CustomEvent('new_message', { detail: data.message }))
+                            break
+                        case 'message_sent':
+                            // Message sent confirmation
+                            break
+                        case 'joined_conversation':
+                            // Successfully joined conversation
+                            break
+                        case 'left_conversation':
+                            // Successfully left conversation
+                            break
+                        case 'user_typing':
+                            window.dispatchEvent(new CustomEvent('user_typing', { detail: data }))
+                            break
+                        case 'user_stopped_typing':
+                            window.dispatchEvent(new CustomEvent('user_stopped_typing', { detail: data }))
+                            break
+                        case 'error':
+                            console.error('WebSocket error:', data.message)
+                            showNotification(data.message, 'error')
+                            break
+                        default:
+                            console.warn('Unknown message type:', data.type)
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error)
+                }
+            }
+
+            setSocket(newSocket)
+        } catch (error) {
+            console.error('Failed to create WebSocket connection:', error)
+            isConnecting.current = false
+            showNotification('Failed to connect to messaging service.', 'error')
+        }
+    }
 
     useEffect(() => {
-        // Initialize socket connection
-        const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000', {
-            transports: ['websocket'],
-            reconnection: true,
-            reconnectionAttempts: maxReconnectAttempts,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            randomizationFactor: 0.5,
-            timeout: 20000,
-        })
-
-        newSocket.on('connect', () => {
-            console.log('WebSocket connected')
-            setIsConnected(true)
-            reconnectAttempts.current = 0
-        })
-
-        newSocket.on('disconnect', (reason) => {
-            console.log('WebSocket disconnected:', reason)
-            setIsConnected(false)
-
-            // Handle manual disconnection
-            if (reason === 'io client disconnect') {
-                return
-            }
-
-            // Attempt to reconnect
-            if (reconnectAttempts.current < maxReconnectAttempts) {
-                reconnectAttempts.current++
-                console.log(`Attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts})`)
-            }
-        })
-
-        newSocket.on('connect_error', (error) => {
-            console.error('WebSocket connection error:', error)
-            showNotification('Connection error. Please check your network.', 'error')
-        })
-
-        newSocket.on('new_message', (message: Message) => {
-            console.log('New message received:', message)
-            // Dispatch a custom event so components can listen for new messages
-            window.dispatchEvent(new CustomEvent('new_message', { detail: message }))
-        })
-
-        newSocket.on('message_delivered', (messageId: string) => {
-            console.log('Message delivered:', messageId)
-            window.dispatchEvent(new CustomEvent('message_delivered', { detail: messageId }))
-        })
-
-        newSocket.on('user_typing', (data: { userId: number; conversationId: string }) => {
-            console.log('User typing:', data)
-            window.dispatchEvent(new CustomEvent('user_typing', { detail: data }))
-        })
-
-        newSocket.on('user_stopped_typing', (data: { userId: number; conversationId: string }) => {
-            console.log('User stopped typing:', data)
-            window.dispatchEvent(new CustomEvent('user_stopped_typing', { detail: data }))
-        })
-
-        setSocket(newSocket)
+        connectWebSocket()
 
         // Cleanup function
         return () => {
-            newSocket.close()
+            if (socket) {
+                socket.close()
+            }
         }
-    }, [showNotification])
+    }, [])
 
-    const sendMessage = (message: Omit<Message, 'id' | 'created_at' | 'sender' | 'recipient'>) => {
+    const sendMessage = (message: any) => {
         if (socket && isConnected) {
-            socket.emit('send_message', message)
+            socket.send(JSON.stringify(message))
         } else {
             console.warn('Cannot send message: WebSocket not connected')
-            showNotification('Message not sent. Please check your connection.', 'error')
+            messageQueue.current.push(message)
+            showNotification('Message queued. Will be sent when connected.', 'warning')
         }
     }
 
     const joinConversation = (conversationId: string) => {
-        if (socket && isConnected) {
-            socket.emit('join_conversation', conversationId)
-        }
+        sendMessage({
+            type: 'join_conversation',
+            conversation_id: conversationId
+        })
     }
 
     const leaveConversation = (conversationId: string) => {
-        if (socket && isConnected) {
-            socket.emit('leave_conversation', conversationId)
-        }
+        sendMessage({
+            type: 'leave_conversation',
+            conversation_id: conversationId
+        })
     }
 
     return (

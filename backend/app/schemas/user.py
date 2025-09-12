@@ -54,6 +54,11 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_verified: Optional[bool] = None
 
+# Properties for password change
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
 # Properties shared by models stored in DB
 class UserInDBBase(UserBase):
     id: int

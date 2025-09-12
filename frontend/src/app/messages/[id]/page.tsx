@@ -17,11 +17,15 @@ export default function ConversationPage(props: any) {
     // then safely read params.
     const params = props?.params ?? {}
     const { id } = params as { id?: string }
-    const { messages: realTimeMessages, isTyping, typingUserId, isConnected, sendRealTimeMessage, sendTypingIndicator } = useRealTimeMessages(id || '')
-    const [messages, setMessages] = useState<Message[]>([])
-    const [loading, setLoading] = useState(true)
+
+    // Create proper conversation ID based on user IDs
     const [currentUser, setCurrentUser] = useState<User | null>(null)
     const [otherUser, setOtherUser] = useState<User | null>(null)
+    const [conversationId, setConversationId] = useState<string>('')
+
+    const { messages: realTimeMessages, isTyping, typingUserId, isConnected, sendRealTimeMessage, sendTypingIndicator } = useRealTimeMessages(conversationId)
+    const [messages, setMessages] = useState<Message[]>([])
+    const [loading, setLoading] = useState(true)
     const { showNotification } = useNotification()
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -39,19 +43,49 @@ export default function ConversationPage(props: any) {
         fetchCurrentUser()
     }, [])
 
+    // Fetch other user and set up conversation ID
+    useEffect(() => {
+        const fetchOtherUser = async () => {
+            try {
+                if (!id) {
+                    throw new Error('User ID is required')
+                }
+                const user = await clientFetcher(`/api/users/${id}`, { method: 'GET' })
+                setOtherUser(user)
+
+                // Set up conversation ID based on user IDs
+                if (currentUser?.id && id) {
+                    const userIds = [currentUser.id, parseInt(id)].sort((a, b) => {
+                        const numA = typeof a === 'number' ? a : parseInt(a.toString());
+                        const numB = typeof b === 'number' ? b : parseInt(b.toString());
+                        return numA - numB;
+                    });
+                    setConversationId(`${userIds[0]}_${userIds[1]}`)
+                }
+            } catch (error) {
+                console.error('Failed to fetch other user', error)
+                showNotification('Failed to load user information', 'error')
+            }
+        }
+
+        if (id && currentUser?.id) {
+            fetchOtherUser()
+        }
+    }, [id, currentUser, showNotification])
+
     // Fetch messages between users and initialize real-time messaging
     useEffect(() => {
         const fetchMessages = async () => {
             try {
                 setLoading(true)
                 if (!id) {
-                    throw new Error('Conversation ID is required')
+                    throw new Error('User ID is required')
                 }
                 const data = await clientFetcher(`/api/messages/between/${id}`, { method: 'GET' })
                 setMessages(data)
 
-                // Set other user info from the first message
-                if (data.length > 0) {
+                // Set other user info from the first message if not already set
+                if (data.length > 0 && !otherUser) {
                     const firstMessage = data[0]
                     setOtherUser(firstMessage.sender?.id === parseInt(id) ? firstMessage.sender : firstMessage.recipient)
                 }
@@ -66,7 +100,7 @@ export default function ConversationPage(props: any) {
         if (id) {
             fetchMessages()
         }
-    }, [id, showNotification, clientFetcher])
+    }, [id, showNotification, clientFetcher, otherUser])
 
     // Use real-time messages instead of fetched messages
     useEffect(() => {
@@ -89,7 +123,7 @@ export default function ConversationPage(props: any) {
         try {
             // Send message through WebSocket for real-time delivery
             if (!id) {
-                throw new Error('Conversation ID is required')
+                throw new Error('User ID is required')
             }
             sendRealTimeMessage(content, parseInt(id))
             showNotification('Message sent successfully', 'success')
@@ -102,7 +136,7 @@ export default function ConversationPage(props: any) {
 
     // Handle typing indicator
     const handleTyping = (isTyping: boolean) => {
-        if (id) {
+        if (conversationId) {
             sendTypingIndicator(isTyping)
         }
     }

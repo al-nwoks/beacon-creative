@@ -224,6 +224,10 @@ export const usersAPI = {
     logger.info(`Fetching user by ID: ${id}`)
     return clientFetcher(`/api/users/${id}`, { method: 'GET' })
   },
+  async updateUser(payload: any) {
+    logger.info('Updating user', payload)
+    return clientFetcher('/api/users/me', { method: 'PUT', body: JSON.stringify(payload) })
+  },
   // add more user-related helpers here
 }
 
@@ -270,5 +274,15 @@ export const notificationSettingsAPI = {
   async updateNotificationSettings(payload: any) {
       logger.info('Updating notification settings', payload)
       return clientFetcher('/api/notification-settings/me', { method: 'PUT', body: JSON.stringify(payload) })
+  },
+}
+
+export const passwordAPI = {
+  async changePassword(currentPassword: string, newPassword: string) {
+      logger.info('Changing user password')
+      return clientFetcher('/api/users/change-password', {
+          method: 'PUT',
+          body: JSON.stringify({ currentPassword, newPassword })
+      })
   },
 }

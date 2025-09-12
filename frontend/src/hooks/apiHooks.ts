@@ -148,7 +148,7 @@ export async function sendMessage(recipientId: string | number, content: string)
 }
 
 export function useSearchMessages(query: string, skip: number = 0, limit: number = 50) {
-  const key = query ? `/messages/search?query=${encodeURIComponent(query)}&skip=${skip}&limit=${limit}` : null
+  const key = query && query.trim() ? `/messages/search?query=${encodeURIComponent(query.trim())}&skip=${skip}&limit=${limit}` : null
   const { data, error } = useSWR<MessageWithSender[]>(key, fetcher, { refreshInterval: 0 })
   return {
     data,

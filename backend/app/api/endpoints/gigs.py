@@ -21,7 +21,7 @@ def get_gigs(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Retrieve gigs.
@@ -50,7 +50,7 @@ def create_gig(
     *,
     db: Session = Depends(get_db),
     gig_in: GigCreate,
-    current_user: User = Depends(get_current_client_user_dependency)
+    current_user: User = get_current_client_user_dependency
 ) -> Any:
     """
     Create new gig.
@@ -85,7 +85,7 @@ def get_gig(
     *,
     db: Session = Depends(get_db),
     gig_id: int,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get gig by ID.
@@ -118,7 +118,7 @@ def update_gig(
     db: Session = Depends(get_db),
     gig_id: int,
     gig_in: GigUpdate,
-    current_user: User = Depends(get_current_client_user_dependency)
+    current_user: User = get_current_client_user_dependency
 ) -> Any:
     """
     Update a gig.
@@ -159,7 +159,7 @@ def delete_gig(
     *,
     db: Session = Depends(get_db),
     gig_id: int,
-    current_user: User = Depends(get_current_client_user_dependency)
+    current_user: User = get_current_client_user_dependency
 ) -> Any:
     """
     Delete a gig.
@@ -197,7 +197,7 @@ def get_my_gigs(
     status: str = None,
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_client_user_dependency)
+    current_user: User = get_current_client_user_dependency
 ) -> Any:
     """
     Get current user's gigs with pagination.

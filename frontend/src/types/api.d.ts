@@ -83,6 +83,7 @@ export interface MessageSummary {
   preview?: string
   time?: string
   unread?: boolean
+  unread_count?: number
 }
 
 /* Message with sender */

@@ -26,7 +26,7 @@ def create_message(
     *,
     db: Session = Depends(get_db),
     message_in: MessageCreate,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Create a new message.
@@ -164,7 +164,7 @@ def get_messages(
     application_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get messages for the current user.
@@ -256,7 +256,7 @@ def get_messages(
 def get_conversations(
     *,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get conversation summaries for the current user.
@@ -350,7 +350,7 @@ def get_message(
     *,
     db: Session = Depends(get_db),
     message_id: str,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get a specific message by ID.
@@ -401,7 +401,7 @@ def update_message(
     db: Session = Depends(get_db),
     message_id: str,
     message_in: MessageUpdate,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Update a message (mark as read).
@@ -453,7 +453,7 @@ def mark_message_as_read(
     *,
     db: Session = Depends(get_db),
     message_id: str,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Mark a message as read.
@@ -498,3 +498,103 @@ def mark_message_as_read(
         logger.info(f"Message {message_id} was already marked as read for user {current_user.id}")
     
     return message
+
+
+@router.get("/between/{other_user_id}", response_model=List[MessageWithUsers])
+def get_messages_between_users(
+    *,
+    db: Session = Depends(get_db),
+    other_user_id: str,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Get messages between the current user and another user.
+    """
+    logger.info(f"Fetching messages between user {current_user.id} and user {other_user_id}")
+    
+    # Validate other_user_id
+    try:
+        other_user_id_int = int(other_user_id)
+    except ValueError:
+        logger.warning(f"Invalid other_user_id format: {other_user_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format",
+        )
+    
+    # Check if other user exists
+    other_user = db.query(User).filter(User.id == other_user_id_int).first()
+    if not other_user:
+        logger.warning(f"Other user {other_user_id_int} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    # Build the query for messages between these two users
+    query = db.query(Message).filter(
+        or_(
+            and_(Message.sender_id == current_user.id, Message.recipient_id == other_user_id_int),
+            and_(Message.sender_id == other_user_id_int, Message.recipient_id == current_user.id)
+        )
+    )
+    
+    # Order by created_at ascending (oldest first) and apply pagination
+    query = query.order_by(Message.created_at.asc()).offset(skip).limit(limit)
+    
+    messages = query.all()
+    
+    # Mark messages as read if they are received by the current user
+    for message in messages:
+        if message.recipient_id == current_user.id and not message.is_read:
+            message.is_read = True
+            db.add(message)
+    
+    if messages:
+        db.commit()
+    
+    logger.info(f"Found {len(messages)} messages between users {current_user.id} and {other_user_id_int}")
+    return messages
+
+
+@router.get("/search", response_model=List[MessageWithUsers])
+def search_messages(
+    *,
+    db: Session = Depends(get_db),
+    query: str = Query(..., min_length=1),
+    skip: int = 0,
+    limit: int = 50,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Search messages for the current user.
+    """
+    logger.info(f"Searching messages for user {current_user.id} with query: {query}")
+    
+    # Validate query parameter
+    if not query or len(query.strip()) == 0:
+        logger.warning(f"Empty search query provided by user {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query cannot be empty",
+        )
+    
+    # Build the query for messages that contain the search term
+    search_query = db.query(Message).filter(
+        or_(
+            Message.sender_id == current_user.id,
+            Message.recipient_id == current_user.id
+        )
+    ).filter(
+        Message.content.ilike(f"%{query.strip()}%")
+    )
+    
+    # Order by created_at descending and apply pagination
+    search_query = search_query.order_by(Message.created_at.desc()).offset(skip).limit(limit)
+    
+    messages = search_query.all()
+    
+    logger.info(f"Found {len(messages)} messages matching query: {query}")
+    return messages

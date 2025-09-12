@@ -18,7 +18,7 @@ router = APIRouter()
 @router.get("/users", response_model=List[UserSchema])
 def get_all_users(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency),
+    current_user: User = get_current_admin_user_dependency,
     skip: int = 0,
     limit: int = 100,
     role: str = Query(None, description="Filter users by role (creative, client, admin)"),
@@ -69,7 +69,7 @@ def get_all_users(
 def get_user_by_id(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Get a specific user by ID (admin only).
@@ -93,7 +93,7 @@ def update_user(
     user_id: int,
     user_in: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Update a user (admin only).
@@ -135,7 +135,7 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Delete a user (admin only).
@@ -168,7 +168,7 @@ def delete_user(
 @router.get("/stats", response_model=dict)
 def get_platform_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Get platform statistics (admin only).
@@ -209,7 +209,7 @@ from app.schemas.gig import Gig as GigSchema, GigUpdate
 @router.get("/gigs", response_model=List[GigSchema])
 def get_all_gigs(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency),
+    current_user: User = get_current_admin_user_dependency,
     skip: int = 0,
     limit: int = 100,
     status: str = Query(None, description="Filter gigs by status"),
@@ -259,7 +259,7 @@ def get_all_gigs(
 def get_gig_by_id(
     gig_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Get a specific gig by ID (admin only).
@@ -283,7 +283,7 @@ def update_gig(
     gig_id: int,
     gig_in: GigUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Update a gig (admin only).
@@ -315,7 +315,7 @@ def update_gig(
 def delete_gig(
     gig_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Delete a gig (admin only).
@@ -344,7 +344,7 @@ from app.schemas.payment import Payment as PaymentSchema
 @router.get("/payments", response_model=List[PaymentSchema])
 def get_all_payments(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency),
+    current_user: User = get_current_admin_user_dependency,
     skip: int = 0,
     limit: int = 100,
     status: str = Query(None, description="Filter payments by status"),
@@ -394,7 +394,7 @@ def get_all_payments(
 def get_payment_by_id(
     payment_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Get a specific payment by ID (admin only).
@@ -428,7 +428,7 @@ def update_payment_status(
     payment_id: str,
     status: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user_dependency)
+    current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Update a payment status (admin only).

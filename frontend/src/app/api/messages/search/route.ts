@@ -18,6 +18,13 @@ export async function GET(request: Request) {
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
   const url = new URL(request.url)
+  const query = url.searchParams.get('query')
+  
+  // Validate query parameter
+  if (!query || query.trim().length === 0) {
+    return NextResponse.json({ message: 'Search query cannot be empty' }, { status: 400 })
+  }
+  
   const qp = url.searchParams.toString()
   const upstreamUrl = `${apiBase()}/messages/search/${qp ? `?${qp}` : ''}`
 

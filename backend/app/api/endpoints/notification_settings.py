@@ -19,7 +19,7 @@ router = APIRouter()
 @router.get("/", response_model=NotificationSetting)
 def get_notification_settings(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get notification settings for the current user.
@@ -51,7 +51,7 @@ def update_notification_settings(
     *,
     db: Session = Depends(get_db),
     notification_settings_in: NotificationSettingUpdate,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Update notification settings for the current user.

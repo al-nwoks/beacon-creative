@@ -116,7 +116,7 @@ def get_application(
     *,
     db: Session = Depends(get_db),
     application_id: str,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get a specific application by ID.
@@ -161,7 +161,7 @@ def update_application(
     db: Session = Depends(get_db),
     application_id: str,
     application_in: ApplicationUpdate,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Update an application.

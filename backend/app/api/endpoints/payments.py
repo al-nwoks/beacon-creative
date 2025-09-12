@@ -106,7 +106,7 @@ def get_gig_payments(
     *,
     db: Session = Depends(get_db),
     gig_id: str,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get all payments for a specific gig.
@@ -142,7 +142,7 @@ def get_payment(
     *,
     db: Session = Depends(get_db),
     payment_id: str,
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get a specific payment by ID.
@@ -245,7 +245,7 @@ def release_payment(
 def get_my_payments(
     *,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get all payments for the current user (either as client or creative).

@@ -25,7 +25,7 @@ async def upload_portfolio_image(
     *,
     db: Session = Depends(get_db),
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> UserSchema:
     """
     Upload a portfolio image with automatic resizing and conversion.
@@ -126,7 +126,7 @@ async def delete_portfolio_image(
     *,
     image_index: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> UserSchema:
     """
     Delete a portfolio image by index.

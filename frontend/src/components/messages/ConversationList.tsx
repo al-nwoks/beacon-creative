@@ -70,11 +70,18 @@ export function ConversationList({ conversations, currentUserId, isLoading, erro
                                 <h3 className="text-lg font-semibold text-neutral-900 truncate">
                                     {conversation.name}
                                 </h3>
-                                {conversation.time && (
-                                    <span className="text-sm text-neutral-500 whitespace-nowrap">
-                                        {conversation.time}
-                                    </span>
-                                )}
+                                <div className="flex items-center space-x-2">
+                                    {conversation.time && (
+                                        <span className="text-sm text-neutral-500 whitespace-nowrap">
+                                            {conversation.time}
+                                        </span>
+                                    )}
+                                    {conversation.unread_count && conversation.unread_count > 0 && (
+                                        <span className="bg-beacon-purple text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            {conversation.unread_count}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             {conversation.preview && (
                                 <p className="text-neutral-600 truncate mt-1">

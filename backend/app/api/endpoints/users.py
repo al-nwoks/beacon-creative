@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.user import User as UserSchema, UserUpdate
+from app.schemas.user import User as UserSchema, UserUpdate, PasswordChange
 from app.auth.dependencies import (
     get_current_active_user_dependency,
     get_current_user_dependency
 )
+from app.auth.password import verify_password, get_password_hash
 from app.utils import resize_image_for_avatar, image_to_base64
 from app.utils.performance import log_performance_metrics, log_query_performance
 
@@ -22,7 +23,7 @@ router = APIRouter()
 @router.get("/me", response_model=UserSchema)
 def get_current_user_info(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> Any:
     """
     Get current user information.
@@ -48,7 +49,7 @@ def update_current_user(
     *,
     db: Session = Depends(get_db),
     user_in: UserUpdate,
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> Any:
     """
     Update current user information.
@@ -101,7 +102,7 @@ async def upload_avatar(
     *,
     db: Session = Depends(get_db),
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> Any:
     """
     Upload a profile avatar with automatic resizing and conversion.
@@ -188,7 +189,7 @@ async def upload_avatar(
 def get_user_by_id(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency),
+    current_user: User = get_current_active_user_dependency,
 ) -> Any:
     """
     Get a specific user by id.
@@ -208,3 +209,56 @@ def get_user_by_id(
         logger.error(f"Error loading notification settings for user {user.id}: {str(e)}")
     
     return user
+
+
+@router.put("/change-password", response_model=UserSchema)
+def change_password(
+    *,
+    db: Session = Depends(get_db),
+    password_change: PasswordChange,
+    current_user: User = get_current_active_user_dependency,
+) -> Any:
+    """
+    Change the current user's password.
+    """
+    start_time = time.time()
+    logger.info(f"Changing password for user ID: {current_user.id}")
+    
+    # Verify current password
+    if not verify_password(password_change.current_password, current_user.hashed_password):
+        logger.warning(f"Password change failed: Invalid current password for user ID: {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    
+    # Check if new password is the same as current password
+    if verify_password(password_change.new_password, current_user.hashed_password):
+        logger.warning(f"Password change failed: New password is the same as current password for user ID: {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password",
+        )
+    
+    # Update password
+    current_user.hashed_password = get_password_hash(password_change.new_password)
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    end_time = time.time()
+    log_performance_metrics("change_password", start_time, end_time)
+    logger.info(f"Password changed successfully for user ID: {current_user.id}")
+    
+    # Load user with notification settings using join
+    from sqlalchemy.orm import joinedload
+    user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
+    
+    # Load notification settings to ensure they exist
+    try:
+        user_with_settings.get_notification_settings(db)
+    except Exception as e:
+        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    
+    return user_with_settings

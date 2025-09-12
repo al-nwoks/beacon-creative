@@ -25,7 +25,7 @@ router = APIRouter()
 @router.get("/client/stats")
 def get_client_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get dashboard statistics for client users.
@@ -83,7 +83,7 @@ def get_client_dashboard_stats(
 def get_client_recent_gigs(
     limit: int = 5,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get recent gigs for client users.
@@ -110,7 +110,7 @@ def get_client_recent_gigs(
 def get_client_recent_activity(
     limit: int = 10,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get recent activity for client users.
@@ -205,7 +205,7 @@ def get_client_recent_activity(
 @router.get("/creative/stats")
 def get_creative_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get dashboard statistics for creative users.
@@ -273,7 +273,7 @@ def get_creative_dashboard_stats(
 def get_creative_recent_applications(
     limit: int = 5,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get recent applications for creative users.
@@ -300,7 +300,7 @@ def get_creative_recent_applications(
 def get_creative_recent_activity(
     limit: int = 10,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user_dependency)
+    current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get recent activity for creative users.
