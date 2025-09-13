@@ -3,6 +3,7 @@
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useNotification } from '@/components/ui/NotificationProvider'
+import { useCaptureEvent } from '@/hooks/usePostHog'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -29,6 +30,7 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const { showNotification } = useNotification()
     const router = useRouter()
+    const captureEvent = useCaptureEvent()
 
     // Initialize react-hook-form with zod validation
     const {
@@ -47,6 +49,11 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true)
 
+        // Track login attempt
+        captureEvent('login_attempt', {
+            email: data.email
+        })
+
         try {
             // POST credentials to secure server-side route
             const resp = await fetch('/api/auth/login', {
@@ -58,6 +65,11 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
             })
 
             if (resp.status === 204) {
+                // Track successful login
+                captureEvent('login_success', {
+                    email: data.email
+                })
+
                 // Cookie set; try to resolve the user's role server-side via our proxy
                 // endpoint and redirect immediately to the correct dashboard. This avoids
                 // the blocking experience and ensures we navigate to dashboard instead of home.
@@ -108,9 +120,21 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
             if (resp.status === 403) {
                 msg = 'Your account has been deactivated. Please contact support.'
             }
+
+            // Track login failure
+            captureEvent('login_failure', {
+                email: data.email,
+                error: msg,
+                status: resp.status
+            })
+
             showNotification(msg, 'error')
         } catch (error) {
             console.error('Login error:', error)
+            captureEvent('login_error', {
+                email: data.email,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            })
             showNotification('An error occurred during login. Please try again.', 'error')
         } finally {
             setIsLoading(false)

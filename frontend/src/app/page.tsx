@@ -2,12 +2,15 @@
 
 import { HeroIllustration } from '@/components/home/HeroIllustration'
 import Button from '@/components/ui/Button'
+import { useCaptureEvent } from '@/hooks/usePostHog'
 import { ArrowRight, Briefcase, Search, Star, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 
 
 export default function Home() {
+  const captureEvent = useCaptureEvent()
+
   const features = [
     {
       icon: <Search className="h-8 w-8 text-beacon-purple" />,
@@ -32,8 +35,8 @@ export default function Home() {
   ]
 
   const stats = [
-    { value: '10K+', label: 'Creative Professionals' },
-    { value: '5K+', label: 'Active Gigs' },
+    { value: '1K+', label: 'Creative Professionals' },
+    { value: '50+', label: 'Active Gigs' },
     { value: '98%', label: 'Client Satisfaction' },
     { value: '24/7', label: 'Support Available' }
   ]
@@ -53,12 +56,28 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-12">
                 <Link href="/register?role=client">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => captureEvent('cta_click', {
+                      button: 'hire_creatives',
+                      page: 'home'
+                    })}
+                  >
                     Hire Creatives
                   </Button>
                 </Link>
                 <Link href="/register?role=creative">
-                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => captureEvent('cta_click', {
+                      button: 'find_work',
+                      page: 'home'
+                    })}
+                  >
                     Find Work
                   </Button>
                 </Link>

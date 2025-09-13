@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, status, WebSocket
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from typing import Optional
 import logging
@@ -10,8 +11,11 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# OAuth2 scheme for extracting token from Authorization header
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
 # For HTTP requests
-def get_current_user(db: Session = Depends(get_db), token: str = None) -> User:
+def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
     """Get current user from JWT token in HTTP requests"""
     if not token:
         raise HTTPException(

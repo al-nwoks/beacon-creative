@@ -20,6 +20,7 @@ class Application(Base):
         nullable=False
     )
     created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # Relationships
     gig = relationship("Gig", backref="applications")
