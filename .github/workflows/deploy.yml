@@ -18,7 +18,7 @@ on:
       COMPOSE_FILE:
         description: 'Compose file to use on remote (e.g. docker-compose.prod.yml, docker-compose.yml)'
         required: false
-        default: 'docker-compose.yml'
+        default: 'docker-compose.prod.yml'
       SERVICES:
         description: 'Which services to (re)deploy: frontend, backend, or all'
         required: false
@@ -53,7 +53,7 @@ jobs:
           echo "REMOTE_HOST=$REMOTE_HOST" >> "$GITHUB_OUTPUT"
           echo "REMOTE_USER=${{ github.event.inputs.REMOTE_USER || 'root' }}" >> "$GITHUB_OUTPUT"
           echo "REMOTE_PATH=${{ github.event.inputs.REMOTE_PATH || '/opt/beacon' }}" >> "$GITHUB_OUTPUT"
-          echo "COMPOSE_FILE=${{ github.event.inputs.COMPOSE_FILE || 'docker-compose.yml' }}" >> "$GITHUB_OUTPUT"
+          echo "COMPOSE_FILE=${{ github.event.inputs.COMPOSE_FILE || 'docker-compose.prod.yml' }}" >> "$GITHUB_OUTPUT"
           echo "SERVICES=${{ github.event.inputs.SERVICES || 'all' }}" >> "$GITHUB_OUTPUT"
           echo "NO_CACHE=${{ github.event.inputs.NO_CACHE || 'false' }}" >> "$GITHUB_OUTPUT"
           echo "CLEAN_ROLLOUT=${{ github.event.inputs.CLEAN_ROLLOUT   || 'false' }}" >> "$GITHUB_OUTPUT"
@@ -85,6 +85,10 @@ jobs:
           # Copy compose files
           if [ -f docker-compose.prod.yml ]; then cp docker-compose.prod.yml deploy_payload/; fi
           if [ -f docker-compose.yml ]; then cp docker-compose.yml deploy_payload/; fi
+          # Copy .env file if it exists
+          if [ -f .env ]; then cp .env deploy_payload/; fi
+          # Copy .env.example file if it exists
+          if [ -f .env.example ]; then cp .env.example deploy_payload/; fi
           tar -C deploy_payload -czf $ARCHIVE .
           ls -lh $ARCHIVE
         shell: bash
@@ -103,7 +107,7 @@ jobs:
           printf '%s\n' '#!/usr/bin/env bash' >> ./remote-deploy.sh
           printf '%s\n' 'set -euo pipefail' >> ./remote-deploy.sh
           printf '%s\n' 'REMOTE_PATH="${REMOTE_PATH}"' >> ./remote-deploy.sh
-          printf '%s\n' 'COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"' >> ./remote-deploy.sh
+          printf '%s\n' 'COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"' >> ./remote-deploy.sh
           printf '%s\n' 'SERVICES="${SERVICES:-all}"' >> ./remote-deploy.sh
           printf '%s\n' 'NO_CACHE="${NO_CACHE:-false}"' >> ./remote-deploy.sh
           printf '%s\n' 'CLEAN_ROLLOUT="${CLEAN_ROLLOUT:-false}"' >> ./remote-deploy.sh
@@ -162,6 +166,28 @@ jobs:
           printf '%s\n' '  exit 1' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' 'cd "${REMOTE_PATH}"' >> ./remote-deploy.sh
+          printf '%s\n' '# Create .env file if it does not exist' >> ./remote-deploy.sh
+          printf '%s\n' 'if [ ! -f .env ] && [ -f .env.example ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Creating .env file from .env.example"' >> ./remote-deploy.sh
+          printf '%s\n' '  cp .env.example .env' >> ./remote-deploy.sh
+          printf '%s\n' 'elif [ ! -f .env ]; then' >> ./remote-deploy.sh
+          printf '%s\n' '  echo "Creating default .env file"' >> ./remote-deploy.sh
+          printf '%s\n' '  cat > .env << "EOF"' >> ./remote-deploy.sh
+          printf '%s\n' 'NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1' >> ./remote-deploy.sh
+          printf '%s\n' 'NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws' >> ./remote-deploy.sh
+          printf '%s\n' 'NEXT_PUBLIC_APP_NAME=B3ACON Creative Connect' >> ./remote-deploy.sh
+          printf '%s\n' 'DATABASE_URL=postgresql://postgres:postgres@localhost:5432/beacon' >> ./remote-deploy.sh
+          printf '%s\n' 'JWT_SECRET_KEY=supersecretkey' >> ./remote-deploy.sh
+          printf '%s\n' 'JWT_ALGORITHM=HS256' >> ./remote-deploy.sh
+          printf '%s\n' 'JWT_EXPIRATION_TIME=3600' >> ./remote-deploy.sh
+          printf '%s\n' 'CORS_ORIGINS=http://localhost:3000' >> ./remote-deploy.sh
+          printf '%s\n' 'MOCK_MODE=True' >> ./remote-deploy.sh
+          printf '%s\n' 'SEED_DATA=True' >> ./remote-deploy.sh
+          printf '%s\n' 'LOG_LEVEL=DEBUG' >> ./remote-deploy.sh
+          printf '%s\n' 'NEXT_PUBLIC_POSTHOG_KEY=phc_8JzJJ82Pc2fa4gJBbIVRsiiae1UWRJp0Hkz06Mf8qHX' >> ./remote-deploy.sh
+          printf '%s\n' 'NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com' >> ./remote-deploy.sh
+          printf '%s\n' 'EOF' >> ./remote-deploy.sh
+          printf '%s\n' 'fi' >> ./remote-deploy.sh
           printf '%s\n' '# Determine services list (empty means all services)' >> ./remote-deploy.sh
           printf '%s\n' 'if [ "$SERVICES" = "all" ] || [ -z "$SERVICES" ]; then' >> ./remote-deploy.sh
           printf '%s\n' '  SERVICES_ARG=""' >> ./remote-deploy.sh

@@ -82,7 +82,8 @@ See `backend/app/auth/README.md` for detailed documentation.
 │   │   ├── lib/          # Library functions
 │   │   └── styles/       # CSS styles
 │   └── package.json      # Node.js dependencies
-├── docker-compose.yml    # Docker configuration
+├── docker-compose.yml    # Development Docker configuration
+├── docker-compose.prod.yml # Production Docker configuration
 ├── docs/                 # Project documentation
 └── README.md             # This file
 ```
@@ -166,6 +167,12 @@ To run the application with Docker:
 docker-compose up --build
 ```
 
+For production deployments, use the production compose file:
+
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+```
+
 ## Deployment
 
 ### GitHub Actions Deploy Workflow
@@ -179,6 +186,7 @@ The project includes a GitHub Actions workflow for remote deployment:
 The deploy workflow supports these key parameters:
 - `NO_CACHE`: Use `--no-cache` when building images (forces clean builds)
 - `CLEAN_ROLLOUT`: Remove all existing resources for a clean deployment
+- `COMPOSE_FILE`: Specify which compose file to use (default: docker-compose.prod.yml)
 
 ## Testing
 
