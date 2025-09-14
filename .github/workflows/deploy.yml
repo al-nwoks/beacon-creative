@@ -121,13 +121,20 @@ jobs:
           printf '%s\n' '  echo "Stopping services and removing containers, networks, volumes, and local images..."' >> ./remote-deploy.sh
           printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" down -v --rmi local 2>/dev/null || true' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Pruning Docker system..."' >> ./remote-deploy.sh
-          printf '%s\n' '  docker system prune -f 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  docker system prune -af 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  docker volume prune -f 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  docker network prune -f 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '  docker image prune -af 2>/dev/null || true' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Removing all files..."' >> ./remote-deploy.sh
           printf '%s\n' '  # Safety check to ensure we are in the correct directory before removing files' >> ./remote-deploy.sh
           printf '%s\n' '  if [ "$(pwd)" = "${REMOTE_PATH}" ] && [ -n "${REMOTE_PATH}" ] && [ "${REMOTE_PATH}" != "/" ]; then' >> ./remote-deploy.sh
-          printf '%s\n' '    rm -fr * 2>/dev/null || true' >> ./remote-deploy.sh
+          printf '%s\n' '    # Remove all files and directories except hidden ones first' >> ./remote-deploy.sh
+          printf '%s\n' '    find . -mindepth 1 -maxdepth 1 ! -name ".*" -exec rm -rf {} +' >> ./remote-deploy.sh
+          printf '%s\n' '    # Then remove hidden files and directories except . and ..' >> ./remote-deploy.sh
+          printf '%s\n' '    find . -mindepth 1 -maxdepth 1 -name ".*" ! -name "." ! -name ".." -exec rm -rf {} +' >> ./remote-deploy.sh
           printf '%s\n' '  else' >> ./remote-deploy.sh
           printf '%s\n' '    echo "Safety check failed: Not in expected directory or REMOTE_PATH is invalid"' >> ./remote-deploy.sh
+          printf '%s\n' '    exit 1' >> ./remote-deploy.sh
           printf '%s\n' '  fi' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Clean rollout completed."' >> ./remote-deploy.sh
           printf '%s\n' 'fi' >> ./remote-deploy.sh
@@ -170,9 +177,9 @@ jobs:
           printf '%s\n' 'if [ "$NO_CACHE" = "true" ]; then' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Building with --no-cache flag..."' >> ./remote-deploy.sh
           printf '%s\n' '  if [ -z "$SERVICES_ARG" ]; then' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache --pull 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
           printf '%s\n' '  else' >> ./remote-deploy.sh
-          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache $SERVICES_ARG 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
+          printf '%s\n' '    $COMPOSE -f "$COMPOSE_FILE" build --no-cache --pull $SERVICES_ARG 2>&1 || echo "Warning: Build with no cache failed"' >> ./remote-deploy.sh
           printf '%s\n' '  fi' >> ./remote-deploy.sh
           printf '%s\n' '  echo "Starting services..."' >> ./remote-deploy.sh
           printf '%s\n' '  $COMPOSE -f "$COMPOSE_FILE" up -d $SERVICES_ARG 2>&1 || echo "Warning: Deployment failed"' >> ./remote-deploy.sh

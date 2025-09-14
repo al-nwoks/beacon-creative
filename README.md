@@ -83,6 +83,7 @@ See `backend/app/auth/README.md` for detailed documentation.
 │   │   └── styles/       # CSS styles
 │   └── package.json      # Node.js dependencies
 ├── docker-compose.yml    # Docker configuration
+├── docs/                 # Project documentation
 └── README.md             # This file
 ```
 
@@ -165,6 +166,20 @@ To run the application with Docker:
 docker-compose up --build
 ```
 
+## Deployment
+
+### GitHub Actions Deploy Workflow
+
+The project includes a GitHub Actions workflow for remote deployment:
+
+- [Deploy Workflow Documentation](docs/deploy-workflow-documentation.md) - Detailed information about the deployment process and parameters
+
+### Deploy Parameters
+
+The deploy workflow supports these key parameters:
+- `NO_CACHE`: Use `--no-cache` when building images (forces clean builds)
+- `CLEAN_ROLLOUT`: Remove all existing resources for a clean deployment
+
 ## Testing
 
 ### Backend Tests
@@ -180,6 +195,11 @@ python -m pytest
 cd frontend
 npm run test
 ```
+
+### User Journey Tests
+
+Comprehensive tests verify all user journey functionality:
+- [User Journey Test Summary](docs/user-journey-test-summary.md)
 
 ## API Documentation
 

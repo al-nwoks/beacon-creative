@@ -5,6 +5,8 @@ This directory contains comprehensive documentation for the B3ACON Creative Conn
 ## Table of Contents
 
 - [Projects to Gigs Refactor Plan](PROJECTS_TO_GIGS_REFATOR.md) - Comprehensive guide for renaming "projects" to "gigs" across the platform
+- [Deploy Workflow Documentation](deploy-workflow-documentation.md) - Detailed information about the GitHub Actions deploy workflow
+- [User Journey Test Summary](../docs/user-journey-test-summary.md) - Summary of user journey tests and role-based access controls
 
 ## Overview
 
