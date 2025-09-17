@@ -4,6 +4,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func, String
 
 from app.db.database import get_db
 from app.models.user import User
@@ -178,7 +179,7 @@ def get_platform_stats(
     
     # Get user counts by role
     query_start = time.time()
-    user_stats = db.query(User.role, db.func.count(User.id)).group_by(User.role).all()
+    user_stats = db.query(User.role, func.count(User.id)).group_by(User.role).all()
     query_end = time.time()
     log_query_performance("SELECT", "aggregate", query_end - query_start)
     
@@ -257,16 +258,26 @@ def get_all_gigs(
 
 @router.get("/gigs/{gig_id}", response_model=GigSchema)
 def get_gig_by_id(
-    gig_id: int,
+    gig_id: str,
     db: Session = Depends(get_db),
     current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Get a specific gig by ID (admin only).
     """
+    import uuid
     logger.info(f"Admin {current_user.id} fetching gig {gig_id}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(
@@ -280,7 +291,7 @@ def get_gig_by_id(
 
 @router.put("/gigs/{gig_id}", response_model=GigSchema)
 def update_gig(
-    gig_id: int,
+    gig_id: str,
     gig_in: GigUpdate,
     db: Session = Depends(get_db),
     current_user: User = get_current_admin_user_dependency
@@ -288,10 +299,20 @@ def update_gig(
     """
     Update a gig (admin only).
     """
+    import uuid
     logger.info(f"Admin {current_user.id} updating gig {gig_id}")
     logger.debug(f"Update data: {gig_in.dict(exclude_unset=True)}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(
@@ -313,16 +334,26 @@ def update_gig(
 
 @router.delete("/gigs/{gig_id}", response_model=GigSchema)
 def delete_gig(
-    gig_id: int,
+    gig_id: str,
     db: Session = Depends(get_db),
     current_user: User = get_current_admin_user_dependency
 ) -> Any:
     """
     Delete a gig (admin only).
     """
+    import uuid
     logger.info(f"Admin {current_user.id} deleting gig {gig_id}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found for admin {current_user.id}")
         raise HTTPException(

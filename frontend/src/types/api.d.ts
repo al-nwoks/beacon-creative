@@ -84,6 +84,10 @@ export interface MessageSummary {
   time?: string
   unread?: boolean
   unread_count?: number
+  // Backend conversation structure
+  user?: User
+  last_message?: Message
+  updated_at?: string
 }
 
 /* Message with sender */
@@ -163,10 +167,15 @@ export interface NotificationSetting {
 /* Generic paginated response */
 export interface Paginated<T> {
   items: T[]
-  total?: number
-  page?: number
-  pageSize?: number
+  total: number
+  page: number
+  pages: number
+  limit: number
+  has_more: boolean
 }
+
+/* Gigs paginated response */
+export interface GigsPaginatedResponse extends Paginated<Gig> {}
 
 /* API Error shape (normalized) */
 export interface APIError {

@@ -232,7 +232,15 @@ export const usersAPI = {
 }
 
 export const gigsAPI = {
-  async getGigs(params?: Record<string, any>) {
+  async getGigs(params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    category?: string
+    status?: string
+    sort_by?: string
+    sort_order?: 'asc' | 'desc'
+  }) {
     logger.info('Fetching gigs', params)
     const qs = buildQuery(params)
     return clientFetcher(`/api/gigs${qs}`, { method: 'GET' })
@@ -245,7 +253,14 @@ export const gigsAPI = {
     logger.info('Creating new gig', payload)
     return clientFetcher('/api/gigs', { method: 'POST', body: JSON.stringify(payload) })
   },
-  // add update/delete as needed
+  async updateGig(id: string, payload: any) {
+    logger.info(`Updating gig ${id}`, payload)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  },
+  async deleteGig(id: string) {
+    logger.info(`Deleting gig ${id}`)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'DELETE' })
+  }
 }
 
 export const authAPI = {

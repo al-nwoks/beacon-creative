@@ -1,6 +1,7 @@
 'use client'
 
 import { useNotification } from '@/components/ui/NotificationProvider'
+import { useMessagingAnalytics } from '@/hooks/usePostHog'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 interface WebSocketContextType {
@@ -17,6 +18,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     const [socket, setSocket] = useState<WebSocket | null>(null)
     const [isConnected, setIsConnected] = useState(false)
     const { showNotification } = useNotification()
+    const { trackWebSocketConnection } = useMessagingAnalytics()
     const reconnectAttempts = useRef(0)
     const maxReconnectAttempts = 5
     const messageQueue = useRef<any[]>([])
@@ -47,48 +49,100 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         isConnecting.current = true
         const token = getAuthToken()
         if (!token) {
-            console.warn('No authentication token available')
+            console.warn('No authentication token available for WebSocket connection')
             isConnecting.current = false
             return
         }
 
         // Create WebSocket URL with token as query parameter
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const wsUrl = baseUrl.replace('http', 'ws') + `/api/v1/ws/messages?token=${token}`
+        const wsUrl = baseUrl.replace('http', 'ws') + `/api/v1/ws/messages?token=${encodeURIComponent(token)}`
 
         try {
             const newSocket = new WebSocket(wsUrl)
 
+            // Set a connection timeout
+            const connectionTimeout = setTimeout(() => {
+                if (newSocket.readyState === WebSocket.CONNECTING) {
+                    console.warn('WebSocket connection timeout')
+                    newSocket.close()
+                    isConnecting.current = false
+
+                    // Attempt to reconnect if we haven't exceeded max attempts
+                    if (reconnectAttempts.current < maxReconnectAttempts) {
+                        reconnectAttempts.current++
+                        console.log(`Connection timeout, attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts})`)
+                        setTimeout(connectWebSocket, 2000 * reconnectAttempts.current)
+                    } else {
+                        showNotification('Unable to connect to messaging service. Please refresh the page.', 'error')
+                    }
+                }
+            }, 10000) // 10 second timeout
+
             newSocket.onopen = () => {
-                console.log('WebSocket connected')
+                clearTimeout(connectionTimeout)
+                console.log('WebSocket connected successfully')
                 setIsConnected(true)
                 isConnecting.current = false
                 reconnectAttempts.current = 0
 
+                // Track successful connection
+                trackWebSocketConnection({ status: 'connected' })
+
                 // Send any queued messages
                 while (messageQueue.current.length > 0) {
                     const message = messageQueue.current.shift()
-                    newSocket.send(JSON.stringify(message))
+                    try {
+                        newSocket.send(JSON.stringify(message))
+                    } catch (error) {
+                        console.error('Error sending queued message:', error)
+                        // Re-queue the message if sending fails
+                        messageQueue.current.unshift(message)
+                        break
+                    }
                 }
+
+                showNotification('Connected to messaging service', 'success')
             }
 
             newSocket.onclose = (event) => {
-                console.log('WebSocket disconnected:', event.reason)
+                clearTimeout(connectionTimeout)
+                console.log('WebSocket disconnected:', event.code, event.reason)
                 setIsConnected(false)
                 isConnecting.current = false
                 setSocket(null)
 
-                // Attempt to reconnect
-                if (reconnectAttempts.current < maxReconnectAttempts) {
+                // Track disconnection
+                trackWebSocketConnection({ status: 'disconnected' })
+
+                // Don't attempt to reconnect if the close was intentional (code 1000)
+                if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
                     reconnectAttempts.current++
-                    console.log(`Attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts})`)
-                    setTimeout(connectWebSocket, 1000 * reconnectAttempts.current)
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000) // Exponential backoff, max 30s
+                    console.log(`Attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts}) in ${delay}ms`)
+
+                    // Track reconnection attempt
+                    trackWebSocketConnection({
+                        status: 'reconnecting',
+                        attemptNumber: reconnectAttempts.current
+                    })
+
+                    setTimeout(connectWebSocket, delay)
+                } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+                    // Track connection failure
+                    trackWebSocketConnection({ status: 'failed' })
+                    showNotification('Lost connection to messaging service. Please refresh the page.', 'error')
                 }
             }
 
             newSocket.onerror = (error) => {
+                clearTimeout(connectionTimeout)
                 console.error('WebSocket error:', error)
-                showNotification('Connection error. Please check your network.', 'error')
+                isConnecting.current = false
+
+                if (reconnectAttempts.current === 0) {
+                    showNotification('Connection error. Attempting to reconnect...', 'warning')
+                }
             }
 
             newSocket.onmessage = (event) => {

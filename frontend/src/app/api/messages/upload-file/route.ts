@@ -12,39 +12,33 @@ async function getToken() {
   return cookieStore.get('access_token')?.value || null
 }
 
-// GET /api/messages/search?query=&skip=&limit=
-export async function GET(request: Request) {
+// POST /api/messages/upload-file
+export async function POST(request: Request) {
   const token = await getToken()
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
-  const url = new URL(request.url)
-  const query = url.searchParams.get('query')
-  
-  // Validate query parameter
-  if (!query || query.trim().length === 0) {
-    return NextResponse.json({ message: 'Search query cannot be empty' }, { status: 400 })
-  }
-  
-  const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/messages/search${qp ? `?${qp}` : ''}`
-
   try {
-    const resp = await fetch(upstreamUrl, {
-      method: 'GET',
+    const formData = await request.formData()
+    
+    const resp = await fetch(`${apiBase()}/messages/upload-file`, {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      cache: 'no-store',
+      body: formData,
     })
+    
     const text = await resp.text()
     let data: any = null
     try { data = text ? JSON.parse(text) : null } catch {}
+    
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to search messages' }, { status: resp.status || 500 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to upload file' }, { status: resp.status || 400 })
     }
-    return NextResponse.json(data ?? [])
-  } catch {
+    
+    return NextResponse.json(data ?? {}, { status: 201 })
+  } catch (error) {
+    console.error('File upload error:', error)
     return NextResponse.json({ message: 'Upstream messages service unreachable' }, { status: 502 })
   }
 }

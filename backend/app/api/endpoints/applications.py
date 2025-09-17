@@ -111,6 +111,53 @@ def get_gig_applications(
     return applications
 
 
+@router.get("/me", response_model=List[ApplicationWithCreative])
+def get_my_applications(
+    *,
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_creative_user)
+) -> Any:
+    """
+    Get current user's applications with pagination.
+    Only creatives can view their own applications.
+    """
+    logger.info(f"Fetching applications for creative user {current_user.id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    query = db.query(Application).filter(Application.creative_id == current_user.id)
+    
+    # Apply pagination
+    applications = query.offset(skip).limit(limit).all()
+    logger.debug(f"Found {len(applications)} applications for creative user {current_user.id}")
+    return applications
+
+
+@router.get("/client/me", response_model=List[ApplicationWithCreative])
+def get_client_applications(
+    *,
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_client_user)
+) -> Any:
+    """
+    Get applications to current client's gigs with pagination.
+    Only clients can view applications to their gigs.
+    """
+    logger.info(f"Fetching applications for client user {current_user.id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    # Get applications for gigs owned by this client
+    query = db.query(Application).join(Gig).filter(Gig.client_id == current_user.id)
+    
+    # Apply pagination
+    applications = query.offset(skip).limit(limit).all()
+    logger.debug(f"Found {len(applications)} applications for client user {current_user.id}")
+    return applications
+
+
 @router.get("/{application_id}", response_model=ApplicationWithCreative)
 def get_application(
     *,
@@ -263,26 +310,3 @@ def update_application(
     
     logger.info(f"Application {application_id} updated successfully by user {current_user.id}")
     return application
-
-
-@router.get("/me", response_model=List[ApplicationWithCreative])
-def get_my_applications(
-    *,
-    db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: User = Depends(get_current_creative_user)
-) -> Any:
-    """
-    Get current user's applications with pagination.
-    Only creatives can view their own applications.
-    """
-    logger.info(f"Fetching applications for creative user {current_user.id}")
-    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
-    
-    query = db.query(Application).filter(Application.creative_id == current_user.id)
-    
-    # Apply pagination
-    applications = query.offset(skip).limit(limit).all()
-    logger.debug(f"Found {len(applications)} applications for creative user {current_user.id}")
-    return applications

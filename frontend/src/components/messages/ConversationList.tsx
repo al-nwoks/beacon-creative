@@ -57,44 +57,68 @@ export function ConversationList({ conversations, currentUserId, isLoading, erro
 
     return (
         <div className="divide-y divide-neutral-200">
-            {conversations.map((conversation) => (
-                <Link
-                    key={conversation.id}
-                    href={`/messages/${conversation.id}`}
-                    className="block p-6 hover:bg-neutral-50 transition-colors"
-                >
-                    <div className="flex items-center space-x-4">
-                        <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-12 h-12 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold text-neutral-900 truncate">
-                                    {conversation.name}
-                                </h3>
-                                <div className="flex items-center space-x-2">
-                                    {conversation.time && (
-                                        <span className="text-sm text-neutral-500 whitespace-nowrap">
-                                            {conversation.time}
-                                        </span>
-                                    )}
-                                    {conversation.unread_count && conversation.unread_count > 0 && (
-                                        <span className="bg-beacon-purple text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                            {conversation.unread_count}
-                                        </span>
-                                    )}
-                                </div>
+            {conversations.map((conversation) => {
+                // Handle the backend conversation structure
+                const otherUser = conversation.user || (conversation as any)
+                const lastMessage = conversation.last_message || (conversation as any)
+
+                // Type-safe property access
+                const userName = (otherUser?.first_name && otherUser?.last_name)
+                    ? `${otherUser.first_name} ${otherUser.last_name}`
+                    : otherUser?.name || otherUser?.email || conversation.name || 'Unknown User'
+
+                const messagePreview = lastMessage?.content || conversation.preview || 'No messages yet'
+
+                const timeDisplay = lastMessage?.created_at
+                    ? new Date(lastMessage.created_at).toLocaleDateString()
+                    : conversation.time || conversation.updated_at
+                        ? new Date(conversation.updated_at!).toLocaleDateString()
+                        : undefined
+
+                const unreadCount = conversation.unread_count || 0
+                const conversationId = otherUser?.id || conversation.id
+
+                return (
+                    <Link
+                        key={conversationId}
+                        href={`/messages/${conversationId}`}
+                        className="block p-6 hover:bg-neutral-50 transition-colors"
+                    >
+                        <div className="flex items-center space-x-4">
+                            <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-12 h-12 flex-shrink-0 flex items-center justify-center">
+                                <span className="text-sm font-medium text-neutral-600">
+                                    {otherUser?.first_name?.charAt(0) || ''}{otherUser?.last_name?.charAt(0) || otherUser?.name?.charAt(0) || userName.charAt(0) || 'U'}
+                                </span>
                             </div>
-                            {conversation.preview && (
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold text-neutral-900 truncate">
+                                        {userName}
+                                    </h3>
+                                    <div className="flex items-center space-x-2">
+                                        {timeDisplay && (
+                                            <span className="text-sm text-neutral-500 whitespace-nowrap">
+                                                {timeDisplay}
+                                            </span>
+                                        )}
+                                        {unreadCount > 0 && (
+                                            <span className="bg-beacon-purple text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                                 <p className="text-neutral-600 truncate mt-1">
-                                    {conversation.preview}
+                                    {messagePreview}
                                 </p>
+                            </div>
+                            {unreadCount > 0 && (
+                                <div className="w-3 h-3 bg-beacon-purple rounded-full flex-shrink-0"></div>
                             )}
                         </div>
-                        {conversation.unread && (
-                            <div className="w-3 h-3 bg-beacon-purple rounded-full flex-shrink-0"></div>
-                        )}
-                    </div>
-                </Link>
-            ))}
+                    </Link>
+                )
+            })}
         </div>
     )
 }

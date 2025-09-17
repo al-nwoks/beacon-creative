@@ -12,38 +12,35 @@ async function getToken() {
   return cookieStore.get('access_token')?.value || null
 }
 
-// GET /api/messages/search?query=&skip=&limit=
-export async function GET(request: Request) {
+// DELETE /api/messages/conversation/[userId]
+export async function DELETE(_request: Request, context: { params: Promise<{ userId: string }> }) {
   const token = await getToken()
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
-  const url = new URL(request.url)
-  const query = url.searchParams.get('query')
-  
-  // Validate query parameter
-  if (!query || query.trim().length === 0) {
-    return NextResponse.json({ message: 'Search query cannot be empty' }, { status: 400 })
-  }
-  
-  const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/messages/search${qp ? `?${qp}` : ''}`
+  const { userId } = await context.params
+  const upstreamUrl = `${apiBase()}/messages/conversation/${encodeURIComponent(userId)}`
 
   try {
     const resp = await fetch(upstreamUrl, {
-      method: 'GET',
+      method: 'DELETE',
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      cache: 'no-store',
     })
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      let data: any = null
+      try { data = text ? JSON.parse(text) : null } catch {}
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to delete conversation' }, { status: resp.status || 400 })
+    }
+
     const text = await resp.text()
     let data: any = null
     try { data = text ? JSON.parse(text) : null } catch {}
-    if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to search messages' }, { status: resp.status || 500 })
-    }
-    return NextResponse.json(data ?? [])
+
+    return NextResponse.json(data ?? { message: 'Conversation deleted successfully' })
   } catch {
     return NextResponse.json({ message: 'Upstream messages service unreachable' }, { status: 502 })
   }

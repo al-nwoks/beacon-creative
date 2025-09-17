@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 function apiBase() {
   const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
@@ -12,22 +12,14 @@ async function getToken() {
   return cookieStore.get('access_token')?.value || null
 }
 
-function getIdFromParams(params: Record<string, string | string[]>): string {
-  const v = params?.['id']
-  const id = Array.isArray(v) ? v[0] : v
-  if (!id) {
-    throw new Error('Missing route param: id')
-  }
-  return id
-}
-
-// GET /api/applications/gig/[id] -> backend GET /applications/gig/{id}
-export async function GET(_request: NextRequest, { params }: any) {
+// GET /api/users/[id]
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const token = await getToken()
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
-  const id = getIdFromParams(params)
-  const upstreamUrl = `${apiBase()}/applications/gig/${encodeURIComponent(id)}`
+  const { id } = await context.params
+  const upstreamUrl = `${apiBase()}/users/${encodeURIComponent(id)}`
+
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',
@@ -41,10 +33,10 @@ export async function GET(_request: NextRequest, { params }: any) {
     let data: any = null
     try { data = text ? JSON.parse(text) : null } catch {}
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch gig applications' }, { status: resp.status || 500 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch user' }, { status: resp.status || 500 })
     }
-    return NextResponse.json(data ?? [])
+    return NextResponse.json(data ?? {})
   } catch {
-    return NextResponse.json({ message: 'Upstream applications service unreachable' }, { status: 502 })
+    return NextResponse.json({ message: 'Upstream users service unreachable' }, { status: 502 })
   }
 }

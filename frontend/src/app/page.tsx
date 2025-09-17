@@ -202,7 +202,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-neutral-700 mb-6">
-                &ldquo;The project management tools and secure payment system give me peace of mind. I can focus on creating while B3ACON handles the logistics.&rdquo;
+                &ldquo;The gig management tools and secure payment system give me peace of mind. I can focus on creating while B3ACON handles the logistics.&rdquo;
               </p>
               <div className="flex items-center">
                 <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />

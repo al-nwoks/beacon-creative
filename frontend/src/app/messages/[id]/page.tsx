@@ -6,6 +6,7 @@ import { MessageBubble } from '@/components/messages/MessageBubble'
 import { MessageInput } from '@/components/messages/MessageInput'
 import { EnhancedLoadingSpinner } from '@/components/ui/EnhancedLoadingSpinner'
 import { useNotification } from '@/components/ui/NotificationProvider'
+import { useMessagingAnalytics } from '@/hooks/usePostHog'
 import { useRealTimeMessages } from '@/hooks/useRealTimeMessages'
 import { clientFetcher } from '@/lib/api'
 import type { Message, User } from '@/types/api'
@@ -26,8 +27,20 @@ export default function ConversationPage(props: any) {
     const { messages: realTimeMessages, isTyping, typingUserId, isConnected, sendRealTimeMessage, sendTypingIndicator } = useRealTimeMessages(conversationId)
     const [messages, setMessages] = useState<Message[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [hasMoreMessages, setHasMoreMessages] = useState(true)
+    const [page, setPage] = useState(0)
     const { showNotification } = useNotification()
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+    // PostHog analytics
+    const {
+        trackMessageSent,
+        trackConversationOpened,
+        trackFileShared,
+        trackWebSocketConnection
+    } = useMessagingAnalytics()
 
     // Fetch current user
     useEffect(() => {
@@ -73,34 +86,85 @@ export default function ConversationPage(props: any) {
         }
     }, [id, currentUser, showNotification])
 
+    // Fetch messages function
+    const fetchMessages = async (pageNum: number = 0, append: boolean = false) => {
+        try {
+            if (pageNum === 0) {
+                setLoading(true)
+            } else {
+                setLoadingMore(true)
+            }
+
+            if (!id) {
+                throw new Error('User ID is required')
+            }
+
+            const limit = 50
+            const skip = pageNum * limit
+            const data = await clientFetcher(`/api/messages/between/${id}?skip=${skip}&limit=${limit}&order=desc`, { method: 'GET' })
+
+            if (append) {
+                setMessages(prev => [...data, ...prev])
+            } else {
+                setMessages(data)
+            }
+
+            // Check if there are more messages
+            setHasMoreMessages(data.length === limit)
+
+            // Set other user info from the first message if not already set
+            if (data.length > 0 && !otherUser) {
+                const firstMessage = data[0]
+                setOtherUser(firstMessage.sender?.id === parseInt(id) ? firstMessage.sender : firstMessage.recipient)
+            }
+        } catch (error: any) {
+            console.error('Failed to fetch messages', error)
+
+            // Provide specific error messages based on error type
+            let errorMessage = 'Failed to load messages'
+            if (error?.message?.includes('404')) {
+                errorMessage = 'User not found'
+            } else if (error?.message?.includes('403')) {
+                errorMessage = 'You do not have permission to view this conversation'
+            } else if (error?.message?.includes('401')) {
+                errorMessage = 'Please log in to view messages'
+            } else if (error?.message?.includes('Network')) {
+                errorMessage = 'Network error. Please check your connection and try again.'
+            }
+
+            showNotification(errorMessage, 'error')
+        } finally {
+            setLoading(false)
+            setLoadingMore(false)
+        }
+    }
+
     // Fetch messages between users and initialize real-time messaging
     useEffect(() => {
-        const fetchMessages = async () => {
-            try {
-                setLoading(true)
-                if (!id) {
-                    throw new Error('User ID is required')
-                }
-                const data = await clientFetcher(`/api/messages/between/${id}`, { method: 'GET' })
-                setMessages(data)
-
-                // Set other user info from the first message if not already set
-                if (data.length > 0 && !otherUser) {
-                    const firstMessage = data[0]
-                    setOtherUser(firstMessage.sender?.id === parseInt(id) ? firstMessage.sender : firstMessage.recipient)
-                }
-            } catch (error) {
-                console.error('Failed to fetch messages', error)
-                showNotification('Failed to load messages', 'error')
-            } finally {
-                setLoading(false)
-            }
-        }
-
         if (id) {
-            fetchMessages()
+            fetchMessages(0, false)
+            setPage(0)
         }
-    }, [id, showNotification, clientFetcher, otherUser])
+    }, [id, showNotification, otherUser])
+
+    // Load more messages
+    const loadMoreMessages = async () => {
+        if (loadingMore || !hasMoreMessages) return
+
+        const nextPage = page + 1
+        setPage(nextPage)
+        await fetchMessages(nextPage, true)
+    }
+
+    // Handle scroll to load more messages
+    const handleScroll = () => {
+        if (!messagesContainerRef.current || loadingMore || !hasMoreMessages) return
+
+        const { scrollTop } = messagesContainerRef.current
+        if (scrollTop === 0) {
+            loadMoreMessages()
+        }
+    }
 
     // Use real-time messages instead of fetched messages
     useEffect(() => {
@@ -121,15 +185,101 @@ export default function ConversationPage(props: any) {
     // Send a new message using real-time messaging
     const handleSendMessage = async (content: string) => {
         try {
-            // Send message through WebSocket for real-time delivery
+            // Validate message content
+            if (!content.trim()) {
+                showNotification('Message cannot be empty', 'warning')
+                return
+            }
+
+            if (content.length > 1000) {
+                showNotification('Message is too long. Please keep it under 1000 characters.', 'warning')
+                return
+            }
+
             if (!id) {
                 throw new Error('User ID is required')
             }
+
+            if (!isConnected) {
+                showNotification('Not connected to messaging service. Please wait and try again.', 'warning')
+                return
+            }
+
             sendRealTimeMessage(content, parseInt(id))
-            showNotification('Message sent successfully', 'success')
-        } catch (error) {
+
+            // Track message sent
+            trackMessageSent({
+                recipientId: id,
+                messageLength: content.length,
+                conversationId: conversationId
+            })
+
+            showNotification('Message sent', 'success')
+        } catch (error: any) {
             console.error('Failed to send message', error)
-            showNotification('Failed to send message. Please try again.', 'error')
+
+            let errorMessage = 'Failed to send message. Please try again.'
+            if (error?.message?.includes('Network')) {
+                errorMessage = 'Network error. Please check your connection.'
+            } else if (error?.message?.includes('WebSocket')) {
+                errorMessage = 'Connection lost. Reconnecting...'
+            }
+
+            showNotification(errorMessage, 'error')
+            throw error
+        }
+    }
+
+    // Send a file message
+    const handleSendFile = async (file: File, recipientId: number) => {
+        try {
+            // Validate file
+            if (!file) {
+                showNotification('No file selected', 'warning')
+                return
+            }
+
+            // Check file size (10MB limit)
+            const maxSize = 10 * 1024 * 1024 // 10MB
+            if (file.size > maxSize) {
+                showNotification('File is too large. Maximum size is 10MB.', 'warning')
+                return
+            }
+
+            // Check file type
+            const allowedTypes = ['image/', 'application/pdf', 'text/', 'application/msword', 'application/vnd.openxmlformats-officedocument']
+            const isAllowedType = allowedTypes.some(type => file.type.startsWith(type))
+            if (!isAllowedType) {
+                showNotification('File type not supported. Please upload images, PDFs, or documents.', 'warning')
+                return
+            }
+
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('recipient_id', recipientId.toString())
+
+            const response = await clientFetcher('/api/messages/upload-file', {
+                method: 'POST',
+                body: formData,
+            })
+
+            showNotification(`File "${file.name}" sent successfully`, 'success')
+
+            // Refresh messages to show the new file message
+            await fetchMessages(0, false)
+        } catch (error: any) {
+            console.error('Failed to send file', error)
+
+            let errorMessage = 'Failed to send file. Please try again.'
+            if (error?.message?.includes('413')) {
+                errorMessage = 'File is too large. Please choose a smaller file.'
+            } else if (error?.message?.includes('400')) {
+                errorMessage = 'Invalid file. Please check the file and try again.'
+            } else if (error?.message?.includes('Network')) {
+                errorMessage = 'Network error. Please check your connection and try again.'
+            }
+
+            showNotification(errorMessage, 'error')
             throw error
         }
     }
@@ -184,7 +334,23 @@ export default function ConversationPage(props: any) {
 
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col h-[calc(100vh-200px)]">
                         {/* Messages container */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div
+                            ref={messagesContainerRef}
+                            className="flex-1 overflow-y-auto p-4 space-y-4"
+                            onScroll={handleScroll}
+                        >
+                            {/* Load more button */}
+                            {hasMoreMessages && (
+                                <div className="text-center py-2">
+                                    <button
+                                        onClick={loadMoreMessages}
+                                        disabled={loadingMore}
+                                        className="text-sm text-beacon-purple hover:text-beacon-purple-dark disabled:opacity-50"
+                                    >
+                                        {loadingMore ? 'Loading...' : 'Load older messages'}
+                                    </button>
+                                </div>
+                            )}
                             {messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center">
                                     <div className="mx-auto h-16 w-16 text-neutral-400">
@@ -227,9 +393,11 @@ export default function ConversationPage(props: any) {
                         {/* Message input */}
                         <MessageInput
                             onSendMessage={handleSendMessage}
+                            onSendFile={handleSendFile}
                             onTyping={handleTyping}
                             placeholder="Type a message..."
                             disabled={!isConnected}
+                            recipientId={id ? parseInt(id) : undefined}
                         />
                     </div>
                 </main>

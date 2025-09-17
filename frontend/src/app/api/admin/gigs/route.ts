@@ -16,14 +16,14 @@ async function requireToken() {
   return { token, res: null as NextResponse | null }
 }
 
-// GET /api/applications/me -> backend GET /applications/me
+// GET /api/admin/gigs -> backend GET /admin/gigs
 export async function GET(request: Request) {
   const { token, res } = await requireToken()
   if (!token) return res!
 
   const url = new URL(request.url)
   const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/applications/me${qp ? `?${qp}` : ''}`
+  const upstreamUrl = `${apiBase()}/admin/gigs${qp ? `?${qp}` : ''}`
 
   try {
     const resp = await fetch(upstreamUrl, {
@@ -38,10 +38,10 @@ export async function GET(request: Request) {
     let data: any = null
     try { data = text ? JSON.parse(text) : null } catch {}
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch applications' }, { status: resp.status || 500 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch gigs' }, { status: resp.status || 500 })
     }
     return NextResponse.json(data ?? [])
   } catch {
-    return NextResponse.json({ message: 'Upstream applications service unreachable' }, { status: 502 })
+    return NextResponse.json({ message: 'Upstream admin service unreachable' }, { status: 502 })
   }
 }

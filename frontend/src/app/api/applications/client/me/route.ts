@@ -16,14 +16,14 @@ async function requireToken() {
   return { token, res: null as NextResponse | null }
 }
 
-// GET /api/applications/me -> backend GET /applications/me
+// GET /api/applications/client/me -> backend GET /applications/client/me
 export async function GET(request: Request) {
   const { token, res } = await requireToken()
   if (!token) return res!
 
   const url = new URL(request.url)
   const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/applications/me${qp ? `?${qp}` : ''}`
+  const upstreamUrl = `${apiBase()}/applications/client/me${qp ? `?${qp}` : ''}`
 
   try {
     const resp = await fetch(upstreamUrl, {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     let data: any = null
     try { data = text ? JSON.parse(text) : null } catch {}
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch applications' }, { status: resp.status || 500 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch client applications' }, { status: resp.status || 500 })
     }
     return NextResponse.json(data ?? [])
   } catch {

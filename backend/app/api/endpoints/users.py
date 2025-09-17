@@ -187,7 +187,7 @@ async def upload_avatar(
 
 @router.get("/{user_id}", response_model=UserSchema)
 def get_user_by_id(
-    user_id: str,
+    user_id: int,
     db: Session = Depends(get_db),
     current_user: User = get_current_active_user_dependency,
 ) -> Any:

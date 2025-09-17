@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
         {
             icon: <Search className="h-8 w-8 text-beacon-purple" />,
             title: 'Post a Gig',
-            description: 'Create a detailed gig posting with your project requirements, budget, timeline, and required skills. Our platform helps you craft compelling gig descriptions.'
+            description: 'Create a detailed gig posting with your requirements, budget, timeline, and required skills. Our platform helps you craft compelling gig descriptions.'
         },
         {
             icon: <MessageCircle className="h-8 w-8 text-beacon-purple" />,

@@ -2,6 +2,8 @@
 
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
+import Button from '@/components/ui/Button'
+import { clientFetcher } from '@/lib/api'
 import type { Application } from '@/types/api'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -10,6 +12,7 @@ export default function ApplicationsClientPage() {
     const [applications, setApplications] = useState<Application[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [userRole, setUserRole] = useState<string>('')
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const limit = 10
@@ -26,44 +29,42 @@ export default function ApplicationsClientPage() {
     }
 
     useEffect(() => {
-        const fetchApplications = async () => {
+        const fetchUserAndApplications = async () => {
             try {
                 setLoading(true)
-                const token = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('access_token='))
-                    ?.split('=')[1]
+                setError(null)
 
-                if (token) {
-                    const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-                    const base = rawBase.replace(/\/+$/, '')
-                    const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
+                // First, get current user to determine role
+                const user = await clientFetcher('/api/users/me')
+                setUserRole(user.role)
 
-                    // Fetch applications with pagination
-                    const skip = (page - 1) * limit
-                    const applicationsResp = await fetch(`${apiBase}/applications/me?skip=${skip}&limit=${limit}`, {
-                        method: 'GET',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: 'application/json'
-                        },
-                    })
+                // Then fetch applications based on role
+                const skip = (page - 1) * limit
+                let applicationsData: Application[]
 
-                    if (applicationsResp.ok) {
-                        const applicationsData = await applicationsResp.json()
-                        if (Array.isArray(applicationsData)) {
-                            // For first page, replace all applications
-                            // For subsequent pages, append to existing applications
-                            if (page === 1) {
-                                setApplications(applicationsData as Application[])
-                            } else {
-                                setApplications(prev => [...prev, ...applicationsData as Application[]])
-                            }
-                            setHasMore(applicationsData.length === limit)
-                        }
+                if (user.role === 'creative') {
+                    // For creatives, get their applications
+                    applicationsData = await clientFetcher(`/api/applications/me?skip=${skip}&limit=${limit}`)
+                } else if (user.role === 'client') {
+                    // For clients, get applications to their gigs
+                    // We'll need to implement this endpoint or get all applications for client's gigs
+                    applicationsData = await clientFetcher(`/api/applications/client/me?skip=${skip}&limit=${limit}`)
+                } else {
+                    throw new Error('Invalid user role')
+                }
+
+                if (Array.isArray(applicationsData)) {
+                    // For first page, replace all applications
+                    // For subsequent pages, append to existing applications
+                    if (page === 1) {
+                        setApplications(applicationsData)
                     } else {
-                        throw new Error('Failed to load applications')
+                        setApplications(prev => [...prev, ...applicationsData])
                     }
+                    setHasMore(applicationsData.length === limit)
+                } else {
+                    setApplications([])
+                    setHasMore(false)
                 }
             } catch (err) {
                 console.error('Failed to fetch applications', err)
@@ -73,7 +74,7 @@ export default function ApplicationsClientPage() {
             }
         }
 
-        fetchApplications()
+        fetchUserAndApplications()
     }, [page])
 
     const loadMore = () => {
@@ -85,13 +86,44 @@ export default function ApplicationsClientPage() {
         setApplications([])
     }
 
+    const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
+        try {
+            await clientFetcher(`/api/applications/${applicationId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: newStatus })
+            })
+
+            // Refresh applications to show updated status
+            refreshApplications()
+        } catch (err) {
+            console.error('Failed to update application status', err)
+            setError('Failed to update application status')
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount)
+    }
+
     return (
-        <ProtectedRoute requiredRole="creative">
-            <SimplifiedLayout userType="creative">
+        <ProtectedRoute>
+            <SimplifiedLayout showSearch={true} searchPlaceholder="Search applications...">
                 <main className="container mx-auto px-4 py-8">
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
-                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">My Applications</h1>
-                        <p className="text-neutral-600">View and manage your gig applications.</p>
+                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                            {userRole === 'client' ? 'Applications to My Gigs' : 'My Applications'}
+                        </h1>
+                        <p className="text-neutral-600">
+                            {userRole === 'client'
+                                ? 'View and manage applications submitted to your gigs.'
+                                : 'View and manage your gig applications.'
+                            }
+                        </p>
                     </div>
 
                     {error ? (
@@ -111,31 +143,77 @@ export default function ApplicationsClientPage() {
                                 {applications.map((application: any) => (
                                     <div key={application.id} className="p-6 hover:bg-neutral-50 transition-colors">
                                         <div className="flex justify-between items-start">
-                                            <div>
-                                                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                                                    {typeof application.gig === 'object' && application.gig !== null
-                                                        ? (application.gig as any).title || 'Untitled Gig'
-                                                        : 'Gig'}
-                                                </h2>
-                                                <p className="text-neutral-600 mb-3">
-                                                    {application.cover_letter}
-                                                </p>
-                                                <div className="flex items-center text-sm text-neutral-500">
-                                                    <span>Applied {application.applied_at ? new Date(application.applied_at).toLocaleDateString() : 'Unknown date'}</span>
-                                                    <span className="mx-2">•</span>
-                                                    <span>
-                                                        Proposed: ${application.proposed_budget} in {application.proposed_timeline_weeks} weeks
+                                            <div className="flex-1">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <h2 className="text-xl font-semibold text-neutral-900">
+                                                        {typeof application.gig === 'object' && application.gig !== null
+                                                            ? (application.gig as any).title || 'Untitled Gig'
+                                                            : 'Gig'}
+                                                    </h2>
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
+                                                        {application.status}
                                                     </span>
                                                 </div>
+
+                                                <p className="text-neutral-600 mb-3 line-clamp-3">
+                                                    {application.cover_letter}
+                                                </p>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                    <div className="text-sm">
+                                                        <span className="font-medium text-neutral-700">Applied:</span>
+                                                        <span className="text-neutral-600 ml-1">
+                                                            {application.applied_at || application.created_at
+                                                                ? new Date(application.applied_at || application.created_at).toLocaleDateString()
+                                                                : 'Unknown date'}
+                                                        </span>
+                                                    </div>
+                                                    {application.proposed_budget && (
+                                                        <div className="text-sm">
+                                                            <span className="font-medium text-neutral-700">Proposed Budget:</span>
+                                                            <span className="text-neutral-600 ml-1">
+                                                                {formatCurrency(application.proposed_budget)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {application.proposed_timeline_weeks && (
+                                                        <div className="text-sm">
+                                                            <span className="font-medium text-neutral-700">Timeline:</span>
+                                                            <span className="text-neutral-600 ml-1">
+                                                                {application.proposed_timeline_weeks} {application.proposed_timeline_weeks === 1 ? 'week' : 'weeks'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center space-x-4">
+                                                    <Link
+                                                        href={`/gigs/${typeof application.gig === 'object' && application.gig !== null ? (application.gig as any).id : application.gig_id || ''}`}
+                                                        className="text-beacon-purple hover:underline text-sm font-medium"
+                                                    >
+                                                        View Gig Details
+                                                    </Link>
+
+                                                    {userRole === 'client' && application.status === 'pending' && (
+                                                        <div className="flex space-x-2">
+                                                            <Button
+                                                                variant="primary"
+                                                                size="sm"
+                                                                onClick={() => handleStatusUpdate(application.id, 'accepted')}
+                                                            >
+                                                                Accept
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleStatusUpdate(application.id, 'rejected')}
+                                                            >
+                                                                Reject
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
-                                                {application.status}
-                                            </span>
-                                        </div>
-                                        <div className="mt-4">
-                                            <Link href={`/gigs/${typeof application.gig === 'object' && application.gig !== null ? application.gig.id : ''}`} className="text-beacon-purple hover:underline text-sm font-medium">
-                                                View Gig Details
-                                            </Link>
                                         </div>
                                     </div>
                                 ))}
@@ -177,11 +255,21 @@ export default function ApplicationsClientPage() {
                         </div>
                     ) : (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
-                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">No applications yet</h2>
-                            <p className="text-neutral-600 mb-6">Your gig applications will appear here once you apply to gigs.</p>
-                            <a href="/gigs" className="bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-beacon-purple-dark transition-colors">
-                                Browse Gigs
-                            </a>
+                            <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+                                {userRole === 'client' ? 'No applications received' : 'No applications yet'}
+                            </h2>
+                            <p className="text-neutral-600 mb-6">
+                                {userRole === 'client'
+                                    ? 'Applications to your gigs will appear here.'
+                                    : 'Your gig applications will appear here once you apply to gigs.'
+                                }
+                            </p>
+                            <Link
+                                href={userRole === 'client' ? '/gigs/new' : '/gigs'}
+                                className="bg-beacon-purple text-white px-4 py-2 rounded-md hover:bg-beacon-purple-dark transition-colors"
+                            >
+                                {userRole === 'client' ? 'Post a Gig' : 'Browse Gigs'}
+                            </Link>
                         </div>
                     )}
 

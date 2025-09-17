@@ -16,13 +16,13 @@ async function requireToken() {
   return { token, res: null as NextResponse | null }
 }
 
-// GET /api/applications/[id] -> backend GET /applications/{id}
+// GET /api/admin/gigs/[id] -> backend GET /admin/gigs/{id}
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { token, res } = await requireToken()
   if (!token) return res!
 
   const { id } = await context.params
-  const upstreamUrl = `${apiBase()}/applications/${encodeURIComponent(id)}`
+  const upstreamUrl = `${apiBase()}/admin/gigs/${encodeURIComponent(id)}`
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',
@@ -37,15 +37,15 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     try { data = text ? JSON.parse(text) : null } catch {}
 
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch application' }, { status: resp.status || 500 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to fetch gig' }, { status: resp.status || 500 })
     }
     return NextResponse.json(data ?? {})
   } catch {
-    return NextResponse.json({ message: 'Upstream applications service unreachable' }, { status: 502 })
+    return NextResponse.json({ message: 'Upstream admin service unreachable' }, { status: 502 })
   }
 }
 
-// PUT /api/applications/[id] -> backend PUT /applications/{id}
+// PUT /api/admin/gigs/[id] -> backend PUT /admin/gigs/{id}
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params
   const { token, res } = await requireToken()
@@ -55,7 +55,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try { payload = await request.json() } catch { return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 }) }
 
   try {
-    const resp = await fetch(`${apiBase()}/applications/${encodeURIComponent(id)}`, {
+    const resp = await fetch(`${apiBase()}/admin/gigs/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
@@ -69,10 +69,36 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     try { data = text ? JSON.parse(text) : null } catch {}
 
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to update application' }, { status: resp.status || 400 })
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to update gig' }, { status: resp.status || 400 })
     }
     return NextResponse.json(data ?? {})
   } catch {
-    return NextResponse.json({ message: 'Upstream applications service unreachable' }, { status: 502 })
+    return NextResponse.json({ message: 'Upstream admin service unreachable' }, { status: 502 })
+  }
+}
+
+// DELETE /api/admin/gigs/[id] -> backend DELETE /admin/gigs/{id}
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params
+  const { token, res } = await requireToken()
+  if (!token) return res!
+
+  try {
+    const resp = await fetch(`${apiBase()}/admin/gigs/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    if (!resp.ok) {
+      const text = await resp.text()
+      let data: any = null
+      try { data = text ? JSON.parse(text) : null } catch {}
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to delete gig' }, { status: resp.status || 400 })
+    }
+    return new NextResponse(null, { status: 204 })
+  } catch {
+    return NextResponse.json({ message: 'Upstream admin service unreachable' }, { status: 502 })
   }
 }

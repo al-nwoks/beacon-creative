@@ -16,33 +16,115 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/", response_model=List[GigSchema])
+@router.get("/")
 def get_gigs(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
+    search: str = None,
+    category: str = None,
+    status: str = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
     current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
-    Retrieve gigs.
+    Retrieve gigs with filtering, search, and pagination.
     """
     start_time = time.time()
-    logger.info(f"Fetching gigs for user {current_user.id}")
+    logger.info(f"Fetching gigs for user {current_user.id} with filters: search={search}, category={category}, status={status}")
     
     query_start = time.time()
-    gigs = db.query(Gig).offset(skip).limit(limit).all()
-    query_end = time.time()
-    log_query_performance("SELECT", "simple", query_end - query_start, len(gigs))
     
-    logger.debug(f"Found {len(gigs)} gigs")
+    # Build base query
+    query = db.query(Gig)
+    
+    # Apply filters
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            Gig.title.ilike(search_term) |
+            Gig.description.ilike(search_term)
+        )
+    
+    if category:
+        query = query.filter(Gig.category.ilike(f"%{category}%"))
+    
+    if status:
+        query = query.filter(Gig.status == status)
+    
+    # Get total count before pagination
+    total_count = query.count()
+    
+    # Apply sorting
+    if sort_by == "created_at":
+        if sort_order == "desc":
+            query = query.order_by(Gig.created_at.desc())
+        else:
+            query = query.order_by(Gig.created_at.asc())
+    elif sort_by == "budget_max":
+        if sort_order == "desc":
+            query = query.order_by(Gig.budget_max.desc().nullslast())
+        else:
+            query = query.order_by(Gig.budget_max.asc().nullsfirst())
+    elif sort_by == "title":
+        if sort_order == "desc":
+            query = query.order_by(Gig.title.desc())
+        else:
+            query = query.order_by(Gig.title.asc())
+    
+    # Apply pagination
+    gigs = query.offset(skip).limit(limit).all()
+    
+    query_end = time.time()
+    log_query_performance("SELECT", "filtered", query_end - query_start, len(gigs))
+    
+    logger.debug(f"Found {len(gigs)} gigs out of {total_count} total")
+    
+    # Calculate pagination metadata
+    has_more = (skip + len(gigs)) < total_count
+    current_page = (skip // limit) + 1 if limit > 0 else 1
+    total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
     
     end_time = time.time()
     log_performance_metrics("get_gigs", start_time, end_time, {
         "gig_count": len(gigs),
+        "total_count": total_count,
         "skip": skip,
-        "limit": limit
+        "limit": limit,
+        "search": search,
+        "category": category,
+        "status": status
     })
-    return gigs
+    
+    # Convert gigs to dict format for proper serialization
+    gigs_data = []
+    for gig in gigs:
+        gig_dict = {
+            "id": str(gig.id),
+            "title": gig.title,
+            "description": gig.description,
+            "category": gig.category,
+            "budget_min": gig.budget_min,
+            "budget_max": gig.budget_max,
+            "timeline_weeks": gig.timeline_weeks,
+            "required_skills": gig.required_skills or [],
+            "status": gig.status,
+            "client_id": gig.client_id,
+            "hired_creative_id": gig.hired_creative_id,
+            "created_at": gig.created_at.isoformat() if gig.created_at else None,
+            "updated_at": gig.updated_at.isoformat() if gig.updated_at else None
+        }
+        gigs_data.append(gig_dict)
+    
+    return {
+        "items": gigs_data,
+        "total": total_count,
+        "page": current_page,
+        "pages": total_pages,
+        "limit": limit,
+        "has_more": has_more
+    }
 
 
 @router.post("/", response_model=GigSchema)
@@ -84,15 +166,25 @@ def create_gig(
 def get_gig(
     *,
     db: Session = Depends(get_db),
-    gig_id: int,
+    gig_id: str,
     current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
     Get gig by ID.
     """
+    import uuid
     logger.info(f"Fetching gig {gig_id} for user {current_user.id}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found")
         raise HTTPException(
@@ -116,7 +208,7 @@ def get_gig(
 def update_gig(
     *,
     db: Session = Depends(get_db),
-    gig_id: int,
+    gig_id: str,
     gig_in: GigUpdate,
     current_user: User = get_current_client_user_dependency
 ) -> Any:
@@ -124,9 +216,19 @@ def update_gig(
     Update a gig.
     Only the client who created the gig can update it.
     """
+    import uuid
     logger.info(f"Updating gig {gig_id} for client user {current_user.id}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found")
         raise HTTPException(
@@ -158,16 +260,26 @@ def update_gig(
 def delete_gig(
     *,
     db: Session = Depends(get_db),
-    gig_id: int,
+    gig_id: str,
     current_user: User = get_current_client_user_dependency
 ) -> Any:
     """
     Delete a gig.
     Only the client who created the gig can delete it.
     """
+    import uuid
     logger.info(f"Deleting gig {gig_id} for client user {current_user.id}")
     
-    gig = db.query(Gig).filter(Gig.id == gig_id).first()
+    try:
+        gig_id_uuid = uuid.UUID(gig_id)
+    except ValueError:
+        logger.warning(f"Invalid gig ID format: {gig_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid gig ID format"
+        )
+    
+    gig = db.query(Gig).filter(Gig.id == gig_id_uuid).first()
     if not gig:
         logger.warning(f"Gig {gig_id} not found")
         raise HTTPException(

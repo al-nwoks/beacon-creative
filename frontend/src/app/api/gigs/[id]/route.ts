@@ -19,12 +19,18 @@ async function requireToken() {
 
 // GET /api/gigs/[id] -> backend GET /gigs/{id}
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { token, res } = await requireToken()
+  if (!token) return res!
+
   const { id } = await context.params
   const upstreamUrl = `${apiBase()}/gigs/${encodeURIComponent(id)}`
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       cache: 'no-store',
     })
     const text = await resp.text()

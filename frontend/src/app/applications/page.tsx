@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import ApplicationsClientPage from './ApplicationsClientPage'
 
 export const metadata: Metadata = {
     title: 'My Applications | B3ACON Creative Connect',
@@ -6,10 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function ApplicationsPage() {
-    return (
-        <div>
-            <h1>Applications</h1>
-            <p>Loading...</p>
-        </div>
-    )
+    return <ApplicationsClientPage />
 }

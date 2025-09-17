@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
     title: 'Client Dashboard | B3ACON Creative Connect',
-    description: 'Manage your gigs and creative projects.',
+    description: 'Manage your gigs and creative work.',
 }
 
 export default async function ClientDashboardPage() {
@@ -113,7 +113,7 @@ export default async function ClientDashboardPage() {
                     {/* Welcome Section */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8 mb-8">
                         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Welcome back!</h1>
-                        <p className="text-neutral-600">Manage your gigs and creative projects from this dashboard.</p>
+                        <p className="text-neutral-600">Manage your gigs and creative work from this dashboard.</p>
                     </div>
 
                     {/* Error Message */}
