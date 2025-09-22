@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, List
 from datetime import datetime
 from pydantic import BaseModel, UUID4
 
@@ -24,7 +24,12 @@ class MessageInDBBase(MessageBase):
     sender_id: int
     recipient_id: int
     is_read: bool
+    is_pinned: bool = False
+    is_favorite: bool = False
     created_at: datetime
+    forwarded_from_id: Optional[UUID4] = None
+    forwarded_from: Optional["Message"] = None
+    reactions: Dict[str, List[int]] = {}  # {"emoji": [user_ids]}
 
     class Config:
         from_attributes = True

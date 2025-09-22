@@ -8,9 +8,14 @@ from sqlalchemy import func, String
 
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.user import User as UserSchema, UserUpdate
+from app.schemas.user import User as UserSchema, UserUpdate, UserCreate
+from app.auth.password import get_password_hash
 from app.auth.dependencies import get_current_admin_user_dependency
 from app.utils.performance import log_performance_metrics, log_query_performance
+from app.utils.audit import log_admin_action, get_resource_values, create_audit_description
+from app.models.audit_log import AuditLog
+from app.schemas.audit_log import AuditLog as AuditLogSchema
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +98,7 @@ def get_user_by_id(
 def update_user(
     user_id: int,
     user_in: UserUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = get_current_admin_user_dependency
 ) -> Any:
@@ -120,6 +126,9 @@ def update_user(
                 detail="Email already registered"
             )
     
+    # Get old values for audit log
+    old_values = get_resource_values(user)
+    
     # Update user attributes
     for field, value in user_in.dict(exclude_unset=True).items():
         setattr(user, field, value)
@@ -128,6 +137,22 @@ def update_user(
     db.commit()
     db.refresh(user)
     
+    # Get new values for audit log
+    new_values = get_resource_values(user)
+    
+    # Log admin action
+    log_admin_action(
+        db=db,
+        admin_user=current_user,
+        action="UPDATE",
+        resource_type="user",
+        resource_id=str(user_id),
+        description=create_audit_description("UPDATE", "user", new_values),
+        old_values=old_values,
+        new_values=new_values,
+        request=request
+    )
+    
     logger.info(f"User {user_id} updated successfully by admin {current_user.id}")
     return user
 
@@ -135,6 +160,7 @@ def update_user(
 @router.delete("/users/{user_id}", response_model=UserSchema)
 def delete_user(
     user_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = get_current_admin_user_dependency
 ) -> Any:
@@ -159,8 +185,23 @@ def delete_user(
             detail="Cannot delete yourself"
         )
     
+    # Get user values for audit log before deletion
+    old_values = get_resource_values(user)
+    
     db.delete(user)
     db.commit()
+    
+    # Log admin action
+    log_admin_action(
+        db=db,
+        admin_user=current_user,
+        action="DELETE",
+        resource_type="user",
+        resource_id=str(user_id),
+        description=create_audit_description("DELETE", "user", old_values),
+        old_values=old_values,
+        request=request
+    )
     
     logger.info(f"User {user_id} deleted successfully by admin {current_user.id}")
     return user
@@ -494,3 +535,298 @@ def update_payment_status(
     
     logger.info(f"Payment {payment_id} status updated from {old_status} to {status} by admin {current_user.id}")
     return payment
+
+
+@router.post("/users", response_model=UserSchema)
+def create_user(
+    *,
+    db: Session = Depends(get_db),
+    user_in: UserCreate,
+    request: Request,
+    current_user: User = get_current_admin_user_dependency
+) -> Any:
+    """
+    Create a new user (admin only).
+    """
+    start_time = time.time()
+    logger.info(f"Admin {current_user.id} creating new user with email: {user_in.email}")
+    logger.debug(f"User data: role={user_in.role}, first_name={user_in.first_name}, last_name={user_in.last_name}")
+    
+    # Check if email is already registered
+    existing_user = db.query(User).filter(User.email == user_in.email).first()
+    if existing_user:
+        logger.warning(f"User creation failed: Email {user_in.email} already registered")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    db_user = User(
+        email=user_in.email,
+        hashed_password=get_password_hash(user_in.password),
+        first_name=user_in.first_name,
+        last_name=user_in.last_name,
+        role=user_in.role,
+        bio=user_in.bio,
+        location=user_in.location,
+        profile_image_url=user_in.profile_image_url,
+        hourly_rate=user_in.hourly_rate,
+        skills=user_in.skills,
+        portfolio_links=user_in.portfolio_links,
+        portfolio_images=user_in.portfolio_images,
+        creative_type=user_in.creative_type,
+        is_active=user_in.is_active,
+        is_verified=user_in.is_verified,
+    )
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    
+    # Get new values for audit log
+    new_values = get_resource_values(db_user)
+    
+    # Log admin action
+    log_admin_action(
+        db=db,
+        admin_user=current_user,
+        action="CREATE",
+        resource_type="user",
+        resource_id=str(db_user.id),
+        description=create_audit_description("CREATE", "user", new_values),
+        new_values=new_values,
+        request=request
+    )
+    
+    end_time = time.time()
+    log_performance_metrics("create_user", start_time, end_time)
+    
+    logger.info(f"User created successfully with ID: {db_user.id} by admin {current_user.id}")
+    return db_user
+
+
+@router.put("/users/{user_id}/suspend", response_model=UserSchema)
+def suspend_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = get_current_admin_user_dependency
+) -> Any:
+    """
+    Suspend a user (admin only).
+    """
+    logger.info(f"Admin {current_user.id} suspending user {user_id}")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        logger.warning(f"User {user_id} not found for admin {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Prevent admin from suspending themselves
+    if user.id == current_user.id:
+        logger.warning(f"Admin {current_user.id} attempted to suspend themselves")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot suspend yourself"
+        )
+    
+    # Suspend user
+    user.is_active = False
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    logger.info(f"User {user_id} suspended successfully by admin {current_user.id}")
+    return user
+
+
+@router.put("/users/{user_id}/activate", response_model=UserSchema)
+def activate_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = get_current_admin_user_dependency
+) -> Any:
+    """
+    Activate a user (admin only).
+    """
+    logger.info(f"Admin {current_user.id} activating user {user_id}")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        logger.warning(f"User {user_id} not found for admin {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Activate user
+    user.is_active = True
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    logger.info(f"User {user_id} activated successfully by admin {current_user.id}")
+    return user
+
+
+@router.get("/analytics", response_model=dict)
+def get_platform_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = get_current_admin_user_dependency,
+    days: int = Query(30, description="Number of days to analyze")
+) -> Any:
+    """
+    Get platform analytics data (admin only).
+    """
+    start_time = time.time()
+    logger.info(f"Admin {current_user.id} fetching platform analytics for {days} days")
+    
+    from datetime import datetime, timedelta
+    from sqlalchemy import and_
+    
+    # Calculate date range
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    
+    # Get user registration data over time
+    user_growth = db.query(
+        func.date(User.created_at).label('date'),
+        func.count(User.id).label('count')
+    ).filter(
+        User.created_at >= start_date
+    ).group_by(
+        func.date(User.created_at)
+    ).order_by(
+        func.date(User.created_at)
+    ).all()
+    
+    # Get gig creation data over time
+    gig_growth = db.query(
+        func.date(Gig.created_at).label('date'),
+        func.count(Gig.id).label('count')
+    ).filter(
+        Gig.created_at >= start_date
+    ).group_by(
+        func.date(Gig.created_at)
+    ).order_by(
+        func.date(Gig.created_at)
+    ).all()
+    
+    # Get payment data over time
+    payment_data = db.query(
+        func.date(Payment.created_at).label('date'),
+        func.sum(Payment.amount).label('amount')
+    ).filter(
+        Payment.created_at >= start_date
+    ).group_by(
+        func.date(Payment.created_at)
+    ).order_by(
+        func.date(Payment.created_at)
+    ).all()
+    
+    analytics = {
+        "user_growth": [{"date": str(date), "count": count} for date, count in user_growth],
+        "gig_growth": [{"date": str(date), "count": count} for date, count in gig_growth],
+        "payment_data": [{"date": str(date), "amount": float(amount or 0)} for date, amount in payment_data],
+        "date_range": {
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat(),
+            "days": days
+        }
+    }
+    
+    end_time = time.time()
+    log_performance_metrics("get_platform_analytics", start_time, end_time)
+    
+    logger.info(f"Platform analytics retrieved for admin {current_user.id}")
+    return analytics
+
+
+@router.get("/audit-logs", response_model=List[AuditLogSchema])
+def get_audit_logs(
+    db: Session = Depends(get_db),
+    current_user: User = get_current_admin_user_dependency,
+    skip: int = 0,
+    limit: int = 100,
+    action: str = Query(None, description="Filter by action type"),
+    resource_type: str = Query(None, description="Filter by resource type"),
+    admin_user_id: int = Query(None, description="Filter by admin user ID")
+) -> Any:
+    """
+    Get audit logs (admin only).
+    """
+    start_time = time.time()
+    logger.info(f"Admin {current_user.id} fetching audit logs")
+    logger.debug(f"Query parameters: skip={skip}, limit={limit}, action={action}, resource_type={resource_type}, admin_user_id={admin_user_id}")
+    
+    query = db.query(AuditLog)
+    
+    # Apply filters
+    if action:
+        query = query.filter(AuditLog.action == action.upper())
+    
+    if resource_type:
+        query = query.filter(AuditLog.resource_type == resource_type.lower())
+    
+    if admin_user_id:
+        query = query.filter(AuditLog.admin_user_id == admin_user_id)
+    
+    # Order by created_at descending and apply pagination
+    query = query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
+    
+    query_start = time.time()
+    audit_logs = query.all()
+    query_end = time.time()
+    log_query_performance("SELECT", "complex", query_end - query_start, len(audit_logs))
+    
+    logger.info(f"Found {len(audit_logs)} audit logs for admin {current_user.id}")
+    
+    end_time = time.time()
+    log_performance_metrics("get_audit_logs", start_time, end_time, {
+        "log_count": len(audit_logs),
+        "skip": skip,
+        "limit": limit
+    })
+    return audit_logs
+
+
+@router.get("/recent-activity", response_model=List[dict])
+def get_recent_activity(
+    db: Session = Depends(get_db),
+    current_user: User = get_current_admin_user_dependency,
+    limit: int = Query(10, description="Number of recent activities to return")
+) -> Any:
+    """
+    Get recent platform activity for dashboard (admin only).
+    """
+    start_time = time.time()
+    logger.info(f"Admin {current_user.id} fetching recent activity")
+    
+    # Get recent audit logs with admin user info
+    recent_logs = db.query(AuditLog).join(
+        User, AuditLog.admin_user_id == User.id
+    ).order_by(
+        AuditLog.created_at.desc()
+    ).limit(limit).all()
+    
+    # Format activity data
+    activities = []
+    for log in recent_logs:
+        activities.append({
+            "id": str(log.id),
+            "action": log.description or f"{log.action} {log.resource_type}",
+            "admin_name": f"{log.admin_user.first_name} {log.admin_user.last_name}",
+            "admin_email": log.admin_user.email,
+            "time": log.created_at.isoformat(),
+            "resource_type": log.resource_type,
+            "resource_id": log.resource_id
+        })
+    
+    end_time = time.time()
+    log_performance_metrics("get_recent_activity", start_time, end_time)
+    
+    logger.info(f"Recent activity retrieved for admin {current_user.id}")
+    return activities

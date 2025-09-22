@@ -19,6 +19,7 @@ export interface User {
   avatar_url?: string | null
   created_at?: string
   updated_at?: string
+  last_login?: string | null
   hourly_rate?: number | null
   skills?: string[]
   portfolio_links?: string[]
@@ -30,6 +31,9 @@ export interface User {
   rating?: number
   creative_type?: string | null
   notification_settings?: NotificationSetting | null
+  // Account status
+  is_active?: boolean
+  is_verified?: boolean
 }
 
 /* Gig */
@@ -102,7 +106,15 @@ export interface Message {
   sender_id: number | string
   recipient_id: number | string
   is_read: boolean
+  is_pinned: boolean
+  is_favorite: boolean
   created_at: string
+  read_at?: string
+  reactions?: {
+    [emoji: string]: number[] // user IDs who reacted with this emoji
+  }
+  forwarded_from_id?: string | null
+  forwarded_from?: Message | null
   gig_id?: string
   application_id?: string
   sender?: User
@@ -141,6 +153,13 @@ export interface Notification {
   read?: boolean
   created_at?: string
   // target, data payload etc.
+}
+
+export interface NotificationList {
+  items: Notification[]
+  total: number
+  page: number
+  pageSize: number
 }
 
 /* Notification Settings */

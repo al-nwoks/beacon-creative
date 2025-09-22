@@ -471,8 +471,98 @@ def update_message(
     return message
 
 
+@router.put("/{message_id}/pin", response_model=MessageWithUsers)
+def toggle_pin_message(
+    *,
+    db: Session = Depends(get_db),
+    message_id: str,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Toggle pin status of a message.
+    Only the sender can pin/unpin their messages.
+    """
+    logger.info(f"Toggling pin status for message {message_id} by user {current_user.id}")
+    
+    try:
+        message_id_uuid = uuid.UUID(message_id)
+    except ValueError:
+        logger.warning(f"Invalid message ID format: {message_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format",
+        )
+    
+    message = db.query(Message).filter(Message.id == message_id_uuid).first()
+    if not message:
+        logger.warning(f"Message {message_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+    
+    if message.sender_id != current_user.id:
+        logger.warning(f"User {current_user.id} attempted to pin message {message_id} without permission")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the sender can pin this message",
+        )
+    
+    message.is_pinned = not message.is_pinned
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    
+    logger.info(f"Message {message_id} pin status toggled to {message.is_pinned} by user {current_user.id}")
+    return message
+
+@router.put("/{message_id}/favorite", response_model=MessageWithUsers)
+def toggle_favorite_message(
+    *,
+    db: Session = Depends(get_db),
+    message_id: str,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Toggle favorite status of a message.
+    Only the recipient can favorite/unfavorite messages.
+    """
+    logger.info(f"Toggling favorite status for message {message_id} by user {current_user.id}")
+    
+    try:
+        message_id_uuid = uuid.UUID(message_id)
+    except ValueError:
+        logger.warning(f"Invalid message ID format: {message_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format",
+        )
+    
+    message = db.query(Message).filter(Message.id == message_id_uuid).first()
+    if not message:
+        logger.warning(f"Message {message_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+    
+    if message.recipient_id != current_user.id:
+        logger.warning(f"User {current_user.id} attempted to favorite message {message_id} without permission")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the recipient can favorite this message",
+        )
+    
+    message.is_favorite = not message.is_favorite
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    
+    logger.info(f"Message {message_id} favorite status toggled to {message.is_favorite} by user {current_user.id}")
+    return message
+
 @router.put("/{message_id}/read", response_model=MessageWithUsers)
-def mark_message_as_read(
+async def mark_message_as_read(
     *,
     db: Session = Depends(get_db),
     message_id: str,
@@ -517,6 +607,21 @@ def mark_message_as_read(
         db.commit()
         db.refresh(message)
         logger.info(f"Message {message_id} marked as read for user {current_user.id}")
+
+        # Broadcast read receipt via WebSocket
+        try:
+            from app.ws.manager import ws_manager
+            await ws_manager.broadcast_to_user(
+                str(message.sender_id),
+                {
+                    "type": "message_read",
+                    "message_id": str(message.id),
+                    "read_at": datetime.utcnow().isoformat(),
+                    "reader_id": current_user.id
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to send read receipt via WebSocket: {str(e)}")
     else:
         logger.info(f"Message {message_id} was already marked as read for user {current_user.id}")
     
@@ -613,40 +718,111 @@ def get_messages_between_users(
 def search_messages(
     *,
     db: Session = Depends(get_db),
-    query: str = Query(..., min_length=1),
+    query: str = Query(None, min_length=1),
+    sender_id: Optional[int] = None,
+    recipient_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    has_files: Optional[bool] = None,
     skip: int = 0,
     limit: int = 50,
     current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
-    Search messages for the current user.
+    Advanced message search with multiple filters:
+    - Text search (supports fuzzy matching)
+    - Filter by sender/recipient
+    - Date range filtering
+    - File attachment filtering
     """
-    logger.info(f"Searching messages for user {current_user.id} with query: {query}")
+    start_time = time.time()
+    logger.info(f"Advanced message search for user {current_user.id}")
+    logger.debug(f"Search params: query={query}, sender={sender_id}, recipient={recipient_id}, start={start_date}, end={end_date}, has_files={has_files}")
     
-    # Validate query parameter
-    if not query or len(query.strip()) == 0:
-        logger.warning(f"Empty search query provided by user {current_user.id}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Search query cannot be empty",
-        )
-    
-    # Build the query for messages that contain the search term
+    # Base query - only messages involving current user
     search_query = db.query(Message).filter(
         or_(
             Message.sender_id == current_user.id,
             Message.recipient_id == current_user.id
         )
-    ).filter(
-        Message.content.ilike(f"%{query.strip()}%")
     )
     
+    # Text search (if provided)
+    if query and query.strip():
+        search_query = search_query.filter(
+            or_(
+                Message.content.ilike(f"%{query.strip()}%"),
+                *[Message.content.ilike(f"%{word}%") for word in query.strip().split() if len(word) > 2]
+            )
+        )
+    
+    # Filter by sender
+    if sender_id:
+        search_query = search_query.filter(Message.sender_id == sender_id)
+    
+    # Filter by recipient
+    if recipient_id:
+        search_query = search_query.filter(Message.recipient_id == recipient_id)
+    
+    # Date range filtering
+    if start_date:
+        try:
+            start_datetime = datetime.fromisoformat(start_date)
+            search_query = search_query.filter(Message.created_at >= start_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid start date format. Use ISO format (YYYY-MM-DD)"
+            )
+    
+    if end_date:
+        try:
+            end_datetime = datetime.fromisoformat(end_date)
+            search_query = search_query.filter(Message.created_at <= end_datetime)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid end date format. Use ISO format (YYYY-MM-DD)"
+            )
+    
+    # File attachment filtering
+    if has_files is not None:
+        if has_files:
+            search_query = search_query.filter(
+                Message.content.like('%"type":"file"%')
+            )
+        else:
+            search_query = search_query.filter(
+                Message.content.notlike('%"type":"file"%')
+            )
+    
     # Order by created_at descending and apply pagination
-    search_query = search_query.order_by(Message.created_at.desc()).offset(skip).limit(limit)
+    search_query = search_query.order_by(desc(Message.created_at)).offset(skip).limit(limit)
     
+    query_start = time.time()
     messages = search_query.all()
+    query_end = time.time()
+    log_query_performance("SELECT", "search", query_end - query_start, len(messages))
     
-    logger.info(f"Found {len(messages)} messages matching query: {query}")
+    # Mark messages as read if they are received by the current user
+    for message in messages:
+        if message.recipient_id == current_user.id and not message.is_read:
+            message.is_read = True
+            db.add(message)
+    
+    if messages:
+        db.commit()
+    
+    end_time = time.time()
+    log_performance_metrics("search_messages", start_time, end_time, {
+        "message_count": len(messages),
+        "has_query": bool(query),
+        "filters_applied": sum([
+            1 for x in [sender_id, recipient_id, start_date, end_date, has_files] if x is not None
+        ])
+    })
+    
+    logger.info(f"Found {len(messages)} messages matching search criteria")
     return messages
 
 
@@ -708,31 +884,29 @@ async def upload_message_file(
             detail="Cannot send message to yourself",
         )
     
-    # Read file content
+    # Read file content and upload to S3
     try:
         file_content = await file.read()
         
-        # For now, we'll store files as base64 in the message content
-        # In production, you'd upload to S3 or similar storage
-        import base64
-        file_base64 = base64.b64encode(file_content).decode('utf-8')
+        # Upload to S3
+        from app.services.s3_service import S3Service
+        s3 = S3Service()
+        file_url = await s3.upload_file(
+            file_content=file_content,
+            file_name=file.filename,
+            content_type=file.content_type
+        )
         
         # Create message content with file info
-        message_content = f"📎 {file.filename}"
-        file_data = {
-            "type": "file",
-            "filename": file.filename,
-            "content_type": file.content_type,
-            "size": len(file_content),
-            "data": file_base64
-        }
-        
-        # Store file data in a separate field (you'd need to add this to the Message model)
-        # For now, we'll include it in the content as JSON
-        import json
         message_content = json.dumps({
             "text": f"📎 {file.filename}",
-            "file": file_data
+            "file": {
+                "type": "file",
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": len(file_content),
+                "url": file_url
+            }
         })
         
     except Exception as e:
@@ -883,8 +1057,147 @@ def delete_conversation(
     return {"message": f"Conversation deleted. {deleted_count} messages removed."}
 
 
+@router.post("/{message_id}/reactions", response_model=MessageWithUsers)
+async def add_reaction(
+    *,
+    db: Session = Depends(get_db),
+    message_id: str,
+    emoji: str = Query(..., min_length=1, max_length=10),
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Add or remove a reaction to a message.
+    """
+    logger.info(f"Updating reaction '{emoji}' for message {message_id} by user {current_user.id}")
+    
+    try:
+        message_id_uuid = uuid.UUID(message_id)
+    except ValueError:
+        logger.warning(f"Invalid message ID format: {message_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format",
+        )
+    
+    message = db.query(Message).filter(Message.id == message_id_uuid).first()
+    if not message:
+        logger.warning(f"Message {message_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+    
+    # Initialize reactions if empty
+    if not message.reactions:
+        message.reactions = {}
+    
+    # Toggle reaction
+    if emoji in message.reactions:
+        if current_user.id in message.reactions[emoji]:
+            # Remove reaction
+            message.reactions[emoji].remove(current_user.id)
+            if not message.reactions[emoji]:
+                del message.reactions[emoji]
+        else:
+            # Add reaction
+            message.reactions[emoji].append(current_user.id)
+    else:
+        # Add new reaction
+        message.reactions[emoji] = [current_user.id]
+    
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    
+    logger.info(f"Reaction '{emoji}' updated for message {message_id}")
+    return message
+
+@router.post("/{message_id}/forward", response_model=MessageWithUsers)
+async def forward_message(
+    *,
+    db: Session = Depends(get_db),
+    message_id: str,
+    recipient_id: int,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Forward a message to another user.
+    """
+    logger.info(f"Forwarding message {message_id} to user {recipient_id} by {current_user.id}")
+    
+    # Validate message ID
+    try:
+        message_id_uuid = uuid.UUID(message_id)
+    except ValueError:
+        logger.warning(f"Invalid message ID format: {message_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format",
+        )
+    
+    # Get original message
+    original_message = db.query(Message).filter(Message.id == message_id_uuid).first()
+    if not original_message:
+        logger.warning(f"Message {message_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+    
+    # Check if user has permission to forward (must be sender or recipient)
+    if (original_message.sender_id != current_user.id and
+        original_message.recipient_id != current_user.id):
+        logger.warning(f"User {current_user.id} not authorized to forward message {message_id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to forward this message",
+        )
+    
+    # Validate recipient
+    recipient = db.query(User).filter(User.id == recipient_id).first()
+    if not recipient:
+        logger.warning(f"Recipient {recipient_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipient not found",
+        )
+    
+    if recipient_id == current_user.id:
+        logger.warning(f"User {current_user.id} attempted to forward to themselves")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot forward to yourself",
+        )
+    
+    # Create forwarded message
+    forwarded_message = Message(
+        sender_id=current_user.id,
+        recipient_id=recipient_id,
+        content=f"(Forwarded) {original_message.content}",
+        forwarded_from_id=original_message.id
+    )
+    
+    db.add(forwarded_message)
+    db.commit()
+    db.refresh(forwarded_message)
+    
+    # Create notification for recipient
+    notification = Notification(
+        user_id=recipient_id,
+        type="message",
+        title="New Forwarded Message",
+        message=f"{current_user.first_name} forwarded you a message",
+        related_entity_type="message",
+        related_entity_id=forwarded_message.id
+    )
+    db.add(notification)
+    db.commit()
+    
+    logger.info(f"Message {message_id} forwarded to {recipient_id} as {forwarded_message.id}")
+    return forwarded_message
+
 @router.delete("/{message_id}")
-def delete_message(
+async def delete_message(
     *,
     db: Session = Depends(get_db),
     message_id: str,
@@ -923,9 +1236,24 @@ def delete_message(
             detail="Only the sender can delete this message",
         )
     
-    # Delete the message
-    db.delete(message)
-    db.commit()
+    # Delete the message and any associated files
+    try:
+        # Check if message contains a file
+        import json
+        content = json.loads(message.content)
+        if 'file' in content and 'url' in content['file']:
+            from app.services.s3_service import S3Service
+            s3 = S3Service()
+            await s3.delete_file(content['file']['url'])
+            
+        db.delete(message)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Error deleting message {message_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete message"
+        )
     
     end_time = time.time()
     log_performance_metrics("delete_message", start_time, end_time)

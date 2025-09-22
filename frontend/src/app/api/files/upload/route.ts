@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -25,7 +21,7 @@ export async function POST(request: Request) {
 
   // We cannot read the body and reconstruct form-data without losing streams.
   // Instead, forward the request as a stream while setting Authorization header.
-  const upstreamUrl = `${apiBase()}/files/upload`
+  const upstreamUrl = `${getApiBase()}/files/upload`
 
   try {
     const resp = await fetch(upstreamUrl, {

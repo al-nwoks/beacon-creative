@@ -1,3 +1,4 @@
+import { getApiBase } from '@/lib/apiBase'
 import { NextResponse } from 'next/server'
 
 /**
@@ -9,20 +10,23 @@ import { NextResponse } from 'next/server'
  */
 export async function GET(request: Request) {
   try {
-    const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-    const base = rawBase.replace(/\/+$/, '')
-    const apiBase = /\/api\/v\\d+$/i.test(base) ? base : `${base}/api/v1`
+    const apiBase = getApiBase()
     const url = `${apiBase}/users/me`
 
-    // Forward cookies from the incoming request to the backend by using fetch with the
-    // Cookie header from the request (server-side).
+    // Extract token from HttpOnly cookie and send as Bearer token
     const cookieHeader = request.headers.get('cookie') || ''
+    const tokenMatch = cookieHeader.match(/access_token=([^;]+)/)
+    const token = tokenMatch ? tokenMatch[1] : null
+
+    if (!token) {
+      return NextResponse.json({ message: 'No access token found' }, { status: 401 })
+    }
 
     const resp = await fetch(url, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        Cookie: cookieHeader,
+        Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
     })

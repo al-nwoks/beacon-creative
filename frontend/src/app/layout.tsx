@@ -2,6 +2,7 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
 import { Shell } from '@/components/layout/Shell'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
+import { WebSocketProvider } from '@/contexts/WebSocketContext'
 import { PostHogProvider } from '@/providers/PostHogProvider'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
@@ -38,16 +39,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>  
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body>
         <PostHogProvider>
           <NotificationProvider>
-            <PageTransitionLayout>
-              {/* Global Shell wraps LayoutWrapper — internal pages can use SimplifiedLayout to opt out */}
-              <Shell>
-                <LayoutWrapper>{children}</LayoutWrapper>
-              </Shell>
-            </PageTransitionLayout>
+            <WebSocketProvider>
+              <PageTransitionLayout>
+                {/* Global Shell wraps LayoutWrapper — internal pages can use SimplifiedLayout to opt out */}
+                <Shell>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                </Shell>
+              </PageTransitionLayout>
+            </WebSocketProvider>
           </NotificationProvider>
         </PostHogProvider>
       </body>

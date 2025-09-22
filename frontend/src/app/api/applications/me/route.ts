@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function requireToken() {
   const { cookies } = await import('next/headers')
@@ -23,7 +19,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url)
   const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/applications/me${qp ? `?${qp}` : ''}`
+  const upstreamUrl = `${getApiBase()}/applications/me${qp ? `?${qp}` : ''}`
 
   try {
     const resp = await fetch(upstreamUrl, {

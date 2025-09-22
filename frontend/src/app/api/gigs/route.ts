@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 // GET /api/gigs?skip=&limit=&status=&category=&search=&sort_by=&sort_order=
 export async function GET(request: Request) {
@@ -14,7 +10,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url)
   const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/gigs/${qp ? `?${qp}` : ''}`
+  const upstreamUrl = `${getApiBase()}/gigs/${qp ? `?${qp}` : ''}`
 
   try {
     const resp = await fetch(upstreamUrl, {
@@ -47,7 +43,7 @@ export async function POST(request: Request) {
   try { payload = await request.json() } catch { return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 }) }
 
   try {
-    const resp = await fetch(`${apiBase()}/gigs/`, {
+    const resp = await fetch(`${getApiBase()}/gigs/`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

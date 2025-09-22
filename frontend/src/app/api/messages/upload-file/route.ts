@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -18,27 +14,96 @@ export async function POST(request: Request) {
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
   try {
+    // Get the form data from the request
     const formData = await request.formData()
     
-    const resp = await fetch(`${apiBase()}/messages/upload-file`, {
+    // Validate required fields
+    const file = formData.get('file') as File
+    const recipientId = formData.get('recipient_id') as string
+    
+    if (!file) {
+      return NextResponse.json({ message: 'No file provided' }, { status: 400 })
+    }
+    
+    if (!recipientId) {
+      return NextResponse.json({ message: 'Recipient ID is required' }, { status: 400 })
+    }
+
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      return NextResponse.json({ message: 'File size exceeds 10MB limit' }, { status: 413 })
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'text/plain', 'text/csv',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+    
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ 
+        message: 'File type not supported. Please upload images, PDFs, or documents.' 
+      }, { status: 400 })
+    }
+
+    // Create new FormData for the backend request
+    const backendFormData = new FormData()
+    backendFormData.append('file', file)
+    backendFormData.append('recipient_id', recipientId)
+    
+    // Add optional fields if present
+    const gigId = formData.get('gig_id')
+    const applicationId = formData.get('application_id')
+    
+    if (gigId) {
+      backendFormData.append('gig_id', gigId as string)
+    }
+    
+    if (applicationId) {
+      backendFormData.append('application_id', applicationId as string)
+    }
+
+    const upstreamUrl = `${getApiBase()}/messages/upload-file`
+
+    const resp = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type header - let the browser set it with boundary for multipart/form-data
       },
-      body: formData,
+      body: backendFormData,
     })
-    
+
     const text = await resp.text()
     let data: any = null
-    try { data = text ? JSON.parse(text) : null } catch {}
-    
+    try { 
+      data = text ? JSON.parse(text) : null 
+    } catch (e) {
+      console.error('Failed to parse response:', e)
+    }
+
     if (!resp.ok) {
-      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to upload file' }, { status: resp.status || 400 })
+      const errorMessage = data?.detail || data?.message || 'Failed to upload file'
+      return NextResponse.json({ message: errorMessage }, { status: resp.status || 500 })
+    }
+
+    return NextResponse.json(data ?? {}, { status: 201 })
+  } catch (error: any) {
+    console.error('File upload error:', error)
+    
+    // Handle specific error types
+    if (error.name === 'PayloadTooLargeError') {
+      return NextResponse.json({ message: 'File is too large' }, { status: 413 })
     }
     
-    return NextResponse.json(data ?? {}, { status: 201 })
-  } catch (error) {
-    console.error('File upload error:', error)
-    return NextResponse.json({ message: 'Upstream messages service unreachable' }, { status: 502 })
+    return NextResponse.json({ 
+      message: 'Failed to upload file. Please try again.' 
+    }, { status: 500 })
   }
 }

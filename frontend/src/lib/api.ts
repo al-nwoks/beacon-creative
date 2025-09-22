@@ -15,7 +15,9 @@
  */
 import { logger } from '@/lib/logger'
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '') || ''
+// Ensure API_BASE doesn't end with /api/v1 to avoid duplication
+const rawApiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '') || ''
+const API_BASE = rawApiBase.endsWith('/api/v1') ? rawApiBase.replace('/api/v1', '') : rawApiBase
 
 type FetchInit = RequestInit & { server?: boolean }
 
@@ -52,8 +54,8 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
   if (path.startsWith('/api/') && !path.startsWith('/api/v1/')) {
       // For /api/users/me, call the backend directly
       if (path === '/api/users/me') {
-          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
-          const url = `${backendUrl}/users/me`;
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/me`;
           logger.debug(`Making direct backend call to: ${url}`)
           const res = await fetch(url, {
               cache: 'no-store',
@@ -65,8 +67,8 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
       
       // For /api/notification-settings/me, call the backend directly
       if (path === '/api/notification-settings/me') {
-          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
-          const url = `${backendUrl}/notification-settings/me`;
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/notification-settings/me`;
           logger.debug(`Making direct backend call to: ${url}`)
           const res = await fetch(url, {
               cache: 'no-store',
@@ -88,11 +90,11 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
       return handleResponse(res)
   }
   
-  // For backend API routes, prepend the API_BASE
+  // For backend API routes, prepend the API_BASE and add /api/v1 if not present
   const url =
     typeof path === 'string' && (path.startsWith('http') || (path.startsWith('/') && API_BASE === ''))
       ? path
-      : `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
+      : `${API_BASE}/api/v1${path.startsWith('/') ? path : `/${path}`}`
 
   logger.debug(`Making backend API call to: ${url}`)
   const res = await fetch(url, {
@@ -142,7 +144,7 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
   
   const url =
     typeof input === 'string' && !input.startsWith('http')
-      ? `${API_BASE}${input.startsWith('/') ? input : `/${input}`}`
+      ? `${API_BASE}/api/v1${input.startsWith('/') ? input : `/${input}`}`
       : (input as string)
 
   logger.debug(`Making client API call to: ${url}`)

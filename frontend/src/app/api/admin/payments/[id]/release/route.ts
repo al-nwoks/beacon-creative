@@ -1,0 +1,43 @@
+import { getApiBase } from "@/lib/apiBase"
+import { NextResponse } from 'next/server'
+
+
+async function getToken() {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  return cookieStore.get('access_token')?.value || null
+}
+
+// POST /api/admin/payments/[id]/release
+export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const token = await getToken()
+  if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
+
+  const { id } = await context.params
+  const upstreamUrl = `${getApiBase()}/payments/${encodeURIComponent(id)}/release`
+
+  try {
+    const resp = await fetch(upstreamUrl, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      let data: any = null
+      try { data = text ? JSON.parse(text) : null } catch {}
+      return NextResponse.json({ message: data?.detail || data?.message || 'Failed to release payment' }, { status: resp.status || 400 })
+    }
+
+    const text = await resp.text()
+    let data: any = null
+    try { data = text ? JSON.parse(text) : null } catch {}
+
+    return NextResponse.json(data ?? { message: 'Payment released successfully' })
+  } catch {
+    return NextResponse.json({ message: 'Upstream admin service unreachable' }, { status: 502 })
+  }
+}

@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -19,7 +15,7 @@ async function getToken() {
  * Accepts JSON payload and forwards to backend.
  */
 export async function PUT(request: Request) {
-  const upstreamUrl = `${apiBase()}/users/change-password`
+  const upstreamUrl = `${getApiBase()}/users/change-password`
 
   const token = await getToken()
   if (!token) {

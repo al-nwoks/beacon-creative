@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function requireToken() {
   const { cookies } = await import('next/headers')
@@ -22,7 +18,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!token) return res!
 
   const { id } = await context.params
-  const upstreamUrl = `${apiBase()}/applications/${encodeURIComponent(id)}`
+  const upstreamUrl = `${getApiBase()}/applications/${encodeURIComponent(id)}`
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',
@@ -55,7 +51,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try { payload = await request.json() } catch { return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 }) }
 
   try {
-    const resp = await fetch(`${apiBase()}/applications/${encodeURIComponent(id)}`, {
+    const resp = await fetch(`${getApiBase()}/applications/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',

@@ -14,7 +14,7 @@ services:
     env_file:
       - ./.env
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+      - NEXT_PUBLIC_API_URL=http://backend:8000
       - NEXT_PUBLIC_WS_URL=ws://backend:8000/ws
       - NEXT_PUBLIC_APP_NAME=B3ACON Creative Connect
     depends_on:

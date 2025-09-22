@@ -181,7 +181,7 @@ export default async function CreativeDashboardPage() {
                                                 </span>
                                             </div>
                                             <div className="mt-4">
-                                                <Link href={`/gigs/${typeof application.gig === 'object' && application.gig !== null ? application.gig.id : ''}`} className="text-beacon-purple hover:underline text-sm font-medium">
+                                                <Link href={`/gigs/${typeof application.gig === 'object' && application.gig !== null ? application.gig.id : application.gig || ''}`} className="text-beacon-purple hover:underline text-sm font-medium">
                                                     View Gig Details
                                                 </Link>
                                             </div>

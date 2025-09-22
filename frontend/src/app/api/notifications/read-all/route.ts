@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -17,7 +13,7 @@ export async function PUT() {
   const token = await getToken()
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
-  const upstreamUrl = `${apiBase()}/notifications/read-all`
+  const upstreamUrl = `${getApiBase()}/notifications/read-all`
 
   try {
     const resp = await fetch(upstreamUrl, {

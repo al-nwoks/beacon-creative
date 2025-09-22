@@ -2,6 +2,8 @@
  * Frontend tests for user journeys and role-based access
  */
 
+// @ts-ignore - Jest globals are available in test environment
+
 // Mock the fetch API
 global.fetch = jest.fn() as jest.Mock;
 
@@ -204,6 +206,190 @@ describe('User Journeys and Role-Based Access', () => {
 
       expect(userData.role).toBe('admin');
       // In the actual implementation, the ProtectedRoute component would allow access
+    });
+  
+    describe('Messaging Functionality', () => {
+      beforeEach(() => {
+        // Reset mocks before each messaging test
+        jest.clearAllMocks();
+      });
+  
+      it('should allow users to send and receive messages', async () => {
+        // Mock two users
+        const user1 = {
+          id: 1,
+          email: 'user1@example.com',
+          first_name: 'User',
+          last_name: 'One'
+        };
+        const user2 = {
+          id: 2,
+          email: 'user2@example.com',
+          first_name: 'User',
+          last_name: 'Two'
+        };
+  
+        // Mock message sending
+        (global.fetch as jest.Mock)
+          .mockResolvedValueOnce({ // Get current user
+            ok: true,
+            json: async () => user1
+          })
+          .mockResolvedValueOnce({ // Send message
+            ok: true,
+            json: async () => ({
+              id: 'msg1',
+              sender_id: user1.id,
+              recipient_id: user2.id,
+              content: 'Hello there!',
+              created_at: new Date().toISOString()
+            })
+          })
+          .mockResolvedValueOnce({ // Get messages
+            ok: true,
+            json: async () => [{
+              id: 'msg1',
+              sender_id: user1.id,
+              recipient_id: user2.id,
+              content: 'Hello there!',
+              created_at: new Date().toISOString()
+            }]
+          });
+  
+        // Verify sender
+        const senderResponse = await fetch('/api/users/me');
+        const sender = await senderResponse.json();
+        expect(sender.id).toBe(user1.id);
+  
+        // Send message
+        const sendResponse = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient_id: user2.id,
+            content: 'Hello there!'
+          })
+        });
+        expect(sendResponse.ok).toBe(true);
+  
+        // Get messages
+        const messagesResponse = await fetch(`/api/messages/between/${user2.id}`);
+        const messages = await messagesResponse.json();
+        expect(messages.length).toBeGreaterThan(0);
+        expect(messages[0].content).toBe('Hello there!');
+      });
+  
+      it('should support message pagination', async () => {
+        const user1 = { id: 1 };
+        const user2 = { id: 2 };
+  
+        // Mock first page
+        (global.fetch as jest.Mock)
+          .mockResolvedValueOnce({ // Get current user
+            ok: true,
+            json: async () => user1
+          })
+          .mockResolvedValueOnce({ // First page
+            ok: true,
+            json: async () => Array(50).fill(0).map((_, i) => ({
+              id: `msg${i}`,
+              sender_id: i % 2 ? user1.id : user2.id,
+              recipient_id: i % 2 ? user2.id : user1.id,
+              content: `Message ${i}`,
+              created_at: new Date().toISOString()
+            }))
+          })
+          .mockResolvedValueOnce({ // Second page
+            ok: true,
+            json: async () => Array(10).fill(0).map((_, i) => ({
+              id: `msg${i+50}`,
+              sender_id: (i+50) % 2 ? user1.id : user2.id,
+              recipient_id: (i+50) % 2 ? user2.id : user1.id,
+              content: `Message ${i+50}`,
+              created_at: new Date().toISOString()
+            }))
+          });
+  
+        // Get first page
+        const page1Response = await fetch(`/api/messages/between/${user2.id}?skip=0&limit=50`);
+        const page1 = await page1Response.json();
+        expect(page1.length).toBe(50);
+  
+        // Get second page
+        const page2Response = await fetch(`/api/messages/between/${user2.id}?skip=50&limit=50`);
+        const page2 = await page2Response.json();
+        expect(page2.length).toBe(10);
+      });
+  
+      it('should support message search', async () => {
+        const user1 = { id: 1 };
+        
+        (global.fetch as jest.Mock)
+          .mockResolvedValueOnce({ // Get current user
+            ok: true,
+            json: async () => user1
+          })
+          .mockResolvedValueOnce({ // Search results
+            ok: true,
+            json: async () => [{
+              id: 'msg1',
+              sender_id: 1,
+              recipient_id: 2,
+              content: 'Important meeting tomorrow',
+              created_at: new Date().toISOString()
+            }]
+          });
+  
+        const searchResponse = await fetch('/api/messages/search?query=meeting');
+        const results = await searchResponse.json();
+        expect(results.length).toBe(1);
+        expect(results[0].content).toContain('meeting');
+      });
+  
+      it('should support file attachments', async () => {
+        const user1 = { id: 1 };
+        const user2 = { id: 2 };
+  
+        (global.fetch as jest.Mock)
+          .mockResolvedValueOnce({ // Get current user
+            ok: true,
+            json: async () => user1
+          })
+          .mockResolvedValueOnce({ // Upload response
+            ok: true,
+            json: async () => ({
+              id: 'msg1',
+              sender_id: user1.id,
+              recipient_id: user2.id,
+              content: JSON.stringify({
+                text: 'Check this file',
+                file: {
+                  type: 'file',
+                  filename: 'document.pdf',
+                  size: 1024,
+                  url: 'https://example.com/files/document.pdf'
+                }
+              }),
+              created_at: new Date().toISOString()
+            })
+          });
+  
+        // Simulate file upload
+        const uploadResponse = await fetch('/api/messages/upload-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient_id: user2.id,
+            file: {
+              name: 'document.pdf',
+              size: 1024,
+              type: 'application/pdf'
+            }
+          })
+        });
+        const message = await uploadResponse.json();
+        expect(message.content).toContain('"type":"file"');
+      });
     });
   });
 

@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse, type NextRequest } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -27,7 +23,7 @@ export async function GET(_request: NextRequest, { params }: any) {
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
   const id = getIdFromParams(params)
-  const upstreamUrl = `${apiBase()}/applications/gig/${encodeURIComponent(id)}`
+  const upstreamUrl = `${getApiBase()}/applications/gig/${encodeURIComponent(id)}`
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',

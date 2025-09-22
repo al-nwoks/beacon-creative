@@ -89,6 +89,35 @@ export function MessageInput({ onSendMessage, onSendFile, onTyping, disabled = f
         const file = e.target.files?.[0]
         if (!file || !onSendFile || !recipientId) return
 
+        // Validate file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024 // 10MB
+        if (file.size > maxSize) {
+            alert('File is too large. Maximum size is 10MB.')
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            return
+        }
+
+        // Validate file type
+        const allowedTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'text/plain', 'text/csv',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ]
+
+        if (!allowedTypes.includes(file.type)) {
+            alert('File type not supported. Please upload images, PDFs, or documents.')
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            return
+        }
+
         try {
             setIsUploadingFile(true)
             await onSendFile(file, recipientId)
@@ -129,13 +158,13 @@ export function MessageInput({ onSendMessage, onSendFile, onTyping, disabled = f
                         type="file"
                         onChange={handleFileChange}
                         className="hidden"
-                        accept="image/*,.pdf,.doc,.docx,.txt"
+                        accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx"
                     />
                     <button
                         type="button"
                         onClick={handleFileSelect}
                         disabled={disabled || isSending || isUploadingFile}
-                        className="flex-shrink-0 h-12 w-12 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-beacon-purple disabled:opacity-50 flex items-center justify-center"
+                        className="flex-shrink-0 h-12 w-12 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-beacon-purple disabled:opacity-50 flex items-center justify-center transition-colors"
                     >
                         {isUploadingFile ? (
                             <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -154,7 +183,7 @@ export function MessageInput({ onSendMessage, onSendFile, onTyping, disabled = f
             <button
                 type="submit"
                 disabled={!message.trim() || disabled || isSending || isUploadingFile}
-                className="flex-shrink-0 h-12 w-12 rounded-full bg-beacon-purple text-white hover:bg-beacon-purple-dark focus:outline-none focus:ring-2 focus:ring-beacon-purple disabled:opacity-50 flex items-center justify-center"
+                className="flex-shrink-0 h-12 w-12 rounded-full bg-beacon-purple text-white hover:bg-beacon-purple-dark focus:outline-none focus:ring-2 focus:ring-beacon-purple disabled:opacity-50 flex items-center justify-center transition-colors"
             >
                 {isSending ? (
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

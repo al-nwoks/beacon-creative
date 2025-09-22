@@ -6,8 +6,8 @@ import { MessageBubble } from '@/components/messages/MessageBubble'
 import { MessageInput } from '@/components/messages/MessageInput'
 import { EnhancedLoadingSpinner } from '@/components/ui/EnhancedLoadingSpinner'
 import { useNotification } from '@/components/ui/NotificationProvider'
+import { useWebSocket } from '@/contexts/WebSocketContext'
 import { useMessagingAnalytics } from '@/hooks/usePostHog'
-import { useRealTimeMessages } from '@/hooks/useRealTimeMessages'
 import { clientFetcher } from '@/lib/api'
 import type { Message, User } from '@/types/api'
 import { useEffect, useRef, useState } from 'react'
@@ -24,12 +24,14 @@ export default function ConversationPage(props: any) {
     const [otherUser, setOtherUser] = useState<User | null>(null)
     const [conversationId, setConversationId] = useState<string>('')
 
-    const { messages: realTimeMessages, isTyping, typingUserId, isConnected, sendRealTimeMessage, sendTypingIndicator } = useRealTimeMessages(conversationId)
+    const { isConnected, sendMessage: sendWebSocketMessage, joinConversation, leaveConversation } = useWebSocket()
     const [messages, setMessages] = useState<Message[]>([])
     const [loading, setLoading] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
     const [hasMoreMessages, setHasMoreMessages] = useState(true)
     const [page, setPage] = useState(0)
+    const [isTyping, setIsTyping] = useState(false)
+    const [typingUserId, setTypingUserId] = useState<number | null>(null)
     const { showNotification } = useNotification()
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -85,6 +87,59 @@ export default function ConversationPage(props: any) {
             fetchOtherUser()
         }
     }, [id, currentUser, showNotification])
+
+    // WebSocket event listeners for real-time messaging
+    useEffect(() => {
+        const handleNewMessage = (event: CustomEvent) => {
+            const newMessage = event.detail as Message
+            setMessages(prev => [...prev, newMessage])
+            scrollToBottom()
+        }
+
+        const handleUserTyping = (event: CustomEvent) => {
+            const data = event.detail as { userId: number; conversationId: string }
+            if (data.conversationId === conversationId && conversationId) {
+                setIsTyping(true)
+                setTypingUserId(data.userId)
+            }
+        }
+
+        const handleUserStoppedTyping = (event: CustomEvent) => {
+            const data = event.detail as { userId: number; conversationId: string }
+            if (data.conversationId === conversationId && conversationId) {
+                setIsTyping(false)
+                setTypingUserId(null)
+            }
+        }
+
+        const handleMessageSent = (event: CustomEvent) => {
+            // Message sent confirmation - could be used for optimistic updates
+            console.log('Message sent confirmation:', event.detail)
+        }
+
+        window.addEventListener('new_message', handleNewMessage as EventListener)
+        window.addEventListener('user_typing', handleUserTyping as EventListener)
+        window.addEventListener('user_stopped_typing', handleUserStoppedTyping as EventListener)
+        window.addEventListener('message_sent', handleMessageSent as EventListener)
+
+        return () => {
+            window.removeEventListener('new_message', handleNewMessage as EventListener)
+            window.removeEventListener('user_typing', handleUserTyping as EventListener)
+            window.removeEventListener('user_stopped_typing', handleUserStoppedTyping as EventListener)
+            window.removeEventListener('message_sent', handleMessageSent as EventListener)
+        }
+    }, [conversationId])
+
+    // Join/leave conversation when conversation ID changes
+    useEffect(() => {
+        if (conversationId && isConnected) {
+            joinConversation(conversationId)
+
+            return () => {
+                leaveConversation(conversationId)
+            }
+        }
+    }, [conversationId, isConnected, joinConversation, leaveConversation])
 
     // Fetch messages function
     const fetchMessages = async (pageNum: number = 0, append: boolean = false) => {
@@ -166,12 +221,6 @@ export default function ConversationPage(props: any) {
         }
     }
 
-    // Use real-time messages instead of fetched messages
-    useEffect(() => {
-        if (realTimeMessages.length > 0) {
-            setMessages(realTimeMessages)
-        }
-    }, [realTimeMessages])
 
     // Scroll to bottom of messages
     useEffect(() => {
@@ -200,12 +249,26 @@ export default function ConversationPage(props: any) {
                 throw new Error('User ID is required')
             }
 
-            if (!isConnected) {
-                showNotification('Not connected to messaging service. Please wait and try again.', 'warning')
-                return
-            }
+            // Try WebSocket first, fallback to HTTP
+            if (isConnected) {
+                sendWebSocketMessage({
+                    type: 'send_message',
+                    content,
+                    recipient_id: parseInt(id)
+                })
+            } else {
+                // Fallback to HTTP API
+                await clientFetcher('/api/messages', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        recipient_id: id,
+                        content
+                    }),
+                })
 
-            sendRealTimeMessage(content, parseInt(id))
+                // Refresh messages to show the new message
+                await fetchMessages(0, false)
+            }
 
             // Track message sent
             trackMessageSent({
@@ -285,9 +348,19 @@ export default function ConversationPage(props: any) {
     }
 
     // Handle typing indicator
-    const handleTyping = (isTyping: boolean) => {
-        if (conversationId) {
-            sendTypingIndicator(isTyping)
+    const handleTyping = (isTypingNow: boolean) => {
+        if (conversationId && isConnected) {
+            if (isTypingNow) {
+                sendWebSocketMessage({
+                    type: 'typing',
+                    conversation_id: conversationId
+                })
+            } else {
+                sendWebSocketMessage({
+                    type: 'stop_typing',
+                    conversation_id: conversationId
+                })
+            }
         }
     }
 

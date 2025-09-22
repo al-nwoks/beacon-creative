@@ -156,6 +156,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
                             break
                         case 'message_sent':
                             // Message sent confirmation
+                            window.dispatchEvent(new CustomEvent('message_sent', { detail: data }))
                             break
                         case 'joined_conversation':
                             // Successfully joined conversation

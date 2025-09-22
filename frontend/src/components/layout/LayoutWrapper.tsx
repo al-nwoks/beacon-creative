@@ -21,7 +21,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     const isInternalDashboard = pathname?.startsWith('/dashboard') ||
         pathname?.startsWith('/creative-dashboard') ||
         pathname?.startsWith('/client-dashboard') ||
-        pathname?.startsWith('/admin')
+        pathname?.startsWith('/admin') ||
+        pathname?.startsWith('/notifications')
 
     // For auth and internal pages we still render children directly.
     // For public pages, do not render header/footer here — Shell handles chrome.

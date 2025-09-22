@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 // Helpers
 async function requireToken() {
@@ -23,7 +19,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!token) return res!
 
   const { id } = await context.params
-  const upstreamUrl = `${apiBase()}/gigs/${encodeURIComponent(id)}`
+  const upstreamUrl = `${getApiBase()}/gigs/${encodeURIComponent(id)}`
   try {
     const resp = await fetch(upstreamUrl, {
       method: 'GET',
@@ -56,7 +52,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try { payload = await request.json() } catch { return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 }) }
 
   try {
-    const resp = await fetch(`${apiBase()}/gigs/${encodeURIComponent(id)}`, {
+    const resp = await fetch(`${getApiBase()}/gigs/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
@@ -85,7 +81,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   if (!token) return res!
 
   try {
-    const resp = await fetch(`${apiBase()}/gigs/${encodeURIComponent(id)}`, {
+    const resp = await fetch(`${getApiBase()}/gigs/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
