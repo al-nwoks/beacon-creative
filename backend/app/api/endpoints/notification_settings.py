@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models.user import User
-from app.models.notification_setting import NotificationSetting
+from app.models.notification_setting import NotificationSetting as NotificationSettingModel
 from app.schemas.notification_setting import NotificationSetting, NotificationSettingUpdate
 from app.auth.dependencies import get_current_active_user_dependency
 from app.utils.performance import log_performance_metrics
@@ -28,14 +28,14 @@ def get_notification_settings(
     logger.info(f"Fetching notification settings for user ID: {current_user.id}")
     
     # Get or create notification settings for the user
-    notification_settings = db.query(NotificationSetting).filter(
-        NotificationSetting.user_id == current_user.id
+    notification_settings = db.query(NotificationSettingModel).filter(
+        NotificationSettingModel.user_id == current_user.id
     ).first()
     
     # If no settings exist, create default ones
     if not notification_settings:
         logger.info(f"No notification settings found for user {current_user.id}, creating defaults")
-        notification_settings = NotificationSetting(user_id=current_user.id)
+        notification_settings = NotificationSettingModel(user_id=current_user.id)
         db.add(notification_settings)
         db.commit()
         db.refresh(notification_settings)
@@ -61,14 +61,14 @@ def update_notification_settings(
     logger.debug(f"Update data: {notification_settings_in.dict(exclude_unset=True)}")
     
     # Get or create notification settings for the user
-    notification_settings = db.query(NotificationSetting).filter(
-        NotificationSetting.user_id == current_user.id
+    notification_settings = db.query(NotificationSettingModel).filter(
+        NotificationSettingModel.user_id == current_user.id
     ).first()
     
     # If no settings exist, create new ones
     if not notification_settings:
         logger.info(f"No notification settings found for user {current_user.id}, creating new ones")
-        notification_settings = NotificationSetting(
+        notification_settings = NotificationSettingModel(
             user_id=current_user.id,
             **notification_settings_in.dict(exclude_unset=True)
         )

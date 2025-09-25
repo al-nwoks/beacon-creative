@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+import uuid
 
 class NotificationSettingBase(BaseModel):
     email_gig_updates: Optional[bool] = True
@@ -23,7 +24,7 @@ class NotificationSettingUpdate(NotificationSettingBase):
     pass
 
 class NotificationSettingInDBBase(NotificationSettingBase):
-    id: int
+    id: uuid.UUID
     user_id: int
 
     class Config:

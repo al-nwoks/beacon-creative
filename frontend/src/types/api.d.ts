@@ -24,6 +24,7 @@ export interface User {
   skills?: string[]
   portfolio_links?: string[]
   portfolio_images?: string[]
+  company_name?: string | null
   // Profile stats
   gigs_count?: number
   followers_count?: number
@@ -60,6 +61,7 @@ export interface Gig {
     name: string
     email: string
     location?: string
+    company_name?: string
   }
   // add other fields returned by backend as needed
 }

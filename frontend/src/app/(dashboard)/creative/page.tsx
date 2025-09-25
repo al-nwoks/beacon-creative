@@ -160,12 +160,17 @@ export default async function CreativeDashboardPage() {
                                         <div key={application.id} className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                                                    <h3 className="text-lg font-semibold text-neutral-900 mb-1">
                                                         {typeof application.gig === 'object' && application.gig !== null
                                                             ? (application.gig as any).title || 'Untitled Gig'
                                                             : 'Gig'}
                                                     </h3>
-                                                    <p className="text-neutral-600 text-sm mb-3">
+                                                    {typeof application.gig === 'object' && application.gig !== null && (application.gig as any).client?.company_name && (
+                                                        <p className="text-neutral-600 text-sm mb-2">
+                                                            {(application.gig as any).client.company_name}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-neutral-600 text-sm mb-3 line-clamp-2">
                                                         {application.cover_letter}
                                                     </p>
                                                     <div className="flex items-center text-sm text-neutral-500">

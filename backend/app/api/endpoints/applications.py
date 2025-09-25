@@ -10,7 +10,7 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.gig import Gig
 from app.models.application import Application
-from app.schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationWithCreative
+from app.schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationWithCreative, ApplicationWithGig, ApplicationWithDetails
 from app.auth.dependencies import get_current_active_user_dependency, get_current_creative_user, get_current_client_user
 from app.utils.performance import log_performance_metrics, log_query_performance
 
@@ -309,4 +309,95 @@ def update_application(
     db.refresh(application)
     
     logger.info(f"Application {application_id} updated successfully by user {current_user.id}")
+    return application
+
+
+@router.get("/me/with-gig", response_model=List[ApplicationWithGig])
+def get_my_applications_with_gig(
+    *,
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_creative_user)
+) -> Any:
+    """
+    Get current user's applications with gig information.
+    Only creatives can view their own applications.
+    """
+    logger.info(f"Fetching applications with gig info for creative user {current_user.id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    query = db.query(Application).filter(Application.creative_id == current_user.id)
+    
+    # Apply pagination
+    applications = query.offset(skip).limit(limit).all()
+    logger.debug(f"Found {len(applications)} applications for creative user {current_user.id}")
+    return applications
+
+
+@router.get("/client/me/with-gig", response_model=List[ApplicationWithGig])
+def get_client_applications_with_gig(
+    *,
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_client_user)
+) -> Any:
+    """
+    Get applications to current client's gigs with gig information.
+    Only clients can view applications to their gigs.
+    """
+    logger.info(f"Fetching applications with gig info for client user {current_user.id}")
+    logger.debug(f"Pagination parameters: skip={skip}, limit={limit}")
+    
+    # Get applications for gigs owned by this client
+    query = db.query(Application).join(Gig).filter(Gig.client_id == current_user.id)
+    
+    # Apply pagination
+    applications = query.offset(skip).limit(limit).all()
+    logger.debug(f"Found {len(applications)} applications for client user {current_user.id}")
+    return applications
+
+
+@router.get("/{application_id}/with-details", response_model=ApplicationWithDetails)
+def get_application_with_details(
+    *,
+    db: Session = Depends(get_db),
+    application_id: str,
+    current_user: User = get_current_active_user_dependency
+) -> Any:
+    """
+    Get a specific application by ID with both creative and gig information.
+    """
+    logger.info(f"Fetching application {application_id} with details for user {current_user.id}")
+    
+    # Convert string ID to UUID
+    try:
+        application_id_uuid = uuid.UUID(application_id)
+    except ValueError:
+        logger.warning(f"Invalid application ID format: {application_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid application ID format",
+        )
+    
+    # Get the application
+    application = db.query(Application).filter(Application.id == application_id_uuid).first()
+    if not application:
+        logger.warning(f"Application {application_id} not found for user {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found",
+        )
+    
+    # Check permissions (only the applicant or the gig owner can view)
+    gig = db.query(Gig).filter(Gig.id == application.gig_id).first()
+    if application.creative_id != current_user.id and gig.client_id != current_user.id:
+        logger.warning(f"User {current_user.id} attempted to access application {application_id} without permission")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions to access this application",
+        )
+    
+    logger.info(f"Application {application_id} with details found for user {current_user.id}")
     return application

@@ -1,12 +1,14 @@
 from sqlalchemy import Column, Integer, Boolean, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
 
 from app.db.database import Base
 
 class NotificationSetting(Base):
     __tablename__ = "notification_settings"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     
     # Email notification preferences

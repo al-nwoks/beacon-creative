@@ -35,11 +35,13 @@ def get_current_user_info(
     from sqlalchemy.orm import joinedload
     user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
     
-    # Load notification settings to ensure they exist
-    try:
-        user_with_settings.get_notification_settings(db)
-    except Exception as e:
-        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    # Ensure notification settings exist
+    if not user_with_settings.notification_settings:
+        from app.models.notification_setting import NotificationSetting
+        notification_settings = NotificationSetting(user_id=user_with_settings.id)
+        db.add(notification_settings)
+        db.commit()
+        db.refresh(user_with_settings)
     
     return user_with_settings
 
@@ -88,11 +90,13 @@ def update_current_user(
     from sqlalchemy.orm import joinedload
     user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
     
-    # Load notification settings to ensure they exist
-    try:
-        user_with_settings.get_notification_settings(db)
-    except Exception as e:
-        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    # Ensure notification settings exist
+    if not user_with_settings.notification_settings:
+        from app.models.notification_setting import NotificationSetting
+        notification_settings = NotificationSetting(user_id=user_with_settings.id)
+        db.add(notification_settings)
+        db.commit()
+        db.refresh(user_with_settings)
     
     return user_with_settings
 
@@ -176,11 +180,13 @@ async def upload_avatar(
     from sqlalchemy.orm import joinedload
     user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
     
-    # Load notification settings to ensure they exist
-    try:
-        user_with_settings.get_notification_settings(db)
-    except Exception as e:
-        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    # Ensure notification settings exist
+    if not user_with_settings.notification_settings:
+        from app.models.notification_setting import NotificationSetting
+        notification_settings = NotificationSetting(user_id=user_with_settings.id)
+        db.add(notification_settings)
+        db.commit()
+        db.refresh(user_with_settings)
     
     return user_with_settings
 
@@ -202,11 +208,13 @@ def get_user_by_id(
             detail="User not found",
         )
     
-    # Load notification settings to ensure they exist
-    try:
-        user.get_notification_settings(db)
-    except Exception as e:
-        logger.error(f"Error loading notification settings for user {user.id}: {str(e)}")
+    # Ensure notification settings exist
+    if not user.notification_settings:
+        from app.models.notification_setting import NotificationSetting
+        notification_settings = NotificationSetting(user_id=user.id)
+        db.add(notification_settings)
+        db.commit()
+        db.refresh(user)
     
     return user
 
@@ -255,10 +263,12 @@ def change_password(
     from sqlalchemy.orm import joinedload
     user_with_settings = db.query(User).options(joinedload(User.notification_settings)).filter(User.id == current_user.id).first()
     
-    # Load notification settings to ensure they exist
-    try:
-        user_with_settings.get_notification_settings(db)
-    except Exception as e:
-        logger.error(f"Error loading notification settings for user {current_user.id}: {str(e)}")
+    # Ensure notification settings exist
+    if not user_with_settings.notification_settings:
+        from app.models.notification_setting import NotificationSetting
+        notification_settings = NotificationSetting(user_id=user_with_settings.id)
+        db.add(notification_settings)
+        db.commit()
+        db.refresh(user_with_settings)
     
     return user_with_settings

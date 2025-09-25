@@ -1,8 +1,8 @@
-"""Complete schema migration
+"""Complete schema migration (consolidated)
 
 Revision ID: 001
-Revises: 
-Create Date: 2025-09-17 16:46:00.000000
+Revises:
+Create Date: 2025-09-22 12:38:00.000000
 
 """
 from alembic import op
@@ -44,6 +44,7 @@ def upgrade() -> None:
     sa.Column('reviews_count', sa.Integer(), nullable=True),
     sa.Column('rating', sa.Float(), nullable=True),
     sa.Column('creative_type', sa.String(), nullable=True),
+    sa.Column('company_name', sa.String(), nullable=True),  # Added from migration 004
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('last_login', sa.DateTime(), nullable=True),
@@ -73,7 +74,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_gigs_id'), 'gigs', ['id'], unique=False)
     
-    # Create applications table (includes updated_at from migration 002)
+    # Create applications table
     op.create_table('applications',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('gig_id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -83,7 +84,7 @@ def upgrade() -> None:
     sa.Column('proposed_timeline_weeks', sa.Integer(), nullable=True),
     sa.Column('status', sa.Enum('pending', 'accepted', 'rejected', name='application_status'), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),  # Added from migration 002
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['creative_id'], ['users.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['gig_id'], ['gigs.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
@@ -100,11 +101,16 @@ def upgrade() -> None:
     sa.Column('application_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('content', sa.String(), nullable=False),
     sa.Column('is_read', sa.Boolean(), nullable=True),
+    sa.Column('is_pinned', sa.Boolean(), nullable=False, default=False),  # Added from migration 002
+    sa.Column('is_favorite', sa.Boolean(), nullable=False, default=False),  # Added from migration 002
+    sa.Column('reactions', sa.JSON(), nullable=False, default=dict),  # Added from migration 002
+    sa.Column('forwarded_from_id', postgresql.UUID(as_uuid=True), nullable=True),  # Added from migration 002
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['application_id'], ['applications.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['gig_id'], ['gigs.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['recipient_id'], ['users.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['sender_id'], ['users.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['forwarded_from_id'], ['messages.id'], ondelete='SET NULL'),  # Added from migration 002
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_messages_id'), 'messages', ['id'], unique=False)
@@ -181,7 +187,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_notification_settings_id'), 'notification_settings', ['id'], unique=False)
     
-    # Create audit_logs table (from migration 003)
+    # Create audit_logs table
     op.create_table('audit_logs',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('admin_user_id', sa.Integer(), nullable=False),

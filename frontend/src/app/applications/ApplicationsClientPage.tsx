@@ -43,12 +43,11 @@ export default function ApplicationsClientPage() {
                 let applicationsData: Application[]
 
                 if (user.role === 'creative') {
-                    // For creatives, get their applications
-                    applicationsData = await clientFetcher(`/api/applications/me?skip=${skip}&limit=${limit}`)
+                    // For creatives, get their applications with gig info
+                    applicationsData = await clientFetcher(`/api/applications/me/with-gig?skip=${skip}&limit=${limit}`)
                 } else if (user.role === 'client') {
-                    // For clients, get applications to their gigs
-                    // We'll need to implement this endpoint or get all applications for client's gigs
-                    applicationsData = await clientFetcher(`/api/applications/client/me?skip=${skip}&limit=${limit}`)
+                    // For clients, get applications to their gigs with gig info
+                    applicationsData = await clientFetcher(`/api/applications/client/me/with-gig?skip=${skip}&limit=${limit}`)
                 } else {
                     throw new Error('Invalid user role')
                 }
@@ -145,11 +144,18 @@ export default function ApplicationsClientPage() {
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <div className="flex items-start justify-between mb-3">
-                                                    <h2 className="text-xl font-semibold text-neutral-900">
-                                                        {typeof application.gig === 'object' && application.gig !== null
-                                                            ? (application.gig as any).title || 'Untitled Gig'
-                                                            : 'Gig'}
-                                                    </h2>
+                                                    <div>
+                                                        <h2 className="text-xl font-semibold text-neutral-900">
+                                                            {typeof application.gig === 'object' && application.gig !== null
+                                                                ? (application.gig as any).title || 'Untitled Gig'
+                                                                : 'Gig'}
+                                                        </h2>
+                                                        {typeof application.gig === 'object' && application.gig !== null && (application.gig as any).client?.company_name && (
+                                                            <p className="text-neutral-600 text-sm">
+                                                                {((application.gig as any).client as any).company_name}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
                                                         {application.status}
                                                     </span>

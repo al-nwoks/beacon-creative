@@ -68,7 +68,7 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
       // For /api/notification-settings/me, call the backend directly
       if (path === '/api/notification-settings/me') {
           const backendUrl = API_BASE || 'http://backend:8000';
-          const url = `${backendUrl}/api/v1/notification-settings/me`;
+          const url = `${backendUrl}/api/v1/notification-settings/`;
           logger.debug(`Making direct backend call to: ${url}`)
           const res = await fetch(url, {
               cache: 'no-store',

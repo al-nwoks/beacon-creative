@@ -11,6 +11,7 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
+    company_name: Optional[str] = None
     hourly_rate: Optional[int] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None

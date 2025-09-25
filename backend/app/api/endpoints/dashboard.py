@@ -15,7 +15,7 @@ from app.models.message import Message
 from app.models.payment import Payment
 from app.auth.dependencies import get_current_active_user_dependency
 from app.schemas.gig import Gig as GigSchema
-from app.schemas.application import ApplicationWithCreative
+from app.schemas.application import ApplicationWithCreative, ApplicationWithGig
 from app.utils.performance import log_performance_metrics
 
 logger = logging.getLogger(__name__)
@@ -269,17 +269,17 @@ def get_creative_dashboard_stats(
         logger.error(f"Error fetching creative dashboard stats for user {current_user.id}: {str(e)}")
         raise
 
-@router.get("/creative/recent-applications", response_model=List[ApplicationWithCreative])
+@router.get("/creative/recent-applications", response_model=List[ApplicationWithGig])
 def get_creative_recent_applications(
     limit: int = 5,
     db: Session = Depends(get_db),
     current_user: User = get_current_active_user_dependency
 ) -> Any:
     """
-    Get recent applications for creative users.
+    Get recent applications for creative users with gig information.
     """
     start_time = time.time()
-    logger.info(f"Fetching recent applications for creative user {current_user.id}")
+    logger.info(f"Fetching recent applications with gig info for creative user {current_user.id}")
     
     try:
         applications = db.query(Application).filter(

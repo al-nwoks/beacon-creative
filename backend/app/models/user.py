@@ -26,6 +26,7 @@ class User(Base):
     bio = Column(Text)
     location = Column(String)
     profile_image_url = Column(String)
+    company_name = Column(String)  # For clients
     hourly_rate = Column(Integer)  # For creatives
     skills = Column(ARRAY(String))  # For creatives
     portfolio_links = Column(ARRAY(String))  # For creatives

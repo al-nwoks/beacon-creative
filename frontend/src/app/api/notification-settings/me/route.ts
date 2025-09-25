@@ -10,7 +10,7 @@ async function getToken() {
 
 /**
  * GET /api/notification-settings/me
- * Server-side proxy to backend /api/v1/notification-settings/me.
+ * Server-side proxy to backend /api/v1/notification-settings/.
  * Reads token from HttpOnly cookie (access_token) and forwards as Bearer auth.
  * Returns JSON payload from upstream or a suitable error.
  */
@@ -53,7 +53,7 @@ export async function GET() {
 
 /**
  * PUT /api/notification-settings/me
- * Server-side proxy to backend /api/v1/notification-settings/me for updates.
+ * Server-side proxy to backend /api/v1/notification-settings/ for updates.
  * Reads token from HttpOnly cookie (access_token) and forwards as Bearer auth.
  * Accepts JSON payload and forwards to backend.
  */

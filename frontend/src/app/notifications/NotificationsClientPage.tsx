@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useWebSocket } from '@/contexts/WebSocketContext'
 import { useNotifications } from '@/hooks/apiHooks'
-import { clientFetcher } from '@/lib/api'
+import { clientFetcher, notificationSettingsAPI } from '@/lib/api'
 import type { Notification, NotificationSetting } from '@/types/api'
 import { useEffect, useState } from 'react'
 import { NotificationSettingsPanel } from './NotificationSettingsPanel'
@@ -64,9 +64,7 @@ export const NotificationsClientPage = () => {
     useEffect(() => {
         const loadSettings = async () => {
             try {
-                const data = await clientFetcher('/api/notification-settings', {
-                    method: 'GET'
-                })
+                const data = await notificationSettingsAPI.getNotificationSettings()
                 setNotificationSettings(data)
             } catch (error) {
                 console.error('Error loading notification settings:', error)
@@ -80,10 +78,7 @@ export const NotificationsClientPage = () => {
 
     const handleSettingsUpdate = async (updates: Partial<NotificationSetting>) => {
         try {
-            const updatedSettings = await clientFetcher('/api/notification-settings', {
-                method: 'PUT',
-                body: JSON.stringify(updates)
-            })
+            const updatedSettings = await notificationSettingsAPI.updateNotificationSettings(updates)
             setNotificationSettings(updatedSettings)
         } catch (error) {
             console.error('Error updating notification settings:', error)
