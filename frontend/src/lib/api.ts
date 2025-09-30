@@ -65,6 +65,19 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
           return handleResponse(res)
       }
       
+      // For /api/users/upload-avatar, call the backend directly
+      if (path === '/api/users/upload-avatar') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/upload-avatar`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              cache: 'no-store',
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
       // For /api/notification-settings/me, call the backend directly
       if (path === '/api/notification-settings/me') {
           const backendUrl = API_BASE || 'http://backend:8000';
@@ -118,7 +131,56 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
   
   // If the input is a frontend API route (starts with /api/ but not /api/v1/), handle it locally
   if (typeof input === 'string' && input.startsWith('/api/') && !input.startsWith('/api/v1/')) {
-    // For frontend API routes, make a direct fetch to the local server
+      // For /api/users/me, call the backend directly
+      if (input === '/api/users/me') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/me`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/users/upload-avatar, call the backend directly
+      if (input === '/api/users/upload-avatar') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/upload-avatar`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              headers: {
+                  Accept: 'application/json',
+                  // For FormData, don't set Content-Type (browser handles boundary)
+                  ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+                  // Spread original headers, excluding Content-Type for FormData
+                  ...(init && (init as any).headers ?
+                      Object.fromEntries(
+                          Object.entries((init as any).headers).filter(
+                              ([key]) => key.toLowerCase() !== 'content-type'
+                          )
+                      ) : {}
+                  ),
+              },
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/notification-settings/me, call the backend directly
+      if (input === '/api/notification-settings/me') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/notification-settings/`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+    // For other frontend API routes, make a direct fetch to the local server
     const url = `${window.location.origin}${input}`;
     logger.debug(`Making local frontend API call to: ${url}`)
     const res = await fetch(url, {
@@ -133,7 +195,8 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
             Object.entries((init as any).headers).filter(
               ([key]) => key.toLowerCase() !== 'content-type'
             )
-          ) : {}),
+          )
+        : {}),
         // For non-FormData requests, spread all original headers
         ...(!isFormData && init && (init as any).headers ? (init as any).headers : {}),
       },
@@ -146,7 +209,6 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
     typeof input === 'string' && !input.startsWith('http')
       ? `${API_BASE}/api/v1${input.startsWith('/') ? input : `/${input}`}`
       : (input as string)
-
   logger.debug(`Making client API call to: ${url}`)
   const res = await fetch(url, {
     credentials: 'include',
