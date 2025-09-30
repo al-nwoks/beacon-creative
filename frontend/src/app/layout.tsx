@@ -1,7 +1,9 @@
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { PageTransitionLayout } from '@/components/layout/PageTransitionLayout'
-import Shell from '@/components/layout/Shell'
+import { Shell } from '@/components/layout/Shell'
 import { NotificationProvider } from '@/components/ui/NotificationProvider'
+import { WebSocketProvider } from '@/contexts/WebSocketContext'
+import { PostHogProvider } from '@/providers/PostHogProvider'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
@@ -21,8 +23,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'B3ACON Creative Connect',
-  description: 'Connect with top creative talent and clients through a seamless platform for project management, collaboration, and discovery.',
-  keywords: ['creative', 'freelance', 'project management', 'collaboration', 'talent'],
+  description: 'Connect with top creative talent and clients through a seamless platform for gig management, collaboration, and discovery.',
+  keywords: ['creative', 'freelance', 'gig management', 'collaboration', 'talent'],
   authors: [{ name: 'B3ACON Team' }],
 }
 
@@ -30,7 +32,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
 }
-
 
 export default function RootLayout({
   children,
@@ -40,14 +41,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body>
-        <NotificationProvider>
-          <PageTransitionLayout>
-            {/* Global Shell wraps LayoutWrapper — internal pages can use SimplifiedLayout to opt out */}
-            <Shell>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </Shell>
-          </PageTransitionLayout>
-        </NotificationProvider>
+        <PostHogProvider>
+          <NotificationProvider>
+            <WebSocketProvider>
+              <PageTransitionLayout>
+                {/* Global Shell wraps LayoutWrapper — internal pages can use SimplifiedLayout to opt out */}
+                <Shell>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                </Shell>
+              </PageTransitionLayout>
+            </WebSocketProvider>
+          </NotificationProvider>
+        </PostHogProvider>
       </body>
     </html>
   )

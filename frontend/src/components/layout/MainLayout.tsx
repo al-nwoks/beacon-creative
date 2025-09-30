@@ -1,7 +1,7 @@
 'use client'
 
 import PublicFooter from '@/components/layout/PublicFooter'
-import PublicHeader from '@/components/layout/PublicHeader'
+import { PublicHeader } from '@/components/layout/PublicHeader'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { BottomNav } from './BottomNav'

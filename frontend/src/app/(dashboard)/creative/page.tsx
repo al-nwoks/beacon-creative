@@ -1,29 +1,26 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import JobCard from '@/components/dashboard/JobCard'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import Button from '@/components/ui/Button'
-import type { MessageSummary, Project, User } from '@/types/api'
-import { Briefcase, DollarSign, MessageSquare, Users } from 'lucide-react'
+import type { Application } from '@/types/api'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
     title: 'Creative Dashboard | B3ACON Creative Connect',
-    description: 'Manage your profile, projects, and applications.',
+    description: 'Find gigs and manage your creative portfolio.',
 }
 
 export default async function CreativeDashboardPage() {
-    // Server-side initial data fetch (hybrid approach)
-    let user: User | null = null
     let stats = [
-        { label: 'Active Applications', value: '0', icon: Briefcase, color: 'text-beacon-blue' },
-        { label: 'Earnings', value: '$0', icon: DollarSign, color: 'text-beacon-green' },
-        { label: 'Completed Projects', value: '0', icon: Users, color: 'text-beacon-purple' },
-        { label: 'Messages', value: '0', icon: MessageSquare, color: 'text-beacon-orange' },
+        { label: 'Active Applications', value: '0', change: '' },
+        { label: 'Total Earned', value: '$0', change: '' },
+        { label: 'Completed Gigs', value: '0', change: '' },
+        { label: 'Success Rate', value: '0%', change: '' },
     ]
 
-    let recentProjects: Project[] = []
-    let recentMessages: MessageSummary[] = []
+    let recentApplications: Application[] = []
+    let recentActivity: any[] = []
+    let error: string | null = null
 
     try {
         // Fetch data directly from backend API
@@ -36,266 +33,191 @@ export default async function CreativeDashboardPage() {
             const base = rawBase.replace(/\/+$/, '')
             const apiBase = /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
 
-            // Fetch all data in parallel
-            const [userResp, projectsResp, appsResp, messagesResp, paymentsResp] = await Promise.allSettled([
-                fetch(`${apiBase}/users/me`, {
+            // Fetch dashboard stats
+            try {
+                const statsResp = await fetch(`${apiBase}/dashboard/creative/stats`, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: 'application/json'
                     },
                     cache: 'no-store',
-                }),
-                fetch(`${apiBase}/projects?limit=6`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json'
-                    },
-                    cache: 'no-store',
-                }),
-                fetch(`${apiBase}/applications/me?limit=6&status=accepted`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json'
-                    },
-                    cache: 'no-store',
-                }),
-                fetch(`${apiBase}/messages/conversations?limit=6`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json'
-                    },
-                    cache: 'no-store',
-                }),
-                fetch(`${apiBase}/payments/me`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json'
-                    },
-                    cache: 'no-store',
-                }),
-            ])
+                })
 
-            if (userResp.status === 'fulfilled' && userResp.value.ok) {
-                user = await userResp.value.json() as User
+                if (statsResp.ok) {
+                    const statsData = await statsResp.json()
+                    if (statsData) {
+                        stats = [
+                            { label: 'Active Applications', value: String(statsData.active_applications || 0), change: '' },
+                            { label: 'Total Earned', value: `$${statsData.total_earned?.toLocaleString() || 0}`, change: '' },
+                            { label: 'Completed Gigs', value: String(statsData.completed_gigs || 0), change: '' },
+                            { label: 'Success Rate', value: `${statsData.success_rate || 0}%`, change: '' },
+                        ]
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch creative stats', err)
             }
 
-            if (projectsResp.status === 'fulfilled' && projectsResp.value.ok) {
-                const projectsData = await projectsResp.value.json()
-                if (Array.isArray(projectsData)) {
-                    recentProjects = projectsData as Project[]
+            // Fetch recent applications
+            try {
+                const applicationsResp = await fetch(`${apiBase}/dashboard/creative/recent-applications`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
+
+                if (applicationsResp.ok) {
+                    const applicationsData = await applicationsResp.json()
+                    if (Array.isArray(applicationsData)) {
+                        recentApplications = applicationsData as Application[]
+                    }
                 }
+            } catch (err) {
+                console.error('Failed to fetch recent applications', err)
             }
 
-            if (appsResp.status === 'fulfilled' && appsResp.value.ok) {
-                const appsData = await appsResp.value.json()
-                if (Array.isArray(appsData)) {
-                    const apps = appsData as any[]
-                    const appsCount = apps.length
-                    if (stats[0]) stats[0].value = String(appsCount)
+            // Fetch recent activity
+            try {
+                const activityResp = await fetch(`${apiBase}/dashboard/creative/recent-activity`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json'
+                    },
+                    cache: 'no-store',
+                })
 
-                    // Calculate completed projects from accepted applications
-                    // For now, we'll assume all accepted applications are for completed projects
-                    // In a real implementation, we would check the project status
-                    const completedProjectsCount = apps.filter((app: any) => app.status === 'accepted').length
-                    if (stats[2]) stats[2].value = String(completedProjectsCount)
+                if (activityResp.ok) {
+                    const activityData = await activityResp.json()
+                    if (Array.isArray(activityData)) {
+                        recentActivity = activityData
+                    }
                 }
-            }
-
-            if (messagesResp.status === 'fulfilled' && messagesResp.value.ok) {
-                const messagesData = await messagesResp.value.json()
-                if (Array.isArray(messagesData)) {
-                    recentMessages = messagesData as MessageSummary[]
-                    const messagesCount = recentMessages.length
-                    if (stats[3]) stats[3].value = String(messagesCount)
-                }
-            }
-
-            // Calculate earnings from payments
-            if (paymentsResp.status === 'fulfilled' && paymentsResp.value.ok) {
-                const paymentsData = await paymentsResp.value.json()
-                if (Array.isArray(paymentsData)) {
-                    const payments = paymentsData as any[]
-                    const earnings = payments
-                        .filter((payment: any) => payment.status === 'released')
-                        .reduce((sum: number, payment: any) => sum + payment.amount, 0)
-                    if (stats[1]) stats[1].value = `$${earnings.toFixed(2)}`
-                }
+            } catch (err) {
+                console.error('Failed to fetch recent activity', err)
             }
         }
     } catch (err) {
-        // Log on server; page will render with fallback/mock data
-        console.error('Initial dashboard fetch failed', err)
+        console.error('Failed to fetch dashboard data', err)
+        error = 'Failed to load dashboard data'
+    }
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'accepted':
+                return 'bg-green-100 text-green-800'
+            case 'rejected':
+                return 'bg-red-100 text-red-800'
+            default:
+                return 'bg-yellow-100 text-yellow-800'
+        }
     }
 
     return (
         <ProtectedRoute requiredRole="creative">
-            <SimplifiedLayout userType="creative" showSearch={false}>
+            <SimplifiedLayout userType="creative">
                 <main className="container mx-auto px-4 py-8">
-                    {/* Welcome Banner (beacon purple gradient) */}
-                    <div className="rounded-lg overflow-hidden mb-8 shadow-sm">
-                        <div className="bg-gradient-to-r from-beacon-purple to-beacon-purple-dark p-8">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div>
-                                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
-                                        Welcome to B3ACON
-                                    </h1>
-                                    <p className="text-beacon-purple-light max-w-xl">
-                                        Connect with top creative talent and exciting opportunities worldwide.
-                                    </p>
-                                    {user?.created_at && (
-                                        <p className="text-sm text-beacon-purple-light mt-3">
-                                            Member since {new Date(user.created_at).toLocaleDateString()}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Link href="/profile">
-                                        <Button className="bg-white text-beacon-purple hover:bg-neutral-100" size="md">
-                                            Complete Your Profile
-                                        </Button>
-                                    </Link>
-                                    <Button variant="outline" className="border-white text-white hidden md:inline-flex">
-                                        <span className="mr-2">🔍</span> Filter
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Welcome Section */}
+                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8 mb-8">
+                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Welcome back!</h1>
+                        <p className="text-neutral-600">Find gigs and manage your creative work from this dashboard.</p>
                     </div>
 
-                    {/* Statistics Cards */}
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                            <p className="text-red-800">{error}</p>
+                        </div>
+                    )}
+
+                    {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {stats.map((stat, index) => (
                             <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-neutral-200">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-neutral-600">{stat.label}</p>
-                                        <p className="text-2xl font-bold text-neutral-900 mt-1">{stat.value}</p>
-                                    </div>
-                                    <div className={`p-3 rounded-full bg-neutral-100 ${stat.color}`}>
-                                        <stat.icon className="h-6 w-6" />
-                                    </div>
-                                </div>
+                                <p className="text-sm font-medium text-neutral-600">{stat.label}</p>
+                                <p className="text-2xl font-bold text-neutral-900 mt-1">{stat.value}</p>
+                                <p className="text-xs text-neutral-500 mt-2">{stat.change}</p>
                             </div>
                         ))}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Recent Projects */}
+                        {/* Recent Applications */}
                         <div className="lg:col-span-2">
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-semibold text-neutral-900">Available Projects</h2>
-                                    <Link href="/projects">
+                                    <h2 className="text-xl font-semibold text-neutral-900">Recent Applications</h2>
+                                    <Link href="/applications">
                                         <Button variant="outline" size="sm">View All</Button>
                                     </Link>
                                 </div>
                                 <div className="space-y-4">
-                                    {recentProjects.length > 0 ? (
-                                        recentProjects.map((project) => {
-                                            // cast to any to avoid strict backend Project differences and safely coerce fields
-                                            const p: any = project as any
-                                            return (
-                                                <JobCard
-                                                    key={String(p.id)}
-                                                    id={String(p.id)}
-                                                    title={p.title ?? 'Untitled project'}
-                                                    company={p.client?.name ?? p.company ?? 'Client'}
-                                                    description={p.description ?? ''}
-                                                    location={p.location ?? p.city ?? ''}
-                                                    budget_min={typeof p.budget_min === 'number' ? p.budget_min : undefined}
-                                                    budget_max={typeof p.budget_max === 'number' ? p.budget_max : undefined}
-                                                    required_skills={Array.isArray(p.skills) ? p.skills : (p.required_skills ?? [])}
-                                                    deadline={p.deadline ?? undefined}
-                                                    created_at={p.created_at ?? new Date().toISOString()}
-                                                    showApplyButton={true}
-                                                />
-                                            )
-                                        })
-                                    ) : (
-                                        <p className="text-neutral-600">No available projects at the moment.</p>
-                                    )}
+                                    {recentApplications.map((application: any) => (
+                                        <div key={application.id} className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-neutral-900 mb-1">
+                                                        {typeof application.gig === 'object' && application.gig !== null
+                                                            ? (application.gig as any).title || 'Untitled Gig'
+                                                            : 'Gig'}
+                                                    </h3>
+                                                    {typeof application.gig === 'object' && application.gig !== null && (application.gig as any).client?.company_name && (
+                                                        <p className="text-neutral-600 text-sm mb-2">
+                                                            {(application.gig as any).client.company_name}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-neutral-600 text-sm mb-3 line-clamp-2">
+                                                        {application.cover_letter}
+                                                    </p>
+                                                    <div className="flex items-center text-sm text-neutral-500">
+                                                        <span>Applied {application.applied_at ? new Date(application.applied_at).toLocaleDateString() : 'Unknown date'}</span>
+                                                        <span className="mx-2">•</span>
+                                                        <span>
+                                                            Proposed: ${application.proposed_budget} in {application.proposed_timeline_weeks} weeks
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
+                                                    {application.status}
+                                                </span>
+                                            </div>
+                                            <div className="mt-4">
+                                                <Link href={`/gigs/${typeof application.gig === 'object' && application.gig !== null ? application.gig.id : application.gig || ''}`} className="text-beacon-purple hover:underline text-sm font-medium">
+                                                    View Gig Details
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Sidebar */}
-                        <div className="space-y-6">
-                            {/* Quick Actions */}
+                        {/* Recent Activity */}
+                        <div>
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h3>
-                                <div className="space-y-3">
-                                    <Link href="/projects" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <Briefcase className="h-4 w-4" />
-                                            Browse Projects
-                                        </Button>
-                                    </Link>
-                                    <Link href="/applications" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <Users className="h-4 w-4" />
-                                            My Applications
-                                        </Button>
-                                    </Link>
-                                    <Link href="/messages" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <MessageSquare className="h-4 w-4" />
-                                            View Messages
-                                        </Button>
-                                    </Link>
-                                    <Link href="/profile" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <DollarSign className="h-4 w-4" />
-                                            Profile Settings
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </div>
-
-                            {/* Recent Messages */}
-                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Messages</h3>
+                                <h2 className="text-xl font-semibold text-neutral-900 mb-6">Recent Activity</h2>
                                 <div className="space-y-4">
-                                    {recentMessages.length > 0 ? (
-                                        recentMessages.map((message) => (
-                                            <div key={message.id} className="flex items-start space-x-3">
-                                                <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-10 h-10 flex-shrink-0" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-neutral-900 truncate">{message.name}</p>
-                                                    <p className="text-sm text-neutral-600 truncate">{message.preview || 'No message preview'}</p>
-                                                    <p className="text-xs text-neutral-500 mt-1">{message.time || 'Unknown time'}</p>
-                                                </div>
-                                                {message.unread && (
-                                                    <div className="w-2 h-2 bg-beacon-purple rounded-full flex-shrink-0 mt-2"></div>
-                                                )}
+                                    {recentActivity.map((activity, index) => (
+                                        <div key={index} className="flex items-start">
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="h-2 w-2 rounded-full bg-beacon-purple"></div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-neutral-600">No recent messages.</p>
-                                    )}
+                                            <div className="ml-3">
+                                                <p className="text-sm text-neutral-900">
+                                                    <span className="font-medium">{activity.action}</span> for <span className="font-medium">{activity.gig}</span>
+                                                </p>
+                                                <p className="text-xs text-neutral-500">{activity.time}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <Link href="/messages" className="block mt-4">
-                                    <Button variant="outline" size="sm" fullWidth>View All Messages</Button>
-                                </Link>
-                            </div>
-
-                            {/* Settings */}
-                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Settings</h3>
-                                <div className="space-y-3">
-                                    <Link href="/profile" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <span className="text-sm font-medium">Profile Settings</span>
-                                        </Button>
-                                    </Link>
-                                    <Link href="/settings" className="block">
-                                        <Button variant="outline" fullWidth className="justify-start gap-3">
-                                            <span className="text-sm font-medium">Account Settings</span>
-                                        </Button>
+                                <div className="mt-6">
+                                    <Link href="/gigs" className="block w-full">
+                                        <Button variant="primary" fullWidth>Browse Gigs</Button>
                                     </Link>
                                 </div>
                             </div>

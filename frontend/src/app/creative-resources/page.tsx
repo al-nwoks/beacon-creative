@@ -189,7 +189,7 @@ export default function CreativeResources() {
                                 </div>
                             </div>
                             <p className="text-neutral-700 mb-6">
-                                &ldquo;The portfolio building guide helped me redesign my portfolio, which led to a 40% increase in project inquiries.&rdquo;
+                                &ldquo;The portfolio building guide helped me redesign my portfolio, which led to a 40% increase in gig inquiries.&rdquo;
                             </p>
                             <div className="flex items-center">
                                 <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
@@ -233,7 +233,7 @@ export default function CreativeResources() {
                                 </div>
                             </div>
                             <p className="text-neutral-700 mb-6">
-                                &ldquo;The client communication webinar transformed how I work with clients and reduced project revisions by 60%.&rdquo;
+                                &ldquo;The client communication webinar transformed how I work with clients and reduced gig revisions by 60%.&rdquo;
                             </p>
                             <div className="flex items-center">
                                 <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />

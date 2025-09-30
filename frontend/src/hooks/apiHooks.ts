@@ -5,8 +5,8 @@
  * Uses the centralized clientFetcher from '@/lib/api' (via fetcher wrapper).
  *
  * Hooks provided:
- * - useProjects
- * - useProject (client-side details / for optimistic updates)
+ * - useGigs
+ * - useGig (client-side details / for optimistic updates)
  * - useMessages
  * - useApplications
  * - usePayments
@@ -21,11 +21,11 @@
 
 import { fetcher } from '@/hooks/useSWRFetcher'
 import { clientFetcher } from '@/lib/api'
-import type { Application, DashboardSummary, MessageSummary, MessageWithSender, Notification, Payment, Project, User } from '@/types/api'
+import type { Application, DashboardSummary, Gig, MessageSummary, MessageWithSender, NotificationList, Payment, User } from '@/types/api'
 import useSWR, { mutate } from 'swr'
 
-export function useProjects(query = '/projects?limit=24') {
-  const { data, error } = useSWR<Project[]>(query, fetcher)
+export function useGigs(query = '/api/gigs?limit=24') {
+  const { data, error } = useSWR<Gig[]>(query, fetcher)
   return {
     data,
     error,
@@ -34,9 +34,9 @@ export function useProjects(query = '/projects?limit=24') {
   }
 }
 
-export function useProject(id?: string) {
-  const key = id ? `/projects/${id}` : null
-  const { data, error } = useSWR<Project | null>(key, fetcher)
+export function useGig(id?: string) {
+  const key = id ? `/api/gigs/${id}` : null
+  const { data, error } = useSWR<Gig | null>(key, fetcher)
   return {
     data,
     error,
@@ -45,7 +45,7 @@ export function useProject(id?: string) {
   }
 }
 
-export function useMessages(query = '/messages/conversations?limit=50') {
+export function useMessages(query = '/api/messages/conversations?limit=50') {
   const { data, error } = useSWR<MessageSummary[]>(query, fetcher, { refreshInterval: 15000 })
   return {
     data,
@@ -55,18 +55,28 @@ export function useMessages(query = '/messages/conversations?limit=50') {
   }
 }
 
-export function useMessagesBetweenUsers(userId?: string | number, query = '/messages/between/') {
-  const key = userId ? `${query}${userId}` : null
-  const { data, error } = useSWR<MessageSummary[]>(key, fetcher, { refreshInterval: 5000 })
-  return {
-    data,
-    error,
-    isLoading: !error && !data,
-    mutate: () => key && mutate(key),
-  }
+export function useMessagesBetweenUsers(
+    userId?: string | number,
+    skip: number = 0,
+    limit: number = 50,
+    order: 'asc' | 'desc' = 'desc'
+) {
+    const key = userId ? `/api/messages/between/${userId}?skip=${skip}&limit=${limit}&order=${order}` : null
+    const { data, error, mutate } = useSWR<MessageWithSender[]>(key, fetcher, {
+        refreshInterval: 5000,
+        revalidateOnFocus: false
+    })
+    
+    return {
+        data,
+        error,
+        isLoading: !error && !data,
+        mutate,
+        hasMore: data ? data.length >= limit : false
+    }
 }
 
-export function useApplications(query = '/applications/me') {
+export function useApplications(query = '/api/applications/me') {
   const { data, error } = useSWR<Application[]>(query, fetcher)
   return {
     data,
@@ -76,7 +86,7 @@ export function useApplications(query = '/applications/me') {
   }
 }
 
-export function usePayments(query = '/payments/me') {
+export function usePayments(query = '/api/payments/me') {
   const { data, error } = useSWR<Payment[]>(query, fetcher)
   return {
     data,
@@ -86,17 +96,26 @@ export function usePayments(query = '/payments/me') {
   }
 }
 
-export function useNotifications(query = '/notifications?limit=50') {
-  const { data, error } = useSWR<Notification[]>(query, fetcher, { refreshInterval: 20000 })
+export function useNotifications(page: number = 1, limit: number = 50, read?: boolean) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...(read !== undefined && { read: read.toString() })
+  })
+  const query = `/api/notifications?${params.toString()}`
+  const { data, error, mutate: swrMutate } = useSWR<NotificationList>(query, fetcher, { refreshInterval: 20000 })
   return {
-    data,
+    data: data?.items || [],
+    total: data?.total || 0,
+    page: data?.page || 1,
+    pageSize: data?.pageSize || limit,
     error,
     isLoading: !error && !data,
-    mutate: () => mutate(query),
+    mutate: swrMutate,
   }
 }
 
-export function useProfile(query = '/users/me') {
+export function useProfile(query = '/api/users/me') {
   const { data, error } = useSWR<User>(query, fetcher)
   return {
     data,
@@ -106,7 +125,7 @@ export function useProfile(query = '/users/me') {
   }
 }
 
-export function useDashboardSummary(query = '/dashboard/summary') {
+export function useDashboardSummary(query = '/api/dashboard/summary') {
   const { data, error } = useSWR<DashboardSummary>(query, fetcher, { refreshInterval: 30000 })
   return {
     data,
@@ -119,36 +138,47 @@ export function useDashboardSummary(query = '/dashboard/summary') {
 /**
  * Helper mutation functions for common actions
  */
-export async function applyToProject(projectId: string, payload: { coverLetter: string }) {
-  const res = await clientFetcher(`/projects/${projectId}/apply`, {
+export async function applyToGig(gigId: string, payload: { coverLetter: string }) {
+  const res = await clientFetcher(`/api/gigs/${gigId}/apply`, {
     method: 'POST',
     body: JSON.stringify(payload),
   })
   // After applying, refresh relevant caches
-  mutate('/applications/me')
-  mutate('/projects')
-  mutate('/dashboard/summary')
+  mutate('/api/applications/me')
+  mutate('/api/gigs')
+  mutate('/api/dashboard/summary')
   return res
 }
 
 export async function markNotificationRead(notificationId: string) {
-  const res = await clientFetcher(`/notifications/${notificationId}/read`, { method: 'POST' })
-  mutate('/notifications?limit=50')
+  const res = await clientFetcher(`/api/notifications/${notificationId}/read`, { method: 'PUT' })
+  // Revalidate notifications cache
+  mutate(() => true, undefined, { revalidate: true })
   return res
 }
 
 export async function sendMessage(recipientId: string | number, content: string) {
-  const res = await clientFetcher('/messages', {
+  const res = await clientFetcher('/api/messages', {
     method: 'POST',
     body: JSON.stringify({ recipient_id: recipientId, content }),
   })
   // Refresh conversations list
-  mutate('/messages/conversations?limit=50')
+  mutate('/api/messages/conversations?limit=50')
   return res
 }
 
+export function useUsers(query = '/api/users') {
+  const { data, error } = useSWR<User[]>(query, fetcher)
+  return {
+    data,
+    error,
+    isLoading: !error && !data,
+    mutate: () => mutate(query),
+  }
+}
+
 export function useSearchMessages(query: string, skip: number = 0, limit: number = 50) {
-  const key = query ? `/messages/search?query=${encodeURIComponent(query)}&skip=${skip}&limit=${limit}` : null
+  const key = query && query.trim() ? `/api/messages/search?query=${encodeURIComponent(query.trim())}&skip=${skip}&limit=${limit}` : null
   const { data, error } = useSWR<MessageWithSender[]>(key, fetcher, { refreshInterval: 0 })
   return {
     data,

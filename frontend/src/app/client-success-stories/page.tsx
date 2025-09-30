@@ -10,7 +10,7 @@ export default function ClientSuccessStories() {
             id: '1',
             client: 'Style Magazine',
             industry: 'Publishing',
-            project: 'Brand Redesign & Marketing Campaign',
+            gig: 'Brand Redesign & Marketing Campaign',
             challenge: 'Needed a complete brand overhaul to appeal to younger demographics',
             solution: 'Partnered with a team of designers and marketers through B3ACON',
             results: '40% increase in digital engagement and 25% growth in subscriptions',
@@ -18,14 +18,14 @@ export default function ClientSuccessStories() {
             clientName: 'John Smith',
             clientTitle: 'Creative Director',
             rating: 5,
-            projectValue: '$75,000',
+            gigValue: '$75,000',
             duration: '4 months'
         },
         {
             id: '2',
             client: 'TechStart Inc.',
             industry: 'Technology',
-            project: 'User Experience Design for Mobile App',
+            gig: 'User Experience Design for Mobile App',
             challenge: 'Struggling with user retention due to poor app experience',
             solution: 'Hired UX specialists to redesign the entire user interface',
             results: '65% improvement in user retention and 4.8 app store rating',
@@ -33,14 +33,14 @@ export default function ClientSuccessStories() {
             clientName: 'Sarah Johnson',
             clientTitle: 'Product Manager',
             rating: 5,
-            projectValue: '$120,000',
+            gigValue: '$120,000',
             duration: '6 months'
         },
         {
             id: '3',
             client: 'Global Retail Corp',
             industry: 'Retail',
-            project: 'E-commerce Photography & Content Creation',
+            gig: 'E-commerce Photography & Content Creation',
             challenge: 'Needed high-quality product photography for 500+ items',
             solution: 'Connected with professional photographers and content creators',
             results: '35% increase in online sales and improved brand perception',
@@ -48,7 +48,7 @@ export default function ClientSuccessStories() {
             clientName: 'Michael Chen',
             clientTitle: 'Marketing Director',
             rating: 4,
-            projectValue: '$45,000',
+            gigValue: '$45,000',
             duration: '2 months'
         }
     ]
@@ -60,7 +60,7 @@ export default function ClientSuccessStories() {
         },
         {
             value: '25K+',
-            label: 'Projects Completed'
+            label: 'Gigs Completed'
         },
         {
             value: '75',
@@ -83,7 +83,7 @@ export default function ClientSuccessStories() {
                             See how businesses like yours have achieved remarkable results with B3ACON
                         </p>
                         <p className="text-lg mb-12">
-                            Discover real stories from companies that have transformed their creative projects
+                            Discover real stories from companies that have transformed their creative gigs
                             and business outcomes by connecting with top talent through our platform.
                         </p>
                     </div>
@@ -132,10 +132,10 @@ export default function ClientSuccessStories() {
                                         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                                             <div>
                                                 <h3 className="text-2xl font-bold text-neutral-900 mb-2">{story.client}</h3>
-                                                <p className="text-neutral-600">{story.industry} • {story.project}</p>
+                                                <p className="text-neutral-600">{story.industry} • {story.gig}</p>
                                             </div>
                                             <div className="flex items-center bg-beacon-purple-light/20 text-beacon-purple px-4 py-2 rounded-full">
-                                                <span className="font-semibold">{story.projectValue}</span>
+                                                <span className="font-semibold">{story.gigValue}</span>
                                                 <span className="mx-2">•</span>
                                                 <span>{story.duration}</span>
                                             </div>
@@ -206,7 +206,7 @@ export default function ClientSuccessStories() {
                                 </div>
                             </div>
                             <p className="text-neutral-700 mb-6">
-                                "The quality of talent on B3ACON is exceptional. We've completed three projects with
+                                "The quality of talent on B3ACON is exceptional. We've completed three gigs with
                                 different creative teams, and each has exceeded our expectations."
                             </p>
                             <div className="flex items-center">
@@ -229,7 +229,7 @@ export default function ClientSuccessStories() {
                                 </div>
                             </div>
                             <p className="text-neutral-700 mb-6">
-                                "B3ACON's payment protection gave us peace of mind. The project was completed on time
+                                "B3ACON's payment protection gave us peace of mind. The gig was completed on time
                                 and within budget, exactly as promised."
                             </p>
                             <div className="flex items-center">
@@ -272,12 +272,12 @@ export default function ClientSuccessStories() {
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to achieve your own success story?</h2>
                     <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Join thousands of businesses that have transformed their creative projects with B3ACON.
+                        Join thousands of businesses that have transformed their creative gigs with B3ACON.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link href="/register?type=client">
                             <Button variant="primary" size="lg">
-                                Post Your Project
+                                Post Your Gig
                             </Button>
                         </Link>
                         <Link href="/how-to-hire">

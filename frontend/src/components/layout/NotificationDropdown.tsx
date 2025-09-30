@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 export function NotificationDropdown() {
-    const { data: notifications = [], isLoading, error } = useNotifications('/api/notifications?limit=5')
+    const { data: notifications = [], isLoading, error } = useNotifications(1, 5)
     const [unreadCount, setUnreadCount] = useState(0)
 
     useEffect(() => {

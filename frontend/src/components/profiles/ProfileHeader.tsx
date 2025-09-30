@@ -16,7 +16,7 @@ interface ProfileHeaderProps {
     rating: number
     profileImage?: string
     stats: {
-        projects: number
+        gigs: number
         followers: string
         reviews: number
     }
@@ -224,8 +224,8 @@ export default function ProfileHeader({
                 {/* Stats */}
                 <div className="flex justify-center space-x-8">
                     <StatCard
-                        value={stats.projects}
-                        label="Projects"
+                        value={stats.gigs}
+                        label="Gigs"
                         className="text-white"
                     />
                     <StatCard

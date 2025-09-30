@@ -13,9 +13,9 @@ export default function Help() {
         },
         {
             icon: <FileText className="h-6 w-6" />,
-            title: 'Projects & Applications',
-            description: 'Information about posting projects and applying to opportunities',
-            link: '/help/projects'
+            title: 'Gigs & Applications',
+            description: 'Information about posting gigs and applying to opportunities',
+            link: '/help/gigs'
         },
         {
             icon: <CreditCard className="h-6 w-6" />,
@@ -38,7 +38,7 @@ export default function Help() {
         },
         {
             question: 'How do payments work?',
-            answer: 'We use a secure escrow system. Clients fund projects upfront, and payments are released to creatives when milestones are completed and approved.'
+            answer: 'We use a secure escrow system. Clients fund gigs upfront, and payments are released to creatives when milestones are completed and approved.'
         },
         {
             question: 'What are the fees?',

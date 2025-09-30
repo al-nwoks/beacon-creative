@@ -1,76 +1,58 @@
 'use client'
 
-import { Briefcase, Home, MessageSquare, Search, User } from 'lucide-react'
+import { NavigationIcon } from '@/components/icons/NavigationIcons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-interface NavItem {
-    name: string
-    href: string
-    icon: React.ComponentType<{ className?: string }>
-}
-
 interface BottomNavigationProps {
-    userType?: 'creative' | 'client' | 'admin'
+    userType: 'creative' | 'client' | 'admin'
 }
 
-export default function BottomNavigation({ userType = 'creative' }: BottomNavigationProps) {
+export function BottomNavigation({ userType }: BottomNavigationProps) {
     const pathname = usePathname()
 
-    const getNavItems = (): NavItem[] => {
-        const baseItems: NavItem[] = [
-            { name: 'Home', href: userType === 'creative' ? '/creative-dashboard' : '/dashboard', icon: Home },
-            { name: 'Jobs', href: '/jobs', icon: Briefcase },
-            { name: 'Search', href: '/search', icon: Search },
-            { name: 'Messages', href: '/messages', icon: MessageSquare },
-            { name: 'Profile', href: '/profile', icon: User },
+    // Define navigation items based on user type
+    const navItems = userType === 'client'
+        ? [
+            { name: 'Home', href: '/', icon: 'home' as const },
+            { name: 'Gigs', href: '/gigs', icon: 'briefcase' as const },
+            { name: 'Messages', href: '/messages', icon: 'messages' as const },
+            { name: 'Profile', href: '/profile', icon: 'profile' as const },
         ]
-
-        if (userType === 'client') {
-            baseItems[1] = { name: 'Projects', href: '/projects', icon: Briefcase }
-        } else if (userType === 'admin') {
-            baseItems[1] = { name: 'Admin', href: '/admin', icon: Briefcase }
-        }
-
-        return baseItems
-    }
-
-    const navItems = getNavItems()
+        : userType === 'admin'
+            ? [
+                { name: 'Home', href: '/', icon: 'home' as const },
+                { name: 'Dashboard', href: '/admin', icon: 'dashboard' as const },
+                { name: 'Messages', href: '/messages', icon: 'messages' as const },
+                { name: 'Profile', href: '/profile', icon: 'profile' as const },
+            ]
+            : [
+                { name: 'Home', href: '/', icon: 'home' as const },
+                { name: 'Find Work', href: '/find-work', icon: 'search' as const },
+                { name: 'Messages', href: '/messages', icon: 'messages' as const },
+                { name: 'Profile', href: '/profile', icon: 'profile' as const },
+            ]
 
     const isActive = (href: string) => {
-        if (href === '/creative-dashboard' || href === '/dashboard') {
-            return pathname === href
-        }
-        return pathname?.startsWith(href)
+        return pathname === href
     }
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50 md:hidden">
-            <div className="flex items-center justify-around max-w-md mx-auto">
-                {navItems.map((item) => {
-                    const Icon = item.icon
-                    const active = isActive(item.href)
-
-                    return (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            className="flex flex-col items-center space-y-1 p-2 min-w-0"
-                            aria-label={item.name}
-                        >
-                            <Icon
-                                className={`h-6 w-6 ${active ? 'text-beacon-purple' : 'text-gray-400'
-                                    }`}
-                            />
-                            <span
-                                className={`text-xs ${active ? 'text-beacon-purple font-medium' : 'text-gray-400'
-                                    }`}
-                            >
-                                {item.name}
-                            </span>
-                        </Link>
-                    )
-                })}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 md:hidden z-50">
+            <div className="grid grid-cols-4 gap-1">
+                {navItems.map((item) => (
+                    <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`flex flex-col items-center justify-center py-2 px-1 text-xs ${isActive(item.href)
+                                ? 'text-beacon-purple'
+                                : 'text-neutral-500 hover:text-neutral-700'
+                            }`}
+                    >
+                        <NavigationIcon type={item.icon} className="h-5 w-5 mb-1" />
+                        <span>{item.name}</span>
+                    </Link>
+                ))}
             </div>
         </div>
     )

@@ -8,8 +8,8 @@ export default function ClientResources() {
     const guides = [
         {
             icon: <FileText className="h-8 w-8" />,
-            title: 'Writing a Great Brief',
-            desc: 'How to describe your project clearly to attract the right creatives.',
+            title: 'Writing a Great Gig Brief',
+            desc: 'How to describe your gig clearly to attract the right creatives.',
             href: '/how-to-hire',
         },
         {
@@ -33,7 +33,7 @@ export default function ClientResources() {
     ]
 
     const checklist = [
-        'Define clear project goals and success criteria',
+        'Define clear gig goals and success criteria',
         'Set a realistic budget and timeframe',
         'Provide brand assets and references',
         'Agree on milestones and deliverables',
@@ -93,7 +93,7 @@ export default function ClientResources() {
             <section className="bg-neutral-50">
                 <div className="container mx-auto px-4 py-16">
                     <div className="max-w-3xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-6">Project Kickoff Checklist</h2>
+                        <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-6">Gig Kickoff Checklist</h2>
                         <ul className="space-y-3">
                             {checklist.map((item, i) => (
                                 <li key={i} className="flex items-start">
@@ -116,7 +116,7 @@ export default function ClientResources() {
                             </div>
                             <div>
                                 <h3 className="text-xl font-semibold text-neutral-900">New to B3ACON?</h3>
-                                <p className="text-neutral-600">Start with our quick guide to posting your first project.</p>
+                                <p className="text-neutral-600">Start with our quick guide to posting your first gig.</p>
                             </div>
                         </div>
                         <Link href="/how-it-works">

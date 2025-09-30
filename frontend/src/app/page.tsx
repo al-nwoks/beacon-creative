@@ -2,51 +2,44 @@
 
 import { HeroIllustration } from '@/components/home/HeroIllustration'
 import Button from '@/components/ui/Button'
-import { ArrowRight, Briefcase, Star, Users, Zap } from 'lucide-react'
+import { useCaptureEvent } from '@/hooks/usePostHog'
+import { ArrowRight, Briefcase, Search, Star, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+
+
 
 export default function Home() {
-  const [user, setUser] = useState<{ role: string } | null>(null)
-  const [loading, setLoading] = useState(true)
+  const captureEvent = useCaptureEvent()
 
-  useEffect(() => {
-    // Check if user is logged in
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch('/api/users/me', {
-          method: 'GET',
-          credentials: 'include'
-        })
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error('Failed to check auth status:', error)
-      } finally {
-        setLoading(false)
-      }
+  const features = [
+    {
+      icon: <Search className="h-8 w-8 text-beacon-purple" />,
+      title: 'Find Your Perfect Gig',
+      description: 'Browse thousands of gigs from top clients and find opportunities that match your skills.'
+    },
+    {
+      icon: <Briefcase className="h-8 w-8 text-beacon-purple" />,
+      title: 'Post Gigs Easily',
+      description: 'Create detailed gig postings and find the perfect creative talent for your gigs.'
+    },
+    {
+      icon: <Users className="h-8 w-8 text-beacon-purple" />,
+      title: 'Connect & Collaborate',
+      description: 'Work directly with clients and creatives through our secure messaging platform.'
+    },
+    {
+      icon: <Zap className="h-8 w-8 text-beacon-purple" />,
+      title: 'Secure Payments',
+      description: 'Our escrow system ensures fair payment for completed work and protects both parties.'
     }
+  ]
 
-    checkAuthStatus()
-  }, [])
-
-  const handleLogout = async () => {
-    try {
-      // Make POST request to logout endpoint
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      })
-      // Redirect to homepage after logout
-      window.location.href = '/'
-    } catch (error) {
-      console.error('Logout failed:', error)
-      // Still redirect to homepage even if logout request fails
-      window.location.href = '/'
-    }
-  }
+  const stats = [
+    { value: '1K+', label: 'Creative Professionals' },
+    { value: '50+', label: 'Active Gigs' },
+    { value: '98%', label: 'Client Satisfaction' },
+    { value: '24/7', label: 'Support Available' }
+  ]
 
   return (
     <>
@@ -56,19 +49,35 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-neutral-900 leading-tight">
-                Connect with top creative talent and clients
+                Connect Creatives with Opportunities
               </h1>
               <p className="text-xl text-neutral-700 mb-8 max-w-2xl mx-auto lg:mx-0">
-                B3ACON helps creative professionals find great projects and clients discover amazing talent. All in one seamless platform.
+                B3ACON helps creative professionals find great gigs and clients discover amazing talent. All in one seamless platform.
               </p>
               <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-12">
-                <Link href="/register?type=client">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto">
+                <Link href="/register?role=client">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => captureEvent('cta_click', {
+                      button: 'hire_creatives',
+                      page: 'home'
+                    })}
+                  >
                     Hire Creatives
                   </Button>
                 </Link>
-                <Link href="/register?type=creative">
-                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                <Link href="/register?role=creative">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => captureEvent('cta_click', {
+                      button: 'find_work',
+                      page: 'home'
+                    })}
+                  >
                     Find Work
                   </Button>
                 </Link>
@@ -101,48 +110,20 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
-                <Briefcase className="h-8 w-8" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow text-center">
+                <div className="flex justify-center mb-6">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-4 text-neutral-900">
+                  {feature.title}
+                </h3>
+                <p className="text-neutral-700">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-neutral-900">Post a Project</h3>
-              <p className="text-neutral-700 mb-4">
-                Describe your project, set your budget, and specify the skills you need.
-              </p>
-              <Link href="/how-it-works" className="text-beacon-purple hover:underline font-medium inline-flex items-center">
-                Learn more
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
-                <Users className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-neutral-900">Review Applications</h3>
-              <p className="text-neutral-700 mb-4">
-                Receive applications from qualified creative professionals and choose the best fit.
-              </p>
-              <Link href="/how-it-works" className="text-beacon-purple hover:underline font-medium inline-flex items-center">
-                Learn more
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="bg-white rounded-xl p-8 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-16 h-16 bg-beacon-purple-light/20 rounded-full flex items-center justify-center text-beacon-purple mb-6">
-                <Zap className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-neutral-900">Collaborate & Pay</h3>
-              <p className="text-neutral-700 mb-4">
-                Work together in our secure workspace and release payments when milestones are completed.
-              </p>
-              <Link href="/how-it-works" className="text-beacon-purple hover:underline font-medium inline-flex items-center">
-                Learn more
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -151,22 +132,12 @@ export default function Home() {
       <section className="py-16 bg-gradient-to-r from-beacon-purple to-beacon-purple-dark text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-3xl md:text-4xl font-bold mb-2">10K+</div>
-              <div className="text-beacon-purple-light">Creative Professionals</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold mb-2">5K+</div>
-              <div className="text-beacon-purple-light">Active Projects</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold mb-2">98%</div>
-              <div className="text-beacon-purple-light">Client Satisfaction</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold mb-2">24/7</div>
-              <div className="text-beacon-purple-light">Support Available</div>
-            </div>
+            {stats.map((stat, index) => (
+              <div key={index}>
+                <div className="text-3xl md:text-4xl font-bold mb-2">{stat.value}</div>
+                <div className="text-beacon-purple-light">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -231,7 +202,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-neutral-700 mb-6">
-                &ldquo;The project management tools and secure payment system give me peace of mind. I can focus on creating while B3ACON handles the logistics.&rdquo;
+                &ldquo;The gig management tools and secure payment system give me peace of mind. I can focus on creating while B3ACON handles the logistics.&rdquo;
               </p>
               <div className="flex items-center">
                 <div className="bg-neutral-200 border-2 border-dashed rounded-xl w-16 h-16" />
@@ -254,12 +225,12 @@ export default function Home() {
               Join thousands of creative professionals and clients already using B3ACON to connect, collaborate, and create amazing work.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/register?type=client">
+              <Link href="/register?role=client">
                 <Button variant="primary" size="lg">
                   Hire Creatives
                 </Button>
               </Link>
-              <Link href="/register?type=creative">
+              <Link href="/register?role=creative">
                 <Button variant="secondary" size="lg">
                   Find Work
                 </Button>

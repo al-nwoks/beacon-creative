@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 import { EnhancedLoadingSpinner } from '@/components/ui/EnhancedLoadingSpinner'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { useNotification } from '@/components/ui/NotificationProvider'
-import api, { authAPI, projectsAPI, usersAPI } from '@/lib/api'
+import api, { authAPI, gigsAPI, usersAPI } from '@/lib/api'
 import { useState } from 'react'
 
 export default function TestApiPage() {
@@ -58,8 +58,8 @@ export default function TestApiPage() {
         }
     }
 
-    const testGetProjects = async () => {
-        const response = await projectsAPI.getProjects()
+    const testGetGigs = async () => {
+        const response = await gigsAPI.getGigs()
         return response
     }
 
@@ -79,7 +79,7 @@ export default function TestApiPage() {
     const tests = [
         { name: 'API Connection', fn: testApiConnection },
         { name: 'Auth Login', fn: testAuthLogin },
-        { name: 'Get Projects', fn: testGetProjects },
+        { name: 'Get Gigs', fn: testGetGigs },
         { name: 'Get Current User', fn: testGetCurrentUser },
     ]
 

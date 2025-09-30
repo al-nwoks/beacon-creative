@@ -1,28 +1,32 @@
 from fastapi import APIRouter
 
 from app.api.endpoints import (
-    auth,
     users,
-    projects,
+    auth,
+    gigs,
     applications,
     messages,
-    project_file,
     payments,
+    gig_file,
     notifications,
     notification_settings,
-    admin
+    admin,
+    dashboard
 )
+from app.websocket import websocket_router
 
 api_router = APIRouter()
-
-# Include all endpoint routers
-api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
-api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
-api_router.include_router(applications.router, prefix="/applications", tags=["applications"])
-api_router.include_router(messages.router, prefix="/messages", tags=["messages"])
-api_router.include_router(project_file, prefix="/files", tags=["files"])
-api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
-api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+api_router.include_router(users, prefix="/users", tags=["users"])
+api_router.include_router(auth, prefix="/auth", tags=["auth"])
+api_router.include_router(gigs, prefix="/gigs", tags=["gigs"])
+api_router.include_router(applications, prefix="/applications", tags=["applications"])
+api_router.include_router(messages, prefix="/messages", tags=["messages"])
+api_router.include_router(payments, prefix="/payments", tags=["payments"])
+api_router.include_router(gig_file, prefix="/files", tags=["files"])
+api_router.include_router(notifications, prefix="/notifications", tags=["notifications"])
 api_router.include_router(notification_settings, prefix="/notification-settings", tags=["notification-settings"])
-api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(dashboard, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(websocket_router, prefix="/ws", tags=["websocket"])
+
+# Admin routes
+api_router.include_router(admin, prefix="/admin", tags=["admin"])

@@ -9,7 +9,7 @@ class Payment(Base):
     __tablename__ = "payments"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    gig_id = Column(UUID(as_uuid=True), ForeignKey("gigs.id", ondelete="CASCADE"), nullable=False)
     client_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     creative_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     stripe_payment_intent_id = Column(String, nullable=True)
@@ -24,7 +24,7 @@ class Payment(Base):
     released_at = Column(DateTime, nullable=True)
     
     # Relationships
-    project = relationship("Project", backref="payments")
+    gig = relationship("Gig", backref="payments")
     client = relationship("User", foreign_keys=[client_id], backref="sent_payments")
     creative = relationship("User", foreign_keys=[creative_id], backref="received_payments")
     

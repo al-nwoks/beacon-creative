@@ -8,8 +8,8 @@ export default function HowToHire() {
     const steps = [
         {
             icon: <Search className="h-8 w-8" />,
-            title: 'Define Your Project',
-            description: 'Clearly outline your project requirements, budget, and timeline to attract the right talent.'
+            title: 'Define Your Gig',
+            description: 'Clearly outline your gig requirements, budget, and timeline to attract the right talent.'
         },
         {
             icon: <Users className="h-8 w-8" />,
@@ -19,12 +19,12 @@ export default function HowToHire() {
         {
             icon: <MessageCircle className="h-8 w-8" />,
             title: 'Connect & Communicate',
-            description: 'Engage with candidates through our secure messaging system to discuss project details.'
+            description: 'Engage with candidates through our secure messaging system to discuss gig details.'
         },
         {
             icon: <FileText className="h-8 w-8" />,
             title: 'Review Proposals',
-            description: 'Evaluate applications and proposals to select the best fit for your project.'
+            description: 'Evaluate applications and proposals to select the best fit for your gig.'
         },
         {
             icon: <Shield className="h-8 w-8" />,
@@ -33,7 +33,7 @@ export default function HowToHire() {
         },
         {
             icon: <CheckCircle className="h-8 w-8" />,
-            title: 'Complete Project',
+            title: 'Complete Gig',
             description: 'Approve deliverables and release payments when milestones are successfully completed.'
         }
     ]
@@ -42,7 +42,7 @@ export default function HowToHire() {
         'Access to pre-vetted, top-tier creative talent',
         'Transparent pricing with no hidden fees',
         'Secure payment protection for all transactions',
-        'Built-in project management tools',
+        'Built-in gig management tools',
         '24/7 customer support',
         'Dispute resolution services'
     ]
@@ -55,7 +55,7 @@ export default function HowToHire() {
                 <div className="container mx-auto px-4 text-center">
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">How to Hire Creative Talent</h1>
                     <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-beacon-purple-light">
-                        Find and collaborate with the perfect creative professionals for your projects
+                        Find and collaborate with the perfect creative professionals for your gigs
                     </p>
                 </div>
             </section>
@@ -93,7 +93,7 @@ export default function HowToHire() {
                         <div className="flex-1">
                             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Why Hire Through B3ACON</h2>
                             <p className="text-xl text-neutral-700 mb-8">
-                                Our platform provides everything you need to successfully hire and manage creative projects.
+                                Our platform provides everything you need to successfully hire and manage creative gigs.
                             </p>
 
                             <ul className="space-y-4 mb-8">
@@ -136,7 +136,7 @@ export default function HowToHire() {
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link href="/register?type=client">
                             <Button variant="primary" size="lg">
-                                Post a Project
+                                Post a Gig
                             </Button>
                         </Link>
                         <Link href="/how-it-works">

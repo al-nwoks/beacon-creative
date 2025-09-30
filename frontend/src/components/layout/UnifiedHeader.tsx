@@ -5,114 +5,143 @@ import { NavigationIcon } from '@/components/icons/NavigationIcons'
 import { MessageDropdown } from '@/components/layout/MessageDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { Menu } from '@headlessui/react'
-import { Filter, Search, User, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 interface UnifiedHeaderProps {
-    showSearch?: boolean
-    showFilter?: boolean
-    onSearch?: (query: string) => void
-    onFilter?: () => void
-    searchPlaceholder?: string
     userType?: 'creative' | 'client' | 'admin'
-    children?: ReactNode
-    className?: string
+    showSearch?: boolean
+    searchPlaceholder?: string
+    onSearch?: (query: string) => void
+    showFilter?: boolean
+    onFilter?: () => void
 }
 
 export function UnifiedHeader({
-    showSearch = false,
-    showFilter = false,
-    onSearch,
-    onFilter,
-    searchPlaceholder = "Search...",
     userType = 'creative',
-    children,
-    className = "bg-white border-b border-gray-200 sticky top-0 z-50"
+    showSearch = true,
+    searchPlaceholder = 'Search...',
+    onSearch,
+    showFilter = false,
+    onFilter,
 }: UnifiedHeaderProps) {
     const [searchQuery, setSearchQuery] = useState('')
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const pathname = usePathname()
 
-    const handleSearchSubmit = (e: React.FormEvent) => {
+    const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
-        if (onSearch) {
-            onSearch(searchQuery)
-        }
-    }
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value)
+        onSearch?.(searchQuery)
     }
 
     const isActive = (path: string) => {
-        if (path === '/') return pathname === '/'
-        return pathname?.startsWith(path) || false
+        return pathname === path || pathname?.startsWith(`${path}/`)
     }
 
+    // Navigation items based on user type
+    const navItems = userType === 'client'
+        ? [
+            { name: 'Dashboard', href: '/client', icon: 'dashboard' },
+            { name: 'My Gigs', href: '/gigs/my-gigs', icon: 'briefcase' },
+            { name: 'Applications', href: '/applications', icon: 'search' },
+            { name: 'Payments', href: '/payments', icon: 'messages' },
+        ]
+        : userType === 'admin'
+            ? [
+                { name: 'Dashboard', href: '/admin', icon: 'dashboard' },
+                { name: 'Users', href: '/admin/users', icon: 'profile' },
+                { name: 'Gigs', href: '/admin/gigs', icon: 'briefcase' },
+                { name: 'Payments', href: '/admin/payments', icon: 'messages' },
+            ]
+            : [
+                { name: 'Dashboard', href: '/creative', icon: 'dashboard' },
+                { name: 'Find Gigs', href: '/gigs', icon: 'search' },
+                { name: 'My Applications', href: '/applications', icon: 'briefcase' },
+                { name: 'Payments', href: '/payments', icon: 'messages' },
+            ]
+
     return (
-        <header className={className}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
-                    <div className="flex items-center">
-                        <Link href="/" className="flex items-center space-x-2">
+        <motion.header
+            className="bg-white shadow-sm"
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+            <div className="container mx-auto px-4">
+                <div className="flex h-16 items-center justify-between">
+                    <motion.div
+                        className="flex items-center"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    >
+                        <Link href={userType === 'admin' ? '/admin' : userType === 'client' ? '/client' : '/creative'} className="flex items-center space-x-2">
                             <B3aconLogo className="h-8 w-auto" />
                         </Link>
-                    </div>
+                    </motion.div>
 
-                    {/* Search Bar - Desktop */}
-                    {showSearch && (
-                        <div className="hidden md:flex flex-1 max-w-lg mx-8">
-                            <form onSubmit={handleSearchSubmit} className="w-full relative">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={handleSearchChange}
-                                        placeholder={searchPlaceholder}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple"
-                                    />
-                                </div>
-                            </form>
-                        </div>
-                    )}
+                    {/* Desktop Navigation */}
+                    <nav className="hidden md:flex space-x-8">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex items-center space-x-1 text-neutral-700 hover:text-beacon-purple transition-colors font-medium ${isActive(item.href) ? 'text-beacon-purple' : ''
+                                    }`}
+                            >
+                                <NavigationIcon type={item.icon as any} className="h-4 w-4" />
+                                <span>{item.name}</span>
+                            </Link>
+                        ))}
+                    </nav>
 
-                    {/* Right side actions */}
+                    {showSearch ? (
+                        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-4">
+                            <div className="relative w-full">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={searchPlaceholder}
+                                    aria-label="Search"
+                                    className="w-full h-10 px-4 pr-10 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple transition-all duration-200"
+                                />
+                                <button
+                                    type="submit"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-neutral-500 hover:text-beacon-purple"
+                                >
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    ) : null}
+
                     <div className="flex items-center space-x-4">
-                        {/* Filter Button - Desktop */}
                         {showFilter && (
                             <button
                                 onClick={onFilter}
-                                className="hidden md:flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                className="p-2 rounded-full hover:bg-neutral-100"
+                                aria-label="Filter"
                             >
-                                <Filter className="h-5 w-5 text-gray-600" />
-                                <span className="text-gray-700">Filter</span>
+                                <NavigationIcon type="filter" className="h-5 w-5 text-neutral-600" />
                             </button>
                         )}
-
-                        {/* Notifications */}
-                        <NotificationDropdown />
-
-                        {/* Messages */}
                         <MessageDropdown />
-
-                        {/* Profile */}
+                        <NotificationDropdown />
                         <Menu as="div" className="relative">
-                            <Menu.Button className="flex items-center space-x-2 p-2 text-gray-600 hover:text-gray-900">
-                                <User className="h-6 w-6" />
+                            <Menu.Button className="p-2 rounded-full hover:bg-neutral-100">
+                                <NavigationIcon type="profile" className="h-6 w-6 text-neutral-600" />
                             </Menu.Button>
                             <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 focus:outline-none z-50">
                                 <Menu.Item>
                                     {({ active }) => (
                                         <Link
-                                            href="/profile"
-                                            className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
+                                            href={userType === 'admin' ? '/admin/settings' : '/profile'}
+                                            className={`${active ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-700'} block w-full text-left px-4 py-2 text-sm`}
                                         >
-                                            Profile
+                                            {userType === 'admin' ? 'Admin Settings' : 'Profile'}
                                         </Link>
                                     )}
                                 </Menu.Item>
@@ -120,16 +149,31 @@ export function UnifiedHeader({
                                     {({ active }) => (
                                         <Link
                                             href="/settings"
-                                            className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
+                                            className={`${active ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-700'} block w-full text-left px-4 py-2 text-sm`}
                                         >
-                                            Settings
+                                            Account Settings
                                         </Link>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
                                         <button
-                                            className={`${active ? 'bg-gray-100' : ''} block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                            onClick={async () => {
+                                                try {
+                                                    // Make POST request to logout endpoint
+                                                    await fetch('/api/auth/logout', {
+                                                        method: 'POST',
+                                                        credentials: 'include'
+                                                    });
+                                                    // Redirect to homepage after logout
+                                                    window.location.href = '/';
+                                                } catch (error) {
+                                                    console.error('Logout failed:', error);
+                                                    // Still redirect to homepage even if logout request fails
+                                                    window.location.href = '/';
+                                                }
+                                            }}
+                                            className={`${active ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-700'} block w-full text-left px-4 py-2 text-sm`}
                                         >
                                             Sign out
                                         </button>
@@ -137,91 +181,9 @@ export function UnifiedHeader({
                                 </Menu.Item>
                             </Menu.Items>
                         </Menu>
-
-                        {/* Mobile menu button */}
-                        <button
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="md:hidden p-2 text-gray-600 hover:text-gray-900"
-                        >
-                            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Filter className="h-6 w-6" />}
-                        </button>
                     </div>
                 </div>
-
-                {/* Mobile Search Bar */}
-                {showSearch && (
-                    <div className="md:hidden pb-4">
-                        <form onSubmit={handleSearchSubmit} className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                placeholder={searchPlaceholder}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-beacon-purple focus:border-beacon-purple"
-                            />
-                        </form>
-                    </div>
-                )}
-
-                {/* Mobile Menu */}
-                {isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-gray-200 py-4">
-                        <div className="flex flex-col space-y-4">
-                            {showFilter && (
-                                <button
-                                    onClick={onFilter}
-                                    className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-                                >
-                                    <Filter className="h-5 w-5" />
-                                    <span>Filter</span>
-                                </button>
-                            )}
-                            <Link
-                                href="/profile"
-                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-                            >
-                                <User className="h-5 w-5" />
-                                <span>Profile</span>
-                            </Link>
-                        </div>
-                    </div>
-                )}
             </div>
-
-            {/* Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
-                <div className="flex items-center justify-around max-w-md mx-auto">
-                    <Link
-                        href={userType === 'creative' ? '/creative-dashboard' : '/dashboard'}
-                        className={`flex flex-col items-center space-y-1 p-2 ${isActive(userType === 'creative' ? '/creative-dashboard' : '/dashboard') ? 'text-beacon-purple' : 'text-gray-400'}`}
-                    >
-                        <User className="h-6 w-6" />
-                        <span className="text-xs">Home</span>
-                    </Link>
-                    <Link
-                        href="/projects"
-                        className={`flex flex-col items-center space-y-1 p-2 ${isActive('/projects') ? 'text-beacon-purple' : 'text-gray-400'}`}
-                    >
-                        <Filter className="h-6 w-6" />
-                        <span className="text-xs">Projects</span>
-                    </Link>
-                    <Link
-                        href="/messages"
-                        className={`flex flex-col items-center space-y-1 p-2 ${isActive('/messages') ? 'text-beacon-purple' : 'text-gray-400'}`}
-                    >
-                        <NavigationIcon type="messages" className="h-6 w-6" />
-                        <span className="text-xs">Messages</span>
-                    </Link>
-                    <Link
-                        href="/notifications"
-                        className={`flex flex-col items-center space-y-1 p-2 ${isActive('/notifications') ? 'text-beacon-purple' : 'text-gray-400'}`}
-                    >
-                        <NavigationIcon type="notifications" className="h-6 w-6" />
-                        <span className="text-xs">Notifications</span>
-                    </Link>
-                </div>
-            </nav>
-        </header>
+        </motion.header>
     )
 }

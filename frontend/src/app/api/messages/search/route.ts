@@ -1,10 +1,6 @@
+import { getApiBase } from "@/lib/apiBase"
 import { NextResponse } from 'next/server'
 
-function apiBase() {
-  const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'
-  const base = rawBase.replace(/\/+$/, '')
-  return /\/api\/v\d+$/i.test(base) ? base : `${base}/api/v1`
-}
 
 async function getToken() {
   const { cookies } = await import('next/headers')
@@ -18,8 +14,15 @@ export async function GET(request: Request) {
   if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
 
   const url = new URL(request.url)
+  const query = url.searchParams.get('query')
+  
+  // Validate query parameter
+  if (!query || query.trim().length === 0) {
+    return NextResponse.json({ message: 'Search query cannot be empty' }, { status: 400 })
+  }
+  
   const qp = url.searchParams.toString()
-  const upstreamUrl = `${apiBase()}/messages/search/${qp ? `?${qp}` : ''}`
+  const upstreamUrl = `${getApiBase()}/messages/search${qp ? `?${qp}` : ''}`
 
   try {
     const resp = await fetch(upstreamUrl, {

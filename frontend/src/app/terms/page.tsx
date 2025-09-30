@@ -40,7 +40,7 @@ export default function TermsOfService() {
 
                         <h2 className="text-2xl font-bold text-neutral-900 mt-12 mb-6">2. Description of Service</h2>
                         <p className="text-neutral-700 mb-4">
-                            B3ACON Creative Connect is a platform that connects creative professionals with clients seeking creative services. The Service includes project posting, talent discovery, communication tools, and payment processing.
+                            B3ACON Creative Connect is a platform that connects creative professionals with clients seeking creative services. The Service includes gig posting, talent discovery, communication tools, and payment processing.
                         </p>
 
                         <h2 className="text-2xl font-bold text-neutral-900 mt-12 mb-6">3. Account Registration</h2>

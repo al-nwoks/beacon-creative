@@ -1,4 +1,3 @@
-
 // Next.js 15 specific types
 export type SearchParams = { [key: string]: string | string[] | undefined };
 
@@ -35,15 +34,15 @@ export type User = {
   isVerified: boolean;
 };
 
-// Project related types
-export type ProjectStatus = 'draft' | 'active' | 'hired' | 'completed' | 'cancelled';
+// Gig related types
+export type GigStatus = 'draft' | 'active' | 'hired' | 'completed' | 'cancelled';
 
-export type Project = {
+export type Gig = {
   id: string;
   title: string;
   description: string;
   clientId: number;
-  status: ProjectStatus;
+  status: GigStatus;
   budget?: {
     min: number;
     max: number;

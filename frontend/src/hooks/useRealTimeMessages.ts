@@ -3,7 +3,7 @@ import type { Message } from '@/types/api'
 import { useCallback, useEffect, useState } from 'react'
 
 export function useRealTimeMessages(conversationId?: string) {
-  const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useWebSocket()
+  const { isConnected, sendMessage, joinConversation, leaveConversation } = useWebSocket()
   const [messages, setMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [typingUserId, setTypingUserId] = useState<number | null>(null)
@@ -38,7 +38,7 @@ export function useRealTimeMessages(conversationId?: string) {
   useEffect(() => {
     const handleUserTyping = (event: CustomEvent) => {
       const data = event.detail as { userId: number; conversationId: string }
-      if (data.conversationId === conversationId) {
+      if (data.conversationId === conversationId && conversationId) {
         setIsTyping(true)
         setTypingUserId(data.userId)
       }
@@ -46,7 +46,7 @@ export function useRealTimeMessages(conversationId?: string) {
 
     const handleUserStoppedTyping = (event: CustomEvent) => {
       const data = event.detail as { userId: number; conversationId: string }
-      if (data.conversationId === conversationId) {
+      if (data.conversationId === conversationId && conversationId) {
         setIsTyping(false)
         setTypingUserId(null)
       }
@@ -62,30 +62,34 @@ export function useRealTimeMessages(conversationId?: string) {
   }, [conversationId])
 
   const sendRealTimeMessage = useCallback((content: string, recipientId: number) => {
-    if (!socket || !isConnected) {
+    if (!isConnected) {
       throw new Error('Not connected to WebSocket')
     }
     
     const message = {
+      type: 'send_message',
       content,
-      recipient_id: recipientId,
-      sender_id: 0, // This will be set by the server
-      is_read: false, // This will be set by the server
-      // Add project_id or application_id if needed
+      recipient_id: recipientId
     }
     
     sendMessage(message)
-  }, [socket, isConnected, sendMessage])
+  }, [isConnected, sendMessage])
 
   const sendTypingIndicator = useCallback((isTyping: boolean) => {
-    if (socket && isConnected && conversationId) {
+    if (isConnected && conversationId) {
       if (isTyping) {
-        socket.emit('typing', { conversationId })
+        sendMessage({
+          type: 'typing',
+          conversation_id: conversationId
+        })
       } else {
-        socket.emit('stop_typing', { conversationId })
+        sendMessage({
+          type: 'stop_typing',
+          conversation_id: conversationId
+        })
       }
     }
-  }, [socket, isConnected, conversationId])
+  }, [isConnected, conversationId, sendMessage])
 
   return {
     messages,

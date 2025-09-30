@@ -3,7 +3,7 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { SimplifiedLayout } from '@/components/layout/SimplifiedLayout'
 import { useNotification } from '@/components/ui/NotificationProvider'
-import { notificationSettingsAPI, usersAPI } from '@/lib/api'
+import { notificationSettingsAPI, passwordAPI, usersAPI } from '@/lib/api'
 import type { NotificationSetting, User } from '@/types/api'
 import { useEffect, useState } from 'react'
 
@@ -24,16 +24,16 @@ export default function SettingsPage() {
     })
 
     const [notificationData, setNotificationData] = useState({
-        email_project_updates: true,
+        email_gig_updates: true,
         email_messages: true,
         email_application_status: true,
         email_payment_updates: true,
         email_newsletter: true,
-        in_app_project_updates: true,
+        in_app_gig_updates: true,
         in_app_messages: true,
         in_app_application_status: true,
         in_app_payment_updates: true,
-        push_project_updates: true,
+        push_gig_updates: true,
         push_messages: true,
         push_application_status: true,
         push_payment_updates: true
@@ -43,6 +43,14 @@ export default function SettingsPage() {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
+    })
+
+    const [privacyData, setPrivacyData] = useState({
+        profile_visibility: true,
+        search_appearance: true,
+        data_collection: true,
+        marketing_emails: true,
+        product_updates: true
     })
 
     // Fetch user data and notification settings on component mount
@@ -65,16 +73,16 @@ export default function SettingsPage() {
                     const settingsData = await notificationSettingsAPI.getNotificationSettings()
                     setNotificationSettings(settingsData)
                     setNotificationData({
-                        email_project_updates: settingsData.email_project_updates ?? true,
+                        email_gig_updates: settingsData.email_gig_updates ?? true,
                         email_messages: settingsData.email_messages ?? true,
                         email_application_status: settingsData.email_application_status ?? true,
                         email_payment_updates: settingsData.email_payment_updates ?? true,
                         email_newsletter: settingsData.email_newsletter ?? true,
-                        in_app_project_updates: settingsData.in_app_project_updates ?? true,
+                        in_app_gig_updates: settingsData.in_app_gig_updates ?? true,
                         in_app_messages: settingsData.in_app_messages ?? true,
                         in_app_application_status: settingsData.in_app_application_status ?? true,
                         in_app_payment_updates: settingsData.in_app_payment_updates ?? true,
-                        push_project_updates: settingsData.push_project_updates ?? true,
+                        push_gig_updates: settingsData.push_gig_updates ?? true,
                         push_messages: settingsData.push_messages ?? true,
                         push_application_status: settingsData.push_application_status ?? true,
                         push_payment_updates: settingsData.push_payment_updates ?? true
@@ -83,16 +91,16 @@ export default function SettingsPage() {
                     console.error('Failed to fetch notification settings:', error)
                     // Create default settings if none exist
                     setNotificationData({
-                        email_project_updates: true,
+                        email_gig_updates: true,
                         email_messages: true,
                         email_application_status: true,
                         email_payment_updates: true,
                         email_newsletter: true,
-                        in_app_project_updates: true,
+                        in_app_gig_updates: true,
                         in_app_messages: true,
                         in_app_application_status: true,
                         in_app_payment_updates: true,
-                        push_project_updates: true,
+                        push_gig_updates: true,
                         push_messages: true,
                         push_application_status: true,
                         push_payment_updates: true
@@ -114,14 +122,16 @@ export default function SettingsPage() {
         setSaving(true)
 
         try {
-            // In a real implementation, you would call the API to update user data
-            // const updatedUser = await usersAPI.updateUser(accountData)
-            // setUser(updatedUser)
-
+            const updatedUser = await usersAPI.updateUser({
+                email: accountData.email,
+                first_name: accountData.first_name,
+                last_name: accountData.last_name
+            })
+            setUser(updatedUser)
             showNotification('Account settings saved successfully', 'success')
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save account settings:', error)
-            showNotification('Failed to save account settings', 'error')
+            showNotification(error.message || 'Failed to save account settings', 'error')
         } finally {
             setSaving(false)
         }
@@ -135,9 +145,9 @@ export default function SettingsPage() {
             const updatedSettings = await notificationSettingsAPI.updateNotificationSettings(notificationData)
             setNotificationSettings(updatedSettings)
             showNotification('Notification settings saved successfully', 'success')
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save notification settings:', error)
-            showNotification('Failed to save notification settings', 'error')
+            showNotification(error.message || 'Failed to save notification settings', 'error')
         } finally {
             setSaving(false)
         }
@@ -147,19 +157,42 @@ export default function SettingsPage() {
         e.preventDefault()
         setSaving(true)
 
-        try {
-            // In a real implementation, you would call the API to update password
-            // await authAPI.changePassword(securityData)
+        // Validate password fields
+        if (!securityData.currentPassword) {
+            showNotification('Please enter your current password', 'error')
+            setSaving(false)
+            return
+        }
 
+        if (!securityData.newPassword) {
+            showNotification('Please enter a new password', 'error')
+            setSaving(false)
+            return
+        }
+
+        if (securityData.newPassword !== securityData.confirmPassword) {
+            showNotification('New passwords do not match', 'error')
+            setSaving(false)
+            return
+        }
+
+        if (securityData.newPassword.length < 8) {
+            showNotification('Password must be at least 8 characters long', 'error')
+            setSaving(false)
+            return
+        }
+
+        try {
+            await passwordAPI.changePassword(securityData.currentPassword, securityData.newPassword)
             showNotification('Password updated successfully', 'success')
             setSecurityData({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
             })
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to update password:', error)
-            showNotification('Failed to update password', 'error')
+            showNotification(error.message || 'Failed to update password', 'error')
         } finally {
             setSaving(false)
         }
@@ -167,6 +200,13 @@ export default function SettingsPage() {
 
     const handleNotificationChange = (field: keyof typeof notificationData, value: boolean) => {
         setNotificationData(prev => ({
+            ...prev,
+            [field]: value
+        }))
+    }
+
+    const handlePrivacyChange = (field: keyof typeof privacyData, value: boolean) => {
+        setPrivacyData(prev => ({
             ...prev,
             [field]: value
         }))
@@ -265,26 +305,26 @@ export default function SettingsPage() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label htmlFor="email_project_updates" className="text-sm font-medium text-neutral-900">
-                            Project Updates
+                        <label htmlFor="email_gig_updates" className="text-sm font-medium text-neutral-900">
+                            Gig Updates
                         </label>
-                        <p className="text-sm text-neutral-500">Get notified about project status changes</p>
+                        <p className="text-sm text-neutral-500">Get notified about gig status changes</p>
                     </div>
                     <div className="relative inline-block w-10 mr-2 align-middle select-none">
                         <input
                             type="checkbox"
-                            name="email_project_updates"
-                            id="email_project_updates"
-                            checked={notificationData.email_project_updates}
-                            onChange={(e) => handleNotificationChange('email_project_updates', e.target.checked)}
+                            name="email_gig_updates"
+                            id="email_gig_updates"
+                            checked={notificationData.email_gig_updates}
+                            onChange={(e) => handleNotificationChange('email_gig_updates', e.target.checked)}
                             className="sr-only"
                         />
                         <label
-                            htmlFor="email_project_updates"
-                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.email_project_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
+                            htmlFor="email_gig_updates"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.email_gig_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
                             <span
-                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.email_project_updates ? 'transform translate-x-4' : ''}`}
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.email_gig_updates ? 'transform translate-x-4' : ''}`}
                             ></span>
                         </label>
                     </div>
@@ -407,26 +447,26 @@ export default function SettingsPage() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label htmlFor="in_app_project_updates" className="text-sm font-medium text-neutral-900">
-                            Project Updates
+                        <label htmlFor="in_app_gig_updates" className="text-sm font-medium text-neutral-900">
+                            Gig Updates
                         </label>
-                        <p className="text-sm text-neutral-500">Show project status changes in-app</p>
+                        <p className="text-sm text-neutral-500">Show gig status changes in-app</p>
                     </div>
                     <div className="relative inline-block w-10 mr-2 align-middle select-none">
                         <input
                             type="checkbox"
-                            name="in_app_project_updates"
-                            id="in_app_project_updates"
-                            checked={notificationData.in_app_project_updates}
-                            onChange={(e) => handleNotificationChange('in_app_project_updates', e.target.checked)}
+                            name="in_app_gig_updates"
+                            id="in_app_gig_updates"
+                            checked={notificationData.in_app_gig_updates}
+                            onChange={(e) => handleNotificationChange('in_app_gig_updates', e.target.checked)}
                             className="sr-only"
                         />
                         <label
-                            htmlFor="in_app_project_updates"
-                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.in_app_project_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
+                            htmlFor="in_app_gig_updates"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.in_app_gig_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
                             <span
-                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.in_app_project_updates ? 'transform translate-x-4' : ''}`}
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.in_app_gig_updates ? 'transform translate-x-4' : ''}`}
                             ></span>
                         </label>
                     </div>
@@ -522,26 +562,26 @@ export default function SettingsPage() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label htmlFor="push_project_updates" className="text-sm font-medium text-neutral-900">
-                            Project Updates
+                        <label htmlFor="push_gig_updates" className="text-sm font-medium text-neutral-900">
+                            Gig Updates
                         </label>
-                        <p className="text-sm text-neutral-500">Receive push notifications for project status changes</p>
+                        <p className="text-sm text-neutral-500">Receive push notifications for gig status changes</p>
                     </div>
                     <div className="relative inline-block w-10 mr-2 align-middle select-none">
                         <input
                             type="checkbox"
-                            name="push_project_updates"
-                            id="push_project_updates"
-                            checked={notificationData.push_project_updates}
-                            onChange={(e) => handleNotificationChange('push_project_updates', e.target.checked)}
+                            name="push_gig_updates"
+                            id="push_gig_updates"
+                            checked={notificationData.push_gig_updates}
+                            onChange={(e) => handleNotificationChange('push_gig_updates', e.target.checked)}
                             className="sr-only"
                         />
                         <label
-                            htmlFor="push_project_updates"
-                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.push_project_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
+                            htmlFor="push_gig_updates"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${notificationData.push_gig_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
                             <span
-                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.push_project_updates ? 'transform translate-x-4' : ''}`}
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationData.push_gig_updates ? 'transform translate-x-4' : ''}`}
                             ></span>
                         </label>
                     </div>
@@ -667,14 +707,17 @@ export default function SettingsPage() {
                             type="checkbox"
                             name="profile_visibility"
                             id="profile_visibility"
-                            defaultChecked={true}
+                            checked={privacyData.profile_visibility}
+                            onChange={(e) => handlePrivacyChange('profile_visibility', e.target.checked)}
                             className="sr-only"
                         />
                         <label
                             htmlFor="profile_visibility"
-                            className="block h-6 w-10 rounded-full bg-beacon-purple cursor-pointer"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${privacyData.profile_visibility ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
-                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transform translate-x-4"></span>
+                            <span
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${privacyData.profile_visibility ? 'transform translate-x-4' : ''}`}
+                            ></span>
                         </label>
                     </div>
                 </div>
@@ -691,14 +734,17 @@ export default function SettingsPage() {
                             type="checkbox"
                             name="search_appearance"
                             id="search_appearance"
-                            defaultChecked={true}
+                            checked={privacyData.search_appearance}
+                            onChange={(e) => handlePrivacyChange('search_appearance', e.target.checked)}
                             className="sr-only"
                         />
                         <label
                             htmlFor="search_appearance"
-                            className="block h-6 w-10 rounded-full bg-beacon-purple cursor-pointer"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${privacyData.search_appearance ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
-                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transform translate-x-4"></span>
+                            <span
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${privacyData.search_appearance ? 'transform translate-x-4' : ''}`}
+                            ></span>
                         </label>
                     </div>
                 </div>
@@ -715,14 +761,17 @@ export default function SettingsPage() {
                             type="checkbox"
                             name="data_collection"
                             id="data_collection"
-                            defaultChecked={true}
+                            checked={privacyData.data_collection}
+                            onChange={(e) => handlePrivacyChange('data_collection', e.target.checked)}
                             className="sr-only"
                         />
                         <label
                             htmlFor="data_collection"
-                            className="block h-6 w-10 rounded-full bg-beacon-purple cursor-pointer"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${privacyData.data_collection ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
-                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transform translate-x-4"></span>
+                            <span
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${privacyData.data_collection ? 'transform translate-x-4' : ''}`}
+                            ></span>
                         </label>
                     </div>
                 </div>
@@ -746,14 +795,17 @@ export default function SettingsPage() {
                             type="checkbox"
                             name="marketing_emails"
                             id="marketing_emails"
-                            defaultChecked={true}
+                            checked={privacyData.marketing_emails}
+                            onChange={(e) => handlePrivacyChange('marketing_emails', e.target.checked)}
                             className="sr-only"
                         />
                         <label
                             htmlFor="marketing_emails"
-                            className="block h-6 w-10 rounded-full bg-beacon-purple cursor-pointer"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${privacyData.marketing_emails ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
-                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transform translate-x-4"></span>
+                            <span
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${privacyData.marketing_emails ? 'transform translate-x-4' : ''}`}
+                            ></span>
                         </label>
                     </div>
                 </div>
@@ -770,14 +822,17 @@ export default function SettingsPage() {
                             type="checkbox"
                             name="product_updates"
                             id="product_updates"
-                            defaultChecked={true}
+                            checked={privacyData.product_updates}
+                            onChange={(e) => handlePrivacyChange('product_updates', e.target.checked)}
                             className="sr-only"
                         />
                         <label
                             htmlFor="product_updates"
-                            className="block h-6 w-10 rounded-full bg-beacon-purple cursor-pointer"
+                            className={`block h-6 w-10 rounded-full cursor-pointer ${privacyData.product_updates ? 'bg-beacon-purple' : 'bg-neutral-300'}`}
                         >
-                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transform translate-x-4"></span>
+                            <span
+                                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${privacyData.product_updates ? 'transform translate-x-4' : ''}`}
+                            ></span>
                         </label>
                     </div>
                 </div>
@@ -852,6 +907,7 @@ export default function SettingsPage() {
                         onChange={(e) => setSecurityData({ ...securityData, newPassword: e.target.value })}
                         className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-beacon-purple focus:ring-beacon-purple sm:text-sm"
                     />
+                    <p className="mt-1 text-sm text-neutral-500">Must be at least 8 characters long</p>
                 </div>
 
                 <div>

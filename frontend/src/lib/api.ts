@@ -8,14 +8,16 @@
  * - clientFetcher: a fetcher suitable for SWR and client-side requests
  * - buildQuery: query string helper
  * - default export `api` with simple get/post helpers (client-side)
- * - named feature APIs: usersAPI, projectsAPI, authAPI
+ * - named feature APIs: usersAPI, gigsAPI, authAPI
  *
  * This file keeps implementations minimal and dependency-free so it's easy to test
  * and run in either server or client contexts.
  */
 import { logger } from '@/lib/logger'
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '') || ''
+// Ensure API_BASE doesn't end with /api/v1 to avoid duplication
+const rawApiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '') || ''
+const API_BASE = rawApiBase.endsWith('/api/v1') ? rawApiBase.replace('/api/v1', '') : rawApiBase
 
 type FetchInit = RequestInit & { server?: boolean }
 
@@ -52,8 +54,21 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
   if (path.startsWith('/api/') && !path.startsWith('/api/v1/')) {
       // For /api/users/me, call the backend directly
       if (path === '/api/users/me') {
-          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
-          const url = `${backendUrl}/users/me`;
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/me`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              cache: 'no-store',
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/users/upload-avatar, call the backend directly
+      if (path === '/api/users/upload-avatar') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/upload-avatar`;
           logger.debug(`Making direct backend call to: ${url}`)
           const res = await fetch(url, {
               cache: 'no-store',
@@ -65,8 +80,8 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
       
       // For /api/notification-settings/me, call the backend directly
       if (path === '/api/notification-settings/me') {
-          const backendUrl = API_BASE || 'http://backend:8000/api/v1';
-          const url = `${backendUrl}/notification-settings/me`;
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/notification-settings/`;
           logger.debug(`Making direct backend call to: ${url}`)
           const res = await fetch(url, {
               cache: 'no-store',
@@ -88,11 +103,11 @@ export async function serverFetch(path: string, init: FetchInit = {}) {
       return handleResponse(res)
   }
   
-  // For backend API routes, prepend the API_BASE
+  // For backend API routes, prepend the API_BASE and add /api/v1 if not present
   const url =
     typeof path === 'string' && (path.startsWith('http') || (path.startsWith('/') && API_BASE === ''))
       ? path
-      : `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
+      : `${API_BASE}/api/v1${path.startsWith('/') ? path : `/${path}`}`
 
   logger.debug(`Making backend API call to: ${url}`)
   const res = await fetch(url, {
@@ -116,7 +131,56 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
   
   // If the input is a frontend API route (starts with /api/ but not /api/v1/), handle it locally
   if (typeof input === 'string' && input.startsWith('/api/') && !input.startsWith('/api/v1/')) {
-    // For frontend API routes, make a direct fetch to the local server
+      // For /api/users/me, call the backend directly
+      if (input === '/api/users/me') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/me`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/users/upload-avatar, call the backend directly
+      if (input === '/api/users/upload-avatar') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/users/upload-avatar`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              headers: {
+                  Accept: 'application/json',
+                  // For FormData, don't set Content-Type (browser handles boundary)
+                  ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+                  // Spread original headers, excluding Content-Type for FormData
+                  ...(init && (init as any).headers ?
+                      Object.fromEntries(
+                          Object.entries((init as any).headers).filter(
+                              ([key]) => key.toLowerCase() !== 'content-type'
+                          )
+                      ) : {}
+                  ),
+              },
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+      // For /api/notification-settings/me, call the backend directly
+      if (input === '/api/notification-settings/me') {
+          const backendUrl = API_BASE || 'http://backend:8000';
+          const url = `${backendUrl}/api/v1/notification-settings/`;
+          logger.debug(`Making direct backend call to: ${url}`)
+          const res = await fetch(url, {
+              credentials: 'include',
+              ...init,
+          } as RequestInit)
+          return handleResponse(res)
+      }
+      
+    // For other frontend API routes, make a direct fetch to the local server
     const url = `${window.location.origin}${input}`;
     logger.debug(`Making local frontend API call to: ${url}`)
     const res = await fetch(url, {
@@ -131,7 +195,8 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
             Object.entries((init as any).headers).filter(
               ([key]) => key.toLowerCase() !== 'content-type'
             )
-          ) : {}),
+          )
+        : {}),
         // For non-FormData requests, spread all original headers
         ...(!isFormData && init && (init as any).headers ? (init as any).headers : {}),
       },
@@ -142,9 +207,8 @@ export async function clientFetcher(input: RequestInfo, init: RequestInit = {}) 
   
   const url =
     typeof input === 'string' && !input.startsWith('http')
-      ? `${API_BASE}${input.startsWith('/') ? input : `/${input}`}`
+      ? `${API_BASE}/api/v1${input.startsWith('/') ? input : `/${input}`}`
       : (input as string)
-
   logger.debug(`Making client API call to: ${url}`)
   const res = await fetch(url, {
     credentials: 'include',
@@ -224,24 +288,43 @@ export const usersAPI = {
     logger.info(`Fetching user by ID: ${id}`)
     return clientFetcher(`/api/users/${id}`, { method: 'GET' })
   },
+  async updateUser(payload: any) {
+    logger.info('Updating user', payload)
+    return clientFetcher('/api/users/me', { method: 'PUT', body: JSON.stringify(payload) })
+  },
   // add more user-related helpers here
 }
 
-export const projectsAPI = {
-  async getProjects(params?: Record<string, any>) {
-    logger.info('Fetching projects', params)
+export const gigsAPI = {
+  async getGigs(params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    category?: string
+    status?: string
+    sort_by?: string
+    sort_order?: 'asc' | 'desc'
+  }) {
+    logger.info('Fetching gigs', params)
     const qs = buildQuery(params)
-    return clientFetcher(`/api/projects${qs}`, { method: 'GET' })
+    return clientFetcher(`/api/gigs${qs}`, { method: 'GET' })
   },
-  async getProject(id: string) {
-    logger.info(`Fetching project by ID: ${id}`)
-    return clientFetcher(`/api/projects/${id}`, { method: 'GET' })
+  async getGig(id: string) {
+    logger.info(`Fetching gig by ID: ${id}`)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'GET' })
   },
-  async createProject(payload: any) {
-    logger.info('Creating new project', payload)
-    return clientFetcher('/api/projects', { method: 'POST', body: JSON.stringify(payload) })
+  async createGig(payload: any) {
+    logger.info('Creating new gig', payload)
+    return clientFetcher('/api/gigs', { method: 'POST', body: JSON.stringify(payload) })
   },
-  // add update/delete as needed
+  async updateGig(id: string, payload: any) {
+    logger.info(`Updating gig ${id}`, payload)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  },
+  async deleteGig(id: string) {
+    logger.info(`Deleting gig ${id}`)
+    return clientFetcher(`/api/gigs/${id}`, { method: 'DELETE' })
+  }
 }
 
 export const authAPI = {
@@ -270,5 +353,15 @@ export const notificationSettingsAPI = {
   async updateNotificationSettings(payload: any) {
       logger.info('Updating notification settings', payload)
       return clientFetcher('/api/notification-settings/me', { method: 'PUT', body: JSON.stringify(payload) })
+  },
+}
+
+export const passwordAPI = {
+  async changePassword(currentPassword: string, newPassword: string) {
+      logger.info('Changing user password')
+      return clientFetcher('/api/users/change-password', {
+          method: 'PUT',
+          body: JSON.stringify({ currentPassword, newPassword })
+      })
   },
 }

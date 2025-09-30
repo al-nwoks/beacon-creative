@@ -19,21 +19,26 @@ export interface User {
   avatar_url?: string | null
   created_at?: string
   updated_at?: string
+  last_login?: string | null
   hourly_rate?: number | null
   skills?: string[]
   portfolio_links?: string[]
   portfolio_images?: string[]
+  company_name?: string | null
   // Profile stats
-  projects_count?: number
+  gigs_count?: number
   followers_count?: number
   reviews_count?: number
   rating?: number
   creative_type?: string | null
   notification_settings?: NotificationSetting | null
+  // Account status
+  is_active?: boolean
+  is_verified?: boolean
 }
 
-/* Project */
-export interface Project {
+/* Gig */
+export interface Gig {
   id: number | string
   title: string
   company?: string
@@ -48,14 +53,24 @@ export interface Project {
   status?: string
   client_id?: number | string
   hired_creative_id?: number | string
+  // Additional properties that may be included in responses
+  applications_count?: number
+  deadline?: string
+  client?: {
+    id: number | string
+    name: string
+    email: string
+    location?: string
+    company_name?: string
+  }
   // add other fields returned by backend as needed
 }
 
 /* Application */
 export interface Application {
   id: number | string
-  project: Project | string | number
-  project_id?: number | string
+  gig: Gig | string | number
+  gig_id?: number | string
   applicant_id?: number | string
   creative_id?: number | string
   status?: string
@@ -74,6 +89,11 @@ export interface MessageSummary {
   preview?: string
   time?: string
   unread?: boolean
+  unread_count?: number
+  // Backend conversation structure
+  user?: User
+  last_message?: Message
+  updated_at?: string
 }
 
 /* Message with sender */
@@ -88,8 +108,16 @@ export interface Message {
   sender_id: number | string
   recipient_id: number | string
   is_read: boolean
+  is_pinned: boolean
+  is_favorite: boolean
   created_at: string
-  project_id?: string
+  read_at?: string
+  reactions?: {
+    [emoji: string]: number[] // user IDs who reacted with this emoji
+  }
+  forwarded_from_id?: string | null
+  forwarded_from?: Message | null
+  gig_id?: string
   application_id?: string
   sender?: User
   recipient?: User
@@ -102,7 +130,7 @@ export interface Payment {
   currency?: string
   status?: string
   created_at?: string
-  project_id?: number | string
+  gig_id?: number | string
   client_id?: number | string
   creative_id?: number | string
   milestone_description?: string
@@ -113,9 +141,9 @@ export interface Payment {
 
 /* Dashboard summary used by /dashboard/summary or similar endpoints */
 export interface DashboardSummary {
-  activeProjects?: number
+  activeGigs?: number
   totalSpent?: number
-  recentActivity?: { action: string; project?: string; time?: string }[]
+  recentActivity?: { action: string; gig?: string; time?: string }[]
   // other aggregate fields
 }
 
@@ -129,20 +157,27 @@ export interface Notification {
   // target, data payload etc.
 }
 
+export interface NotificationList {
+  items: Notification[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 /* Notification Settings */
 export interface NotificationSetting {
   id: string
   user_id: number
-  email_project_updates?: boolean
+  email_gig_updates?: boolean
   email_messages?: boolean
   email_application_status?: boolean
   email_payment_updates?: boolean
   email_newsletter?: boolean
-  in_app_project_updates?: boolean
+  in_app_gig_updates?: boolean
   in_app_messages?: boolean
   in_app_application_status?: boolean
   in_app_payment_updates?: boolean
-  push_project_updates?: boolean
+  push_gig_updates?: boolean
   push_messages?: boolean
   push_application_status?: boolean
   push_payment_updates?: boolean
@@ -153,10 +188,15 @@ export interface NotificationSetting {
 /* Generic paginated response */
 export interface Paginated<T> {
   items: T[]
-  total?: number
-  page?: number
-  pageSize?: number
+  total: number
+  page: number
+  pages: number
+  limit: number
+  has_more: boolean
 }
+
+/* Gigs paginated response */
+export interface GigsPaginatedResponse extends Paginated<Gig> {}
 
 /* API Error shape (normalized) */
 export interface APIError {

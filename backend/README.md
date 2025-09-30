@@ -23,16 +23,16 @@ FastAPI service that powers B3ACON Creative Connect. It exposes a versioned API 
 
 ## Overview
 
-The B3ACON backend is a FastAPI application that provides RESTful APIs for the creative marketplace platform. It handles user management, project listings, applications, messaging, payments, and notifications.
+The B3ACON backend is a FastAPI application that provides RESTful APIs for the creative marketplace platform. It handles user management, gig listings, applications, messaging, payments, and notifications.
 
 ## Key Features
 
 ### Core Functionality
 - **User Management**: Registration, authentication, profile management
-- **Project Management**: Create, browse, and manage creative projects
-- **Application System**: Apply to projects and manage applications
+- **Gig Management**: Create, browse, and manage creative gigs
+- **Application System**: Apply to gigs and manage applications
 - **Messaging**: Real-time communication between users
-- **File Management**: Upload and manage project files
+- **File Management**: Upload and manage gig files
 - **Payment Processing**: Secure payment handling with escrow
 - **Notifications**: Real-time user notifications
 
@@ -105,13 +105,13 @@ The B3ACON backend is a FastAPI application that provides RESTful APIs for the c
 - PUT /api/v1/users/me
 - POST /api/v1/users/upload-avatar
 
-### Projects
-- GET /api/v1/projects
-- POST /api/v1/projects
-- GET /api/v1/projects/{id}
-- PUT /api/v1/projects/{id}
-- DELETE /api/v1/projects/{id}
-- GET /api/v1/projects/my-projects
+### Gigs
+- GET /api/v1/gigs
+- POST /api/v1/gigs
+- GET /api/v1/gigs/{id}
+- PUT /api/v1/gigs/{id}
+- DELETE /api/v1/gigs/{id}
+- GET /api/v1/gigs/my-gigs
 
 ### Applications
 - GET /api/v1/applications
@@ -222,10 +222,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
 ### Core Tables
 1. **Users**: User accounts and profiles
-2. **Projects**: Project listings and details
-3. **Applications**: Project applications
+2. **Gigs**: Gig listings and details
+3. **Applications**: Gig applications
 4. **Messages**: User messaging system
-5. **Project Files**: File attachments
+5. **Gig Files**: File attachments
 6. **Payments**: Payment transactions
 7. **Notifications**: User notifications
 
@@ -253,7 +253,7 @@ alembic downgrade -1
 When running with mock or seed flags, the app seeds the database on startup.
 
 #### MOCK_MODE=True
-- Clears tables and seeds a full set of users, projects, applications, etc.
+- Clears tables and seeds a full set of users, gigs, applications, etc.
 - See [app/db/seed_data.py](app/db/seed_data.py)
 
 #### SEED_DATA=True

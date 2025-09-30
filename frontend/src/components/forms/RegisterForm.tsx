@@ -92,9 +92,9 @@ export default function RegisterForm({ defaultUserType }: RegisterFormProps) {
                 } catch { /* ignore if unavailable; fall back to selected type */ }
 
                 if (role === 'creative') {
-                    router.push('/creative-dashboard')
+                    router.push('/creative')
                 } else {
-                    router.push('/dashboard')
+                    router.push('/client')
                 }
                 return
             }

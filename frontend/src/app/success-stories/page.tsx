@@ -78,7 +78,7 @@ export default function SuccessStories() {
                     <div className="bg-white rounded-2xl p-10 border border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-6">
                         <div>
                             <h3 className="text-2xl font-semibold text-neutral-900">Ready to create your own success story?</h3>
-                            <p className="text-neutral-600 mt-1">Hire top creatives or find your next project on B3ACON.</p>
+                            <p className="text-neutral-600 mt-1">Hire top creatives or find your next gig on B3ACON.</p>
                         </div>
                         <div className="flex gap-4">
                             <Link href="/register?type=client">

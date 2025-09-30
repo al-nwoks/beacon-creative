@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "class-variance-authority": "^0.7.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0"
   }
 }

@@ -22,20 +22,22 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/", response_model=List[NotificationSchema])
+@router.get("/", response_model=NotificationList)
 def get_notifications(
     *,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    skip: int = 0,
+    page: int = 1,
     limit: int = 50,
     read: Optional[bool] = None,
 ) -> Any:
     """
-    Get notifications for the current user.
+    Get notifications for the current user with pagination.
     """
     logger.info(f"Fetching notifications for user ID: {current_user.id}")
-    logger.debug(f"Filter parameters: skip={skip}, limit={limit}, read={read}")
+    logger.debug(f"Filter parameters: page={page}, limit={limit}, read={read}")
+    
+    skip = (page - 1) * limit
     
     # Base query - notifications for current user
     query = db.query(Notification).filter(Notification.user_id == current_user.id)
@@ -44,14 +46,22 @@ def get_notifications(
     if read is not None:
         query = query.filter(Notification.read == read)
     
-    # Order by creation time (newest first) and apply pagination
-    notifications = query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
+    # Get total count
+    total = query.count()
     
-    logger.info(f"Found {len(notifications)} notifications for user ID: {current_user.id}")
-    return notifications
+    # Order by creation time (newest first) and apply pagination
+    items = query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
+    
+    logger.info(f"Found {len(items)} notifications (total: {total}) for user ID: {current_user.id}")
+    return NotificationList(
+        items=items,
+        total=total,
+        page=page,
+        pageSize=limit
+    )
 
 @router.post("/", response_model=NotificationSchema)
-def create_notification(
+async def create_notification(
     *,
     db: Session = Depends(get_db),
     notification_in: NotificationCreate,
@@ -81,6 +91,25 @@ def create_notification(
     db.add(db_notification)
     db.commit()
     db.refresh(db_notification)
+    
+    # Broadcast new notification via WebSocket
+    if ws_manager:
+        try:
+            await ws_manager.broadcast_to_user(
+                str(db_notification.user_id),
+                {
+                    "type": "notification",
+                    "notification": {
+                        "id": str(db_notification.id),
+                        "title": db_notification.title,
+                        "body": db_notification.body,
+                        "read": db_notification.read,
+                        "created_at": db_notification.created_at.isoformat()
+                    }
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to broadcast notification via WebSocket: {str(e)}")
     
     logger.info(f"Notification created successfully with ID: {db_notification.id} for user ID: {db_notification.user_id}")
     return db_notification

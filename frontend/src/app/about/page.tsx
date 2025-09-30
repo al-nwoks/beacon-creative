@@ -125,7 +125,7 @@ export default function About() {
                             </div>
                             <div>
                                 <div className="text-3xl md:text-4xl font-bold mb-2">5K+</div>
-                                <div className="text-beacon-purple-light">Active Projects</div>
+                                <div className="text-beacon-purple-light">Active Gigs</div>
                             </div>
                             <div>
                                 <div className="text-3xl md:text-4xl font-bold mb-2">98%</div>

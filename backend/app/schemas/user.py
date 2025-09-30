@@ -1,9 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
-from typing import Union
-
-from app.schemas.notification_setting import NotificationSetting
+from pydantic import BaseModel, EmailStr, validator
 
 # Shared properties
 class UserBase(BaseModel):
@@ -14,13 +11,33 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
-    # Creative classification (e.g., Photographer, Model, DJ, Screenwriter)
+    company_name: Optional[str] = None
+    hourly_rate: Optional[int] = None
+    skills: Optional[List[str]] = None
+    portfolio_links: Optional[List[str]] = None
+    portfolio_images: Optional[List[str]] = None
     creative_type: Optional[str] = None
+    
+    # Profile stats
+    gigs_count: Optional[int] = 0
+    followers_count: Optional[int] = 0
+    reviews_count: Optional[int] = 0
+    rating: Optional[float] = 0.0
+    
+    # Account status
+    is_active: Optional[bool] = True
+    is_verified: Optional[bool] = False
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str
     confirm_password: str
+    
+    @validator('confirm_password')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'password' in values and v != values['password']:
+            raise ValueError('Passwords do not match')
+        return v
 
 # Properties to receive via API on update
 class UserUpdate(BaseModel):
@@ -30,39 +47,24 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
-    creative_type: Optional[str] = None
-    hourly_rate: Optional[float] = None
+    hourly_rate: Optional[int] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None
     portfolio_images: Optional[List[str]] = None
+    creative_type: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
+
+# Properties for password change
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
 
 # Properties shared by models stored in DB
-class UserInDBBase(BaseModel):
-    email: EmailStr
-    first_name: str
-    last_name: str
-    role: str
-    bio: Optional[str] = None
-    location: Optional[str] = None
-    profile_image_url: Optional[str] = None
+class UserInDBBase(UserBase):
     id: int
-    is_active: bool
-    is_verified: bool
     created_at: datetime
-    updated_at: datetime
-    hourly_rate: Optional[float] = None
-    skills: Optional[List[str]] = None
-    portfolio_links: Optional[List[str]] = None
-    portfolio_images: Optional[List[str]] = None
-    # Profile stats
-    projects_count: Optional[int] = 0
-    followers_count: Optional[int] = 0
-    reviews_count: Optional[int] = 0
-    rating: Optional[float] = 0.0
-    # Expose creative_type on API responses
-    creative_type: Optional[str] = None
-    # Notification settings
-    notification_settings: Optional[NotificationSetting] = None
+    last_login: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -75,11 +77,11 @@ class User(UserInDBBase):
 class UserInDB(UserInDBBase):
     hashed_password: str
 
-# Token schema
+# Properties to return via API for authentication
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Token payload
 class TokenPayload(BaseModel):
-    sub: Optional[str] = None
+    sub: int
+    exp: int

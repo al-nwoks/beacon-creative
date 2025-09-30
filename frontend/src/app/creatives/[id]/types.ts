@@ -12,7 +12,7 @@ export interface Creative {
     isVerified: boolean;
     rating?: number;
     reviewCount?: number;
-    totalProjects?: number;
+    totalGigs?: number;
     joinDate: string;
     languages?: string[];
 }
@@ -24,7 +24,7 @@ export interface Review {
     clientAvatar?: string;
     rating: number;
     comment: string;
-    projectId: string;
-    projectName: string;
+    gigId: string;
+    gigName: string;
     date: string;
 }

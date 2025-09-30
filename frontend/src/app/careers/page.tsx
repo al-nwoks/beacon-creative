@@ -79,7 +79,7 @@ export default function Careers() {
                                     At B3ACON, we're not just building a platform - we're building the infrastructure for the
                                     future of work. Our team is passionate about creating tools and experiences that help
                                     creative professionals thrive and enable businesses to find the perfect talent for their
-                                    most important projects.
+                                    most important gigs.
                                 </p>
                             </div>
                         </div>

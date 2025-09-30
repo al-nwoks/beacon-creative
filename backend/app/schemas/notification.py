@@ -28,6 +28,10 @@ class Notification(NotificationBase):
     class Config:
         from_attributes = True
 
+# Properties stored in DB
+class NotificationInDB(Notification):
+    pass
+
 # Properties for list responses
 class NotificationList(BaseModel):
     items: List[Notification]

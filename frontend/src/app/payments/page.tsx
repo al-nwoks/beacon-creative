@@ -95,7 +95,7 @@ export default async function PaymentsPage() {
                     ) : (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                             <h2 className="text-xl font-semibold text-neutral-900 mb-4">No payments yet</h2>
-                            <p className="text-neutral-600">Your payments will appear here once you start working on projects.</p>
+                            <p className="text-neutral-600">Your payments will appear here once you start working on gigs.</p>
                         </div>
                     )}
                 </main>

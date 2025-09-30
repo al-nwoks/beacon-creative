@@ -15,7 +15,7 @@ interface SimplifiedLayoutProps {
  *
  * A lightweight layout for internal pages and dashboards that keeps a minimal header
  * (logo + optional small nav) and no heavy public chrome. Use this for pages that
- * should appear "in-app" (dashboard, creatives/projects details, etc).
+ * should appear "in-app" (dashboard, creatives/gigs details, etc).
  */
 export function SimplifiedLayout({
     children,
